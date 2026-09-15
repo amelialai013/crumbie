@@ -331,6 +331,9 @@ body::-webkit-scrollbar {
   gap: 10px;
   margin-bottom: 34px;
 }
+.enquiry-form .field.has-error {
+  border-bottom-color: #ff8f8f;
+}
 .enquiry-form .field label,
 .enquiry-form .field-label {
   color: #d9d7d3;
@@ -350,6 +353,14 @@ body::-webkit-scrollbar {
 .enquiry-form .field textarea:focus {
   outline: 0;
   border-color: #fff;
+}
+.enquiry-form .field.has-error label,
+.enquiry-form .field.has-error .field-label {
+  color: #ff8f8f;
+}
+.enquiry-form .field-error {
+  margin: 0;
+  padding-top: 8px;
 }
 .enquiry-form .field textarea {
   min-height: 146px;
@@ -435,10 +446,19 @@ body::-webkit-scrollbar {
 }
 .enquiry-fields-row {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 32px;
+  row-gap: 28px;
+  column-gap: 32px;
+}
+.enquiry-field-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.enquiry-form > .enquiry-field-group {
+  margin-top: 28px;
 }
 .enquiry-form .field {
-  margin-bottom: 28px;
+  margin-bottom: 0;
 }
 .enquiry-form .field textarea {
   min-height: 108px;
@@ -460,7 +480,7 @@ body::-webkit-scrollbar {
 
 @media(max-width:760px) {
   .enquiry-form-heading { grid-template-columns: 1fr; gap: 18px; margin-bottom: 40px; }
-  .enquiry-fields-row { grid-template-columns: 1fr; gap: 0; }
+  .enquiry-fields-row { grid-template-columns: 1fr; row-gap: 28px; column-gap: 0; }
 }
 @media(max-width:640px) {
   .custom-order-hero { padding-block: 68px 50px; }
@@ -1104,7 +1124,7 @@ body::-webkit-scrollbar {
 .premium-select-trigger {
   display: grid;
   width: 100%;
-  min-height: 52px;
+  min-height: 56px;
   grid-template-columns: minmax(0, 1fr) auto 18px;
   gap: 12px;
   align-items: center;
@@ -1166,7 +1186,7 @@ body::-webkit-scrollbar {
 .premium-select-menu li {
   display: grid;
   min-height: 54px;
-  grid-template-columns: minmax(0, 1fr) auto 18px;
+  grid-template-columns: minmax(0, 1fr) 18px;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -1182,10 +1202,13 @@ body::-webkit-scrollbar {
   color: var(--accent);
 }
 .premium-select-menu li small {
+  grid-column: 1;
   color: var(--muted);
   font-size: .76rem;
 }
 .premium-select-menu li svg {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   width: 16px;
   height: 16px;
   stroke: currentColor;
