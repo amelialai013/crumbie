@@ -1,0 +1,118 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import signatureCookie from "@/assets/cookies/choc-chip-cookie/turntable-clean/frame-01.png";
+import biscoffCookie from "@/assets/cookies/biscoff-white-chocolate-cookie/turntable-clean/frame-03.png";
+import { useCart } from "@/components/cart-context";
+
+export default function Cart() {
+  const { lines, total, remove, setQuantity } = useCart();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function checkout() {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lines }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || typeof data.url !== "string") {
+        setError(data.error || "Checkout could not be started.");
+        return;
+      }
+      window.location.assign(data.url);
+    } catch {
+      setError("Checkout could not be started. Please check your connection and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <section className="page-hero"><div className="shell"><h1 className="page-title">Cart</h1></div></section>
+      <section className="section cart-section">
+        <div className="shell">
+          {lines.length === 0 ? (
+            <div className="cart-empty">
+              <h2>Nothing here yet.</h2>
+              <p>Your next box of crumbs is waiting.</p>
+              <Link className="btn btn-dark btn-arrow" href="/cookies">
+                Explore crumbs
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                  <path d="m7 4.5 5.5 5.5L7 15.5" />
+                </svg>
+              </Link>
+            </div>
+          ) : (
+            <div className="cart-layout">
+              <div className="cart-items">
+                {lines.map((line) => (
+              <div className="cart-row" key={line.key}>
+                <Link className="cart-product-link" href={`/cookies/${line.productSlug}`} aria-label={`View ${line.productName}`}>
+                  <Image
+                    className="cart-product-image"
+                    src={line.productSlug === "seasonal-box" ? biscoffCookie : signatureCookie}
+                    alt={line.productName}
+                    width={160}
+                    height={160}
+                    sizes="(max-width: 640px) 96px, 160px"
+                  />
+                </Link>
+                <div className="cart-row-details">
+                  <h2><Link href={`/cookies/${line.productSlug}`}>{line.productName}</Link></h2>
+                  <div className="cart-row-variant">
+                    <p>{line.variantLabel}</p>
+                    <p className="cart-line-price">${(line.unitPrice * line.quantity).toFixed(2)} AUD</p>
+                  </div>
+                  <p>{new Intl.DateTimeFormat("en-AU", { dateStyle: "full", timeZone: "Australia/Melbourne" }).format(new Date(`${line.pickupDate}T12:00:00+10:00`))}<br />{line.pickupWindow}</p>
+                </div>
+                <div className="cart-row-actions">
+                  <div className="field quantity-field">
+                    <span>Quantity</span>
+                    <div className="quantity-stepper cart-quantity-stepper">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={line.quantity}
+                        onChange={(event) => {
+                          const value = event.target.value.replace(/\D/g, "");
+                          if (value) setQuantity(line.key, Number(value));
+                        }}
+                        aria-label={`Quantity for ${line.productName}`}
+                      />
+                      <div className="quantity-stepper-controls">
+                        <button type="button" onClick={() => setQuantity(line.key, line.quantity + 1)} disabled={line.quantity >= 99} aria-label={`Increase ${line.productName} quantity`}>
+                          <svg aria-hidden="true" viewBox="0 0 12 12" fill="none"><path d="m3 7.5 3-3 3 3" /></svg>
+                        </button>
+                        <button type="button" onClick={() => setQuantity(line.key, line.quantity - 1)} disabled={line.quantity <= 1} aria-label={`Decrease ${line.productName} quantity`}>
+                          <svg aria-hidden="true" viewBox="0 0 12 12" fill="none"><path d="m3 4.5 3 3 3-3" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="text-button" onClick={() => remove(line.key)}>Remove</button>
+                </div>
+              </div>
+                ))}
+              </div>
+              <aside className="summary cart-summary">
+                <p className="cart-summary-heading">Order total</p>
+                <h2>${total.toFixed(2)} <span>AUD</span></h2>
+                <p>GST included. Pickup address provided in confirmation email.</p>
+                {error && <p className="field-error" role="alert">{error}</p>}
+                <button className="btn btn-dark" disabled={busy} onClick={checkout}>{busy ? "Starting secure checkout…" : "Checkout"}</button>
+              </aside>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
