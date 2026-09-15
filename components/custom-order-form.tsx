@@ -34,9 +34,6 @@ export default function CustomOrderForm() {
 
   return (
     <form className="enquiry-form" onSubmit={submit}>
-      <div className="enquiry-form-heading">
-        <h2>Get in touch</h2>
-      </div>
       <div className="enquiry-fields-row">
         <div className="field">
           <label htmlFor="name">Name</label>

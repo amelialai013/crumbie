@@ -14,10 +14,12 @@ const links = [
 ];
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const [menuPathname, setMenuPathname] = useState(pathname);
+  const [scrolled, setScrolled] = useState(false);
   const { count } = useCart();
+  const menuVisible = open && menuPathname === pathname;
   const isActive = (href: string) => pathname === href || (href === "/cookies" && pathname.startsWith("/cookies/"));
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function Header() {
   }, [pathname]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!menuVisible) return;
 
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -42,24 +44,41 @@ export default function Header() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [open]);
+  }, [menuVisible]);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 900px)");
+    const closeMenuOnDesktop = (event: MediaQueryListEvent) => {
+      if (!event.matches) setOpen(false);
+    };
+
+    mobileQuery.addEventListener("change", closeMenuOnDesktop);
+    return () => mobileQuery.removeEventListener("change", closeMenuOnDesktop);
+  }, []);
 
   return (
-    <header className={`site-header${pathname === "/" ? " home-header" : ""}${scrolled ? " scrolled" : ""}${open ? " menu-open" : ""}`}>
+    <header className={`site-header${pathname === "/" ? " home-header" : ""}${scrolled ? " scrolled" : ""}${menuVisible ? " menu-open" : ""}`}>
       <div className="nav-shell">
         <Link href="/" className="brand" onClick={() => setOpen(false)} aria-label="Crumbie home">
           <Image src={pictureLogoWhite} alt="Crumbie" priority sizes="52px" />
         </Link>
-        <nav id="primary-navigation" className={open ? "nav-links open" : "nav-links"} aria-label="Primary navigation" aria-hidden={!open ? undefined : false}>
+        <nav id="primary-navigation" className={menuVisible ? "nav-links open" : "nav-links"} aria-label="Primary navigation" aria-hidden={!menuVisible ? undefined : false}>
           {links.map(([label, href]) => (
-            <Link key={href} href={href} onClick={() => setOpen(false)} className={isActive(href) ? "active" : ""} aria-current={isActive(href) ? "page" : undefined}>
+            <Link key={href} href={href} className={isActive(href) ? "active" : ""} aria-current={isActive(href) ? "page" : undefined}>
               {label}
             </Link>
           ))}
-          <Link href="/cart" onClick={() => setOpen(false)} className={`cart-link${pathname === "/cart" ? " active" : ""}`} aria-current={pathname === "/cart" ? "page" : undefined}>Cart <span>{count}</span></Link>
+          <Link href="/cart" className={`cart-link${pathname === "/cart" ? " active" : ""}`} aria-current={pathname === "/cart" ? "page" : undefined}>Cart <span>{count}</span></Link>
         </nav>
-        <button type="button" className="menu-button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="primary-navigation">
-          {open ? "Close" : "Menu"}
+        <button type="button" className="menu-button" onClick={() => {
+          if (open) {
+            setOpen(false);
+          } else {
+            setMenuPathname(pathname);
+            setOpen(true);
+          }
+        }} aria-expanded={menuVisible} aria-controls="primary-navigation">
+          {menuVisible ? "Close" : "Menu"}
         </button>
       </div>
     </header>
