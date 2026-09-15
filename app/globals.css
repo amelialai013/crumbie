@@ -1392,8 +1392,10 @@ body::-webkit-scrollbar {
   }
   .product-detail-copy {
     position: static;
+    grid-row: 2;
   }
-  .cookie-explorer { grid-row: auto; }
+  .cookie-explorer,
+  .product-gallery { grid-row: 1; }
 }
 @media(max-width:640px) {
   .product-detail-section .breadcrumb {
