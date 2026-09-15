@@ -467,7 +467,7 @@ body::-webkit-scrollbar {
   width: auto;
   min-width: 0;
   min-height: 50px;
-  margin-top: 28px;
+  margin-top: 56px;
   padding-inline: 28px;
 }
 .enquiry-submit svg {
