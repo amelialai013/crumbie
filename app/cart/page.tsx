@@ -12,16 +12,20 @@ export default function Cart() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [removingKey, setRemovingKey] = useState<string | null>(null);
+  const [removingLastItem, setRemovingLastItem] = useState(false);
 
   function removeLine(key: string) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       remove(key);
       return;
     }
+    const isLastItem = lines.length === 1;
+    setRemovingLastItem(isLastItem);
     setRemovingKey(key);
     window.setTimeout(() => {
       remove(key);
       setRemovingKey(null);
+      setRemovingLastItem(false);
     }, 460);
   }
 
@@ -54,8 +58,7 @@ export default function Cart() {
         <div className="shell">
           {lines.length === 0 ? (
             <div className="cart-empty">
-              <h2>Nothing here yet.</h2>
-              <p>Your next box of crumbs is waiting.</p>
+              <h2>No crumbs yet.</h2>
               <Link className="btn btn-dark btn-arrow" href="/cookies">
                 Explore crumbs
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
@@ -64,7 +67,7 @@ export default function Cart() {
               </Link>
             </div>
           ) : (
-            <div className="cart-layout">
+            <div className={`cart-layout${removingLastItem ? " is-last-removing" : ""}`}>
               <div className="cart-items">
                 {lines.map((line) => (
               <div className={`cart-row${removingKey === line.key ? " is-removing" : ""}`} key={line.key}>
