@@ -711,16 +711,16 @@ body::-webkit-scrollbar {
   filter: saturate(1) contrast(1.02) drop-shadow(0 24px 22px rgba(0, 0, 0, .34));
 }
 .cookie-catalog .product-cookie-image-biscoff {
-  transform: scale(.94);
+  transform: scale(1);
 }
 .cookie-catalog .product-cookie-image-signature {
-  transform: scale(.94, .82);
+  transform: scale(1);
 }
 .cookie-catalog .product-card:hover .product-cookie-image-biscoff {
-  transform: scale(.97);
+  transform: scale(1.04);
 }
 .cookie-catalog .product-card:hover .product-cookie-image-signature {
-  transform: scale(.97, .85);
+  transform: scale(1.04);
 }
 .cookie-catalog .product-card-body {
   display: flex;
