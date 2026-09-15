@@ -11,6 +11,19 @@ export default function Cart() {
   const { lines, total, remove, setQuantity } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [removingKey, setRemovingKey] = useState<string | null>(null);
+
+  function removeLine(key: string) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      remove(key);
+      return;
+    }
+    setRemovingKey(key);
+    window.setTimeout(() => {
+      remove(key);
+      setRemovingKey(null);
+    }, 460);
+  }
 
   async function checkout() {
     setBusy(true);
@@ -54,7 +67,7 @@ export default function Cart() {
             <div className="cart-layout">
               <div className="cart-items">
                 {lines.map((line) => (
-              <div className="cart-row" key={line.key}>
+              <div className={`cart-row${removingKey === line.key ? " is-removing" : ""}`} key={line.key}>
                 <Link className="cart-product-link" href={`/cookies/${line.productSlug}`} aria-label={`View ${line.productName}`}>
                   <Image
                     className="cart-product-image"
@@ -97,7 +110,9 @@ export default function Cart() {
                       </div>
                     </div>
                   </div>
-                  <button className="text-button" onClick={() => remove(line.key)}>Remove</button>
+                  <button className="text-button" onClick={() => removeLine(line.key)} disabled={removingKey === line.key}>
+                    {removingKey === line.key ? "Removing…" : "Remove"}
+                  </button>
                 </div>
               </div>
                 ))}
@@ -106,8 +121,8 @@ export default function Cart() {
                 <p className="cart-summary-heading">Order total</p>
                 <h2>${total.toFixed(2)} <span>AUD</span></h2>
                 <p>GST included. Pickup address provided in confirmation email.</p>
-                {error && <p className="field-error" role="alert">{error}</p>}
                 <button className="btn btn-dark" disabled={busy} onClick={checkout}>{busy ? "Starting secure checkout…" : "Checkout"}</button>
+                {error && <p className="field-error cart-checkout-error" role="alert">{error}</p>}
               </aside>
             </div>
           )}

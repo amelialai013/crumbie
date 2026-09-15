@@ -17,7 +17,7 @@ export default function Footer() {
           <Link href="/ordering-policy">Ordering policy</Link>
         </div>
         <div>
-          <p>Small-batch cookies made<br />for pickup in Ivanhoe, Victoria.</p>
+          <p>Big cookie energy, baked in<br />small batches with care.</p>
         </div>
       </div>
       <div className="shell footer-bottom"><span>© {new Date().getFullYear()} Crumbie. All rights reserved.</span></div>
