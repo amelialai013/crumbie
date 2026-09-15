@@ -1691,6 +1691,9 @@ body::-webkit-scrollbar {
     align-items: flex-end;
     justify-content: space-between;
   }
+  .cart-row-actions .text-button {
+    margin-bottom: 16px;
+  }
 }
 
 /* Consistent interaction feedback */
