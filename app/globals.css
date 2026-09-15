@@ -1187,6 +1187,7 @@ body::-webkit-scrollbar {
   display: grid;
   min-height: 54px;
   grid-template-columns: minmax(0, 1fr) 18px;
+  grid-template-rows: 1fr;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -1208,13 +1209,19 @@ body::-webkit-scrollbar {
 }
 .premium-select-menu li svg {
   grid-column: 2;
-  grid-row: 1 / span 2;
+  grid-row: 1;
   width: 16px;
   height: 16px;
   stroke: currentColor;
   stroke-width: 1.4;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+.premium-select-menu li:has(small) {
+  grid-template-rows: auto auto;
+}
+.premium-select-menu li:has(small) svg {
+  grid-row: 1 / span 2;
 }
 .product-order .product-date {
   grid-column: 1 / -1;
