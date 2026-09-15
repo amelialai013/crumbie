@@ -734,13 +734,13 @@ body::-webkit-scrollbar {
   transform: scale(1);
 }
 .cookie-catalog .product-cookie-image-signature {
-  transform: scale(1);
+  transform: scale(1, .86);
 }
 .cookie-catalog .product-card:hover .product-cookie-image-biscoff {
   transform: scale(1.04);
 }
 .cookie-catalog .product-card:hover .product-cookie-image-signature {
-  transform: scale(1.04);
+  transform: scale(1.04, .89);
 }
 .cookie-catalog .product-card-body {
   display: flex;
