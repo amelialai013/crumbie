@@ -703,6 +703,11 @@ body::-webkit-scrollbar {
   gap: clamp(24px, 3vw, 42px);
   align-items: stretch;
 }
+@media(max-width:900px) {
+  .cookie-catalog .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .cookie-catalog .product-card {
   display: flex;
   flex-direction: column;
@@ -734,13 +739,13 @@ body::-webkit-scrollbar {
   transform: scale(1);
 }
 .cookie-catalog .product-cookie-image-signature {
-  transform: scale(1, .86);
+  transform: scale(.97, .87);
 }
 .cookie-catalog .product-card:hover .product-cookie-image-biscoff {
-  transform: scale(1.04);
+  transform: scale(1.02);
 }
 .cookie-catalog .product-card:hover .product-cookie-image-signature {
-  transform: scale(1.04, .89);
+  transform: scale(.99, .89);
 }
 .cookie-catalog .product-card-body {
   display: flex;
@@ -781,6 +786,7 @@ body::-webkit-scrollbar {
   display: inline-flex;
   gap: 8px;
   align-items: center;
+  white-space: nowrap;
   font-size: .9rem;
   font-weight: 600;
 }
