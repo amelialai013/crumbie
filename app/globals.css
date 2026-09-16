@@ -7,7 +7,7 @@
   margin-bottom: 20px;
 }
 
-/* Dark Crumbie theme */
+/* Dark Club Crumbie theme */
 :root {
   color-scheme: dark;
   --ink: #f7f7f5;
@@ -614,7 +614,7 @@ body::-webkit-scrollbar {
   transform: translateX(3px);
 }
 .hero-logo-heading {
-  width: min(520px, 56vw);
+  width: min(640px, 68vw);
   margin: 0 0 10px;
   line-height: 0;
 }
@@ -634,7 +634,7 @@ body::-webkit-scrollbar {
 
 @media(max-width:640px) {
   .hero-content { padding-block: 48px; }
-  .hero-logo-heading { width: min(330px, 76vw); margin-bottom: 8px; }
+  .hero-logo-heading { width: min(390px, 88vw); margin-bottom: 8px; }
   .hero-content .actions { width: 100%; }
   .hero-content .actions .btn { flex: 1 1 240px; }
   .hero-media::after {

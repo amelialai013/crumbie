@@ -59,8 +59,8 @@ export default function Header() {
   return (
     <header className={`site-header${pathname === "/" ? " home-header" : ""}${scrolled ? " scrolled" : ""}${menuVisible ? " menu-open" : ""}`}>
       <div className="nav-shell">
-        <Link href="/" className="brand" onClick={() => setOpen(false)} aria-label="Crumbie home">
-          <Image src={pictureLogoWhite} alt="Crumbie" priority sizes="52px" />
+        <Link href="/" className="brand" onClick={() => setOpen(false)} aria-label="Club Crumbie home">
+          <Image src={pictureLogoWhite} alt="Club Crumbie" priority sizes="52px" />
         </Link>
         <nav id="primary-navigation" className={menuVisible ? "nav-links open" : "nav-links"} aria-label="Primary navigation" aria-hidden={!menuVisible ? undefined : false}>
           {links.map(([label, href]) => (

@@ -1,10 +1,10 @@
-# Crumbie
+# Club Crumbie
 
-Production-oriented Next.js 16 storefront for Crumbie, a pickup-only cookie business in Ivanhoe, Victoria. This is an independent project and must use its own Vercel project, Redis-compatible datastore, R2 bucket, Stripe configuration, Resend identity, domain and secrets.
+Production-oriented Next.js 16 storefront for Club Crumbie, a pickup-only cookie business in Ivanhoe, Victoria. This is an independent project and must use its own Vercel project, Redis-compatible datastore, R2 bucket, Stripe configuration, Resend identity, domain and secrets.
 
 ## Local development
 
-1. Copy `.env.example` to `.env.local` and replace placeholders with new Crumbie test values. Never copy environment files from Imperfect Bakers.
+1. Copy `.env.example` to `.env.local` and replace placeholders with new Club Crumbie test values. Never copy environment files from Imperfect Bakers.
 2. Run `npm install`.
 3. Run `npm run dev` and open `http://localhost:3000`.
 4. Forward Stripe test webhooks to `http://localhost:3000/api/stripe/webhook` and set the resulting signing secret.
