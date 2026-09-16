@@ -15,7 +15,7 @@ export default function HeroMedia() {
   const [activeClip, setActiveClip] = useState(0);
   const [activeLayer, setActiveLayer] = useState(0);
   const [layerClips, setLayerClips] = useState([0, 1]);
-  const [videoFailed, setVideoFailed] = useState(false);
+  const [failedLayers, setFailedLayers] = useState<Set<number>>(new Set());
   const [transitionInProgress, setTransitionInProgress] = useState(false);
   const [pendingTransition, setPendingTransition] = useState<{ nextClip: number; nextLayer: number; oldLayer: number } | null>(null);
 
@@ -53,6 +53,11 @@ export default function HeroMedia() {
           requestAnimationFrame(() => setActiveLayer(nextLayer));
         });
         cleanupTimer = window.setTimeout(() => {
+          setFailedLayers((current) => {
+            const next = new Set(current);
+            next.delete(oldLayer);
+            return next;
+          });
           setLayerClips((current) => current.map((clip, layer) => layer === oldLayer ? (nextClip + 1) % clips.length : clip));
           setActiveClip(nextClip);
           setPendingTransition(null);
@@ -72,13 +77,13 @@ export default function HeroMedia() {
 
   return (
     <div className="hero-media" aria-hidden="true">
-      {!reduceMotion && !videoFailed && (
+      {!reduceMotion && failedLayers.size < 2 && (
         [0, 1].map((layer) => (
           <video
             key={layer}
             className={`hero-video${activeLayer === layer ? " is-active" : ""}`}
             autoPlay={layer === 0}
-            loop={transitionInProgress}
+            loop={false}
             muted
             playsInline
             preload="auto"
@@ -89,17 +94,19 @@ export default function HeroMedia() {
               const clipLimit = layerClips[layer] === 0 ? 7 : layerClips[layer] === 1 ? 2.5 : layerClips[layer] === 2 ? 7 : layerClips[layer] === 3 ? 7 : null;
               if (clipLimit && event.currentTarget.currentTime >= clipLimit) advanceClip();
             }}
-            onEnded={(event) => {
+            onEnded={() => {
               if (layer !== activeLayer) return;
-              if (transitionInProgress) {
-                event.currentTarget.currentTime = 0;
-                event.currentTarget.play().catch(() => undefined);
-                return;
-              }
+              if (transitionInProgress) return;
               advanceClip();
             }}
             onError={() => {
-              setVideoFailed(true);
+              setFailedLayers((current) => new Set(current).add(layer));
+              if (layer === activeLayer) {
+                const fallbackLayer = 1 - layer;
+                setActiveLayer(fallbackLayer);
+                setActiveClip(layerClips[fallbackLayer]);
+                document.querySelector<HTMLVideoElement>(`video[data-layer="${fallbackLayer}"]`)?.play().catch(() => undefined);
+              }
             }}
           >
           </video>

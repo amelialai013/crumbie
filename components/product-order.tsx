@@ -98,7 +98,6 @@ export default function ProductOrder({ product }: { product: Product }) {
           />
         </div>
       </div>
-      <p className="fine-print">Orders close 72 hours before pickup. Pickup only in Ivanhoe, Victoria. Exact address provided in your confirmation email after purchase.</p>
       <div className="product-order-total" aria-live="polite">
         <strong>${orderTotal} <span>AUD</span></strong>
         <button type="button" className="btn btn-dark" onClick={submit} disabled={soldOut || !dateId}>

@@ -72,7 +72,7 @@ export default function Home() {
                       </svg>
                     </span>
                   </div>
-                  <span className="price">From ${product.variants[0].price}</span>
+                    <span className="price">Boxes from ${product.variants[0].price}</span>
                 </div>
               </Link>
             ))}

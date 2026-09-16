@@ -32,17 +32,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </svg>
         <span aria-current="page">{product.name}</span>
       </nav>
-      <header className="shell product-detail-hero">
-        <div className="product-detail-heading">
-          <h1 className="page-title">{product.name}</h1>
-          <div>
-            <p>{product.description}</p>
-            <span>From ${product.variants[0].price} AUD</span>
-          </div>
-        </div>
-      </header>
       <div className="shell product-detail-layout">
         <div className="product-detail-copy">
+          <header className="product-detail-hero">
+            <div className="product-detail-heading">
+              <h1 className="page-title">{product.name}</h1>
+              <div>
+                <p>{product.description}</p>
+              </div>
+            </div>
+          </header>
           <ProductOrder product={product} />
         </div>
         {product.slug === "signature-box" || product.slug === "seasonal-box" ? (
@@ -57,7 +56,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </div>
       <div className="shell product-facts">
         <section>
-          <h2>Inside the box</h2>
+          <h2>Order information</h2>
           <p>{product.ingredients}</p>
         </section>
         <section>
