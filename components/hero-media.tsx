@@ -89,7 +89,7 @@ export default function HeroMedia() {
               const clipLimit = layerClips[layer] === 0 ? 7 : layerClips[layer] === 1 ? 2.5 : layerClips[layer] === 2 ? 7 : layerClips[layer] === 3 ? 7 : null;
               if (clipLimit && event.currentTarget.currentTime >= clipLimit) advanceClip();
             }}
-            onEnded={() => {
+            onEnded={(event) => {
               if (layer !== activeLayer) return;
               if (transitionInProgress) {
                 event.currentTarget.currentTime = 0;
