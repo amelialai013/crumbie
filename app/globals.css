@@ -34,11 +34,18 @@ body {
     linear-gradient(90deg, rgba(7,7,7,.98) 0%, rgba(7,7,7,.86) 44%, rgba(7,7,7,.16) 82%);
 }
 .hero-video {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
-  animation: hero-video-in .8s ease both;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+  will-change: opacity;
+}
+.hero-video.is-active {
+  opacity: 1;
 }
 @keyframes hero-video-in {
   from { opacity: 0; }
@@ -242,7 +249,7 @@ body::-webkit-scrollbar {
 }
 
 @media(prefers-reduced-motion:reduce) {
-  .hero-video { display: none; animation: none; }
+  .hero-video { display: none; transition: none; }
 }
 
 /* Refined brand and custom enquiry */
