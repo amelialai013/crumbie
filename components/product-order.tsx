@@ -23,7 +23,14 @@ export default function ProductOrder({ product }: { product: Product }) {
 
   useEffect(() => {
     if (!confirmation || confirmationClosing) return;
-    const timeoutId = window.setTimeout(() => setConfirmationClosing(true), 5000);
+    const timeoutId = window.setTimeout(() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setConfirmation(null);
+        setConfirmationClosing(false);
+      } else {
+        setConfirmationClosing(true);
+      }
+    }, 5000);
     return () => window.clearTimeout(timeoutId);
   }, [confirmation, confirmationClosing]);
 
@@ -46,6 +53,15 @@ export default function ProductOrder({ product }: { product: Product }) {
     });
     setConfirmationClosing(false);
     setConfirmation({ quantity: addedQuantity, variant: selectedVariant.label });
+  }
+
+  function closeConfirmation() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setConfirmation(null);
+      setConfirmationClosing(false);
+      return;
+    }
+    setConfirmationClosing(true);
   }
 
   return (
@@ -107,7 +123,7 @@ export default function ProductOrder({ product }: { product: Product }) {
           </div>
           <div className="cart-confirmation-actions">
             <a className="btn btn-dark" href="/cart">View cart</a>
-            <button className="text-button" type="button" onClick={() => setConfirmationClosing(true)}>Close</button>
+            <button className="text-button" type="button" onClick={closeConfirmation}>Close</button>
           </div>
         </div>,
         document.body,

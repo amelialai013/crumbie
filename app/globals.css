@@ -153,7 +153,10 @@
     visibility: hidden;
     pointer-events: none;
     transform: translateY(-16px);
-    transition: none;
+    transition:
+      opacity .4s ease,
+      transform .55s cubic-bezier(.22, 1, .36, 1),
+      visibility 0s linear .55s;
   }
   .nav-links.open {
     opacity: 1;
@@ -210,6 +213,23 @@
 }
 
 @media(max-width:900px) and (prefers-reduced-motion:reduce) {
+
+  @media(prefers-reduced-motion:reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition-duration: .01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  .btn {
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
   .nav-links,
   .nav-links.open,
   .nav-links > a,

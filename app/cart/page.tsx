@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import signatureCookie from "@/assets/cookies/choc-chip-cookie/turntable-clean/frame-01.png";
 import biscoffCookie from "@/assets/cookies/biscoff-white-chocolate-cookie/turntable-clean/frame-03.png";
 import { useCart } from "@/components/cart-context";
@@ -15,6 +15,11 @@ export default function Cart() {
   const [removingKey, setRemovingKey] = useState<string | null>(null);
   const [removingLastItem, setRemovingLastItem] = useState(false);
   const [emptyAppearing, setEmptyAppearing] = useState(false);
+  const removeTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (removeTimeoutRef.current !== null) window.clearTimeout(removeTimeoutRef.current);
+  }, []);
 
   function removeLine(key: string) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -24,11 +29,12 @@ export default function Cart() {
     }
     setRemovingLastItem(lines.length === 1);
     setRemovingKey(key);
-    window.setTimeout(() => {
+    removeTimeoutRef.current = window.setTimeout(() => {
       remove(key);
       setRemovingKey(null);
       setRemovingLastItem(false);
       if (lines.length === 1) setEmptyAppearing(true);
+      removeTimeoutRef.current = null;
     }, 460);
   }
 

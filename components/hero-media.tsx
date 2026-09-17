@@ -30,6 +30,11 @@ export default function HeroMedia() {
   const failedClipsRef = useRef<Set<number>>(new Set());
   const primedRef = useRef(false);
   const transitioningRef = useRef(false);
+  const transitionTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (transitionTimeoutRef.current !== null) window.clearTimeout(transitionTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -73,7 +78,7 @@ export default function HeroMedia() {
       setActiveLayer(toLayer);
       videoRefs.current[fromLayer]?.pause();
       primedRef.current = false;
-      window.setTimeout(() => {
+      transitionTimeoutRef.current = window.setTimeout(() => {
         // Queue the clip after next onto the now-hidden layer so it's ready for the following crossfade.
         setClipForLayer((current) => {
           const next: [number, number] = [...current];
@@ -81,6 +86,7 @@ export default function HeroMedia() {
           return next;
         });
         transitioningRef.current = false;
+        transitionTimeoutRef.current = null;
       }, CROSSFADE_MS);
     };
 
