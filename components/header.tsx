@@ -104,6 +104,7 @@ export default function Header() {
             </Link>
           ))}
           <Link href="/cart" className={`cart-link${pathname === "/cart" ? " active" : ""}`} aria-current={pathname === "/cart" ? "page" : undefined}>Cart <span>{count}</span></Link>
+          <Link href="/cart" className={`mobile-menu-cart-link${pathname === "/cart" ? " active" : ""}`} aria-current={pathname === "/cart" ? "page" : undefined}>Cart</Link>
         </nav>
         <div className="nav-actions">
           <Link href="/cart" className="mobile-cart-link" aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}>

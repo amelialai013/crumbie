@@ -20,7 +20,7 @@
 }
 .site-header { background: rgba(7, 7, 7, .94); border-bottom: 0; }
 .nav-links a { color: #b9b9b7; }
-.cart-link span { background: #fff; color: #070707; }
+.cart-link span { background: var(--accent); color: #070707; }
 .menu-button { color: #fff; }
 .hero-media::after {
   background:
@@ -202,17 +202,7 @@
   .nav-links.open > a:nth-child(4) { transition-delay: .23s; }
   .nav-links.open > a:nth-child(5) { transition-delay: .28s; }
   .nav-links .cart-link {
-    align-self: flex-start;
-    margin-top: 32px;
-    color: #f7f7f5;
-    font-size: 1rem;
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity .4s ease, transform .5s var(--motion-ease);
-  }
-  .nav-links .cart-link span {
-    min-width: 28px;
-    height: 28px;
+    display: none;
   }
 }
 /* Suppress the nav's open/close transitions while the viewport is being resized, so crossing
@@ -338,6 +328,9 @@ body::-webkit-scrollbar {
   color: #070707;
   font-size: .64rem;
   font-weight: 600;
+}
+.mobile-menu-cart-link {
+  display: none;
 }
 .footer-bottom { justify-content: flex-start; }
 
