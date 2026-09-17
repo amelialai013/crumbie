@@ -54,7 +54,7 @@ export default function Cart() {
 
   return (
     <>
-      <section className="page-hero"><div className="shell"><h1 className="page-title">Cart</h1></div></section>
+      <section className="page-hero"><div className="shell"><h1 className="page-title">Your order</h1></div></section>
       <section className="section cart-section">
         <div className="shell">
           {lines.length === 0 ? (
@@ -95,7 +95,7 @@ export default function Cart() {
                     value={line.quantity}
                     inputId={`quantity-${line.key}`}
                     inputAriaLabel={`Quantity for ${line.productName}`}
-                    onChange={(value) => setQuantity(line.key, value || 1)}
+                    onChange={(value) => setQuantity(line.key, value)}
                   />
                   <button className="text-button" onClick={() => removeLine(line.key)} disabled={removingKey === line.key}>
                     {removingKey === line.key ? "Removing…" : "Remove"}

@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="shell footer-grid">
         <div>
           <Link href="/" className="footer-brand" aria-label="Club Crumbie home">
-            <Image src={whiteLogo} alt="Club Crumbie" sizes="190px" />
+            <Image src={whiteLogo} alt="Club Crumbie" sizes="240px" quality={100} />
           </Link>
         </div>
         <div>

@@ -10,7 +10,7 @@ export default function Crumbs() {
     <>
       <section className="page-hero">
         <div className="shell">
-          <h1 className="page-title">Crumbs</h1>
+          <h1 className="page-title">Crumb selection</h1>
         </div>
       </section>
       <section className="section section-warm cookie-catalog">

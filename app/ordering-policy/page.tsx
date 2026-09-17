@@ -5,7 +5,7 @@ export default function Policy() {
     <>
       <section className="page-hero">
         <div className="shell">
-          <h1 className="page-title">Ordering policy</h1>
+          <h1 className="page-title">Crumbie policies</h1>
         </div>
       </section>
       <section className="section policy-section">

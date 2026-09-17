@@ -12,7 +12,7 @@ export default function Home() {
         <HeroMedia />
         <div className="hero-content">
           <h1 className="hero-logo-heading">
-            <Image className="hero-logo" src={whiteLogo} alt="Club Crumbie" priority sizes="(max-width: 640px) 88vw, 640px" />
+            <Image className="hero-logo" src={whiteLogo} alt="Club Crumbie" priority quality={100} sizes="(max-width: 640px) 88vw, 640px" />
           </h1>
           <div className="actions">
             <Link className="btn btn-dark btn-arrow" href="/cookies">

@@ -14,11 +14,11 @@ export default function ProductOrder({ product }: { product: Product }) {
     .sort((a, b) => a.date.localeCompare(b.date));
   const [variantId, setVariantId] = useState(product.variants[0].id);
   const [dateId, setDateId] = useState(() => available[0]?.id ?? "");
-  const [quantity, setQuantity] = useState<number | "">(1);
+  const [quantity, setQuantity] = useState(1);
   const [confirmation, setConfirmation] = useState<{ quantity: number; variant: string } | null>(null);
   const [confirmationClosing, setConfirmationClosing] = useState(false);
   const selectedVariant = product.variants.find((item) => item.id === variantId) ?? product.variants[0];
-  const orderTotal = selectedVariant.price * (quantity || 1);
+  const orderTotal = selectedVariant.price * quantity;
   const soldOut = product.soldOut || available.length === 0;
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function ProductOrder({ product }: { product: Product }) {
   function submit() {
     const date = pickupDates.find((item) => item.id === dateId);
     if (!date) return;
-    const addedQuantity = quantity || 1;
+    const addedQuantity = quantity;
     add({
       productId: product.id,
       productSlug: product.slug,

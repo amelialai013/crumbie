@@ -253,7 +253,7 @@ body::-webkit-scrollbar {
   height: auto;
 }
 .footer-brand img {
-  width: 176px;
+  width: 240px;
   height: auto;
 }
 .menu-button {
@@ -394,7 +394,7 @@ body::-webkit-scrollbar {
 }
 @media(max-width:640px) {
   .brand img { width: 48px; }
-  .footer-brand img { width: 150px; }
+  .footer-brand img { width: 205px; }
   .custom-order-hero { padding-block: 76px 60px; }
   .enquiry-layout { width: 100%; border-inline: 0; }
   .enquiry-intro,
@@ -531,6 +531,9 @@ body::-webkit-scrollbar {
 .about-image img,
 .product-hero-image img {
   object-fit: cover;
+}
+.about-image img {
+  object-position: 50% 20%;
 }
 .product-hero-image {
   aspect-ratio: 4 / 3;

@@ -1,6 +1,6 @@
 "use client";
 
-type QuantityValue = number | "";
+import { useState } from "react";
 
 export default function QuantityControl({
   value,
@@ -8,12 +8,19 @@ export default function QuantityControl({
   inputAriaLabel,
   onChange,
 }: {
-  value: QuantityValue;
+  value: number;
   inputId: string;
   inputAriaLabel?: string;
-  onChange: (value: QuantityValue) => void;
+  onChange: (value: number) => void;
 }) {
-  const currentValue = value || 1;
+  const [draft, setDraft] = useState(String(value));
+  const [lastValue, setLastValue] = useState(value);
+
+  // Keep the field in sync when the quantity changes from outside (e.g. the stepper buttons).
+  if (value !== lastValue) {
+    setLastValue(value);
+    setDraft(String(value));
+  }
 
   return (
     <div className="field product-quantity">
@@ -23,21 +30,26 @@ export default function QuantityControl({
           id={inputId}
           type="text"
           inputMode="numeric"
-          value={value}
+          value={draft}
           aria-label={inputAriaLabel}
           onChange={(event) => {
-            const nextValue = event.target.value.replace(/\D/g, "");
-            onChange(nextValue === "" ? "" : Math.min(99, Math.max(1, Number(nextValue))));
+            const digits = event.target.value.replace(/\D/g, "");
+            setDraft(digits);
+            if (digits === "") return;
+            onChange(Math.min(99, Math.max(1, Number(digits))));
           }}
           onBlur={() => {
-            if (value === "") onChange(1);
+            if (draft === "") {
+              setDraft("1");
+              onChange(1);
+            }
           }}
         />
         <div className="quantity-stepper-controls">
-          <button type="button" onClick={() => onChange(Math.max(1, currentValue - 1))} disabled={value === "" || value <= 1} aria-label="Decrease quantity">
+          <button type="button" onClick={() => onChange(Math.max(1, value - 1))} disabled={value <= 1} aria-label="Decrease quantity">
             <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M3 8h10" /></svg>
           </button>
-          <button type="button" onClick={() => onChange(Math.min(99, currentValue + 1))} disabled={value !== "" && value >= 99} aria-label="Increase quantity">
+          <button type="button" onClick={() => onChange(Math.min(99, value + 1))} disabled={value >= 99} aria-label="Increase quantity">
             <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" /></svg>
           </button>
         </div>
