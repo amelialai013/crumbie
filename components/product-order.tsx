@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { isDateClosed, pickupDates, type Product } from "@/lib/catalog";
 import { useCart } from "./cart-context";
 import PremiumSelect from "./premium-select";
-import QuantityControl from "./quantity-control";
 
 export default function ProductOrder({ product }: { product: Product }) {
   const { add } = useCart();
@@ -14,23 +14,17 @@ export default function ProductOrder({ product }: { product: Product }) {
     .sort((a, b) => a.date.localeCompare(b.date));
   const [variantId, setVariantId] = useState(product.variants[0].id);
   const [dateId, setDateId] = useState(() => available[0]?.id ?? "");
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | "">(1);
   const [confirmation, setConfirmation] = useState<{ quantity: number; variant: string } | null>(null);
   const [confirmationClosing, setConfirmationClosing] = useState(false);
   const selectedVariant = product.variants.find((item) => item.id === variantId) ?? product.variants[0];
-  const orderTotal = selectedVariant.price * quantity;
+  const orderTotal = selectedVariant.price * (quantity || 1);
   const soldOut = product.soldOut || available.length === 0;
-
-  useEffect(() => {
-    if (!confirmation || confirmationClosing) return;
-    const timeoutId = window.setTimeout(() => setConfirmationClosing(true), 5000);
-    return () => window.clearTimeout(timeoutId);
-  }, [confirmation, confirmationClosing]);
 
   function submit() {
     const date = pickupDates.find((item) => item.id === dateId);
     if (!date) return;
-    const addedQuantity = quantity;
+    const addedQuantity = quantity || 1;
     add({
       productId: product.id,
       productSlug: product.slug,
@@ -64,7 +58,25 @@ export default function ProductOrder({ product }: { product: Product }) {
             onChange={setVariantId}
           />
         </div>
-        <QuantityControl value={quantity} inputId="quantity" onChange={setQuantity} />
+        <div className="field product-quantity">
+          <label htmlFor="quantity">Quantity</label>
+          <div className="quantity-stepper">
+            <input id="quantity" type="text" inputMode="numeric" value={quantity} onChange={(event) => {
+              const value = event.target.value.replace(/\D/g, "");
+              setQuantity(value === "" ? "" : Math.min(99, Math.max(1, Number(value))));
+            }} onBlur={() => {
+              if (quantity === "") setQuantity(1);
+            }} />
+            <div className="quantity-stepper-controls">
+              <button type="button" onClick={() => setQuantity((current) => Math.min(99, (current || 0) + 1))} disabled={quantity !== "" && quantity >= 99} aria-label="Increase quantity">
+                <svg aria-hidden="true" viewBox="0 0 12 12" fill="none"><path d="m3 7.5 3-3 3 3" /></svg>
+              </button>
+              <button type="button" onClick={() => setQuantity((current) => Math.max(1, (current || 1) - 1))} disabled={quantity === "" || quantity <= 1} aria-label="Decrease quantity">
+                <svg aria-hidden="true" viewBox="0 0 12 12" fill="none"><path d="m3 4.5 3 3 3-3" /></svg>
+              </button>
+            </div>
+          </div>
+        </div>
         <div className="field product-date">
           <span className="field-label" id="date-label">Pickup date</span>
           <PremiumSelect
@@ -81,6 +93,7 @@ export default function ProductOrder({ product }: { product: Product }) {
           />
         </div>
       </div>
+      <p className="fine-print">Orders close 72 hours before pickup. Pickup only in Ivanhoe, Victoria. Exact address provided in your confirmation email after purchase.</p>
       <div className="product-order-total" aria-live="polite">
         <strong>${orderTotal} <span>AUD</span></strong>
         <button type="button" className="btn btn-dark" onClick={submit} disabled={soldOut || !dateId}>
@@ -106,7 +119,7 @@ export default function ProductOrder({ product }: { product: Product }) {
             <p>{confirmation.quantity} × {confirmation.variant} · {product.name}</p>
           </div>
           <div className="cart-confirmation-actions">
-            <a className="btn btn-dark" href="/cart">View cart</a>
+            <Link className="btn btn-dark" href="/cart">View cart</Link>
             <button className="text-button" type="button" onClick={() => setConfirmationClosing(true)}>Close</button>
           </div>
         </div>,
