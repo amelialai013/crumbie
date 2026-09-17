@@ -215,6 +215,14 @@
     height: 28px;
   }
 }
+/* Suppress the nav's open/close transitions while the viewport is being resized, so crossing
+   the mobile breakpoint doesn't flash the hidden menu open and closed. */
+html.is-resizing .nav-links,
+html.is-resizing .nav-links.open,
+html.is-resizing .nav-links > a,
+html.is-resizing .nav-links .cart-link {
+  transition: none !important;
+}
 
 /* Preserve scrolling without displaying browser scrollbars. */
 html {

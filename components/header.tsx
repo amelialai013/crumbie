@@ -70,6 +70,27 @@ export default function Header() {
     return () => mobileQuery.removeEventListener("change", closeMenuOnDesktop);
   }, []);
 
+  useEffect(() => {
+    // Crossing the mobile breakpoint flips the nav's opacity/position rules instantly; without this
+    // it briefly transitions through those styles, flashing the hidden menu open and closed.
+    let resizeTimeout: number | null = null;
+    const handleResize = () => {
+      document.documentElement.classList.add("is-resizing");
+      if (resizeTimeout !== null) window.clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(() => {
+        document.documentElement.classList.remove("is-resizing");
+        resizeTimeout = null;
+      }, 200);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (resizeTimeout !== null) window.clearTimeout(resizeTimeout);
+      document.documentElement.classList.remove("is-resizing");
+    };
+  }, []);
+
   return (
     <header className={`site-header${pathname === "/" ? " home-header" : ""}${scrolled ? " scrolled" : ""}${menuVisible ? " menu-open" : ""}`}>
       <div className="nav-shell">
