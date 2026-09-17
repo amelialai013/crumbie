@@ -886,12 +886,12 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
 
 /* Subtle route transition while the global navigation remains stationary. */
 .page-transition {
-  animation: page-enter .55s cubic-bezier(.22, 1, .36, 1) both;
+  animation: none;
 }
 .cart-page-transition .page-hero {
   animation: cart-page-hero-in .7s cubic-bezier(.22, 1, .36, 1) both;
 }
-.cart-page-transition .cart-section {
+.cart-page-transition > .section {
   animation: cart-page-content-in .8s cubic-bezier(.22, 1, .36, 1) .12s both;
 }
 @keyframes page-enter {
@@ -922,7 +922,7 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
     animation: none;
   }
   .cart-page-transition .page-hero,
-  .cart-page-transition .cart-section {
+  .cart-page-transition > .section {
     animation: none;
   }
   .cart-checkout-error {
