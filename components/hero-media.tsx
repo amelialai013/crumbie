@@ -7,7 +7,7 @@ type Layer = 0 | 1;
 
 const CLIPS: Clip[] = [
   { src: "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4", cutAt: 7 },
-  { src: "https://videos.pexels.com/video-files/10551703/10551703-hd_1080_1920_30fps.mp4", cutAt: 7 },
+  { src: "https://videos.pexels.com/video-files/5309782/5309782-hd_1920_1080_30fps.mp4", cutAt: 7 },
   { src: "https://videos.pexels.com/video-files/10835189/10835189-hd_1920_1080_24fps.mp4", cutAt: 7 },
   { src: "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4", cutAt: 7 },
 ];
@@ -22,6 +22,7 @@ function otherLayer(layer: Layer): Layer {
 export default function HeroMedia() {
   const [reduceMotion, setReduceMotion] = useState(true);
   const [hidden, setHidden] = useState(false);
+  const [ready, setReady] = useState(false);
   const [activeLayer, setActiveLayer] = useState<Layer>(0);
   const [clipForLayer, setClipForLayer] = useState<[number, number]>([0, 1]);
 
@@ -92,6 +93,9 @@ export default function HeroMedia() {
 
   return (
     <div className="hero-media" aria-hidden="true">
+      <div className={`hero-media-loading${ready ? " is-hidden" : ""}`}>
+        <div className="hero-media-loading-pulse" />
+      </div>
       {([0, 1] as const).map((layer) => (
         <video
           key={layer}
@@ -104,6 +108,9 @@ export default function HeroMedia() {
           playsInline
           preload="auto"
           src={CLIPS[clipForLayer[layer]].src}
+          onPlaying={() => {
+            if (layer === 0) setReady(true);
+          }}
           onTimeUpdate={(event) => {
             if (layer !== activeLayer) return;
             const time = event.currentTarget.currentTime;
