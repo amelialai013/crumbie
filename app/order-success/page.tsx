@@ -8,7 +8,7 @@ export default function Success() {
 				<p className="lede" style={{ margin: "24px auto" }}>
 					A confirmation will be sent to the email used at checkout. Pickup is in Ivanhoe; until the final address is configured, exact pickup details will be provided separately.
 				</p>
-				<Link className="btn btn-dark" href="/cookies">
+				<Link className="btn btn-dark" href="/cookies" scroll={false}>
 					Back to crumbs
 				</Link>
 			</div>

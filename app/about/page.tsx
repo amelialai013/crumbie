@@ -21,7 +21,7 @@ export default function About() {
             <p>Club Crumbie began with two girls who love baking and a shared belief that the best things are made with patience and care. We make considered drops that give each collection room to explore depth, richness and quality, from thoughtful flavours to beautiful textures. The result is familiar, but made with a little more intention.</p>
             <h2>Small batch by design</h2>
             <p>Each release is made in small quantities, giving us room to refine every detail and share something fresh, thoughtful and worth returning to.</p>
-            <Link className="btn btn-dark btn-arrow" href="/cookies">
+            <Link className="btn btn-dark btn-arrow" href="/cookies" scroll={false}>
               Explore crumbs
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                 <path d="m7 4.5 5.5 5.5L7 15.5" />

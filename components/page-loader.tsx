@@ -47,8 +47,8 @@ export default function PageLoader() {
   useEffect(() => {
     if (pathname !== "/") return;
 
-    const minimumDisplayMs = 80;
-    const exitDurationMs = 80;
+    const minimumDisplayMs = 220;
+    const exitDurationMs = 360;
     const loaderStartedAt = performance.now();
     let pageLoaded = document.readyState === "complete";
     let heroReady = false;

@@ -15,7 +15,7 @@ export default function Home() {
             <Image className="hero-logo" src={whiteLogo} alt="Club Crumbie" priority quality={100} sizes="(max-width: 640px) 88vw, 640px" />
           </h1>
           <div className="actions">
-            <Link className="btn btn-dark btn-arrow" href="/cookies">
+            <Link className="btn btn-dark btn-arrow" href="/cookies" scroll={false}>
               Explore crumbs
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                 <path d="m7 4.5 5.5 5.5L7 15.5" />

@@ -348,7 +348,9 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
 }
 .page-loader.is-closing {
   opacity: 0;
-  transition: opacity .08s ease;
+  transition: opacity .36s cubic-bezier(.22, 1, .36, 1);
+  pointer-events: none;
+  will-change: opacity;
 }
 .home-page-loader-inner {
   position: absolute;
@@ -909,12 +911,17 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
   animation: none;
 }
 .secondary-page-transition {
-  animation: page-enter .55s cubic-bezier(.22, 1, .36, 1) both;
+  animation: page-enter .82s cubic-bezier(.16, 1, .3, 1) both;
+  will-change: opacity, transform;
+}
+.catalog-page-transition {
+  animation-duration: .96s;
+  animation-timing-function: cubic-bezier(.2, .8, .2, 1);
 }
 @keyframes page-enter {
   from {
-    opacity: .98;
-    transform: translateY(8px);
+    opacity: .99;
+    transform: translateY(2px);
   }
   to {
     opacity: 1;
@@ -2113,8 +2120,13 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
 }
 
 .secondary-page-transition {
-  animation-duration: .7s;
-  animation-timing-function: var(--motion-ease);
+  animation-duration: .82s;
+  animation-timing-function: cubic-bezier(.16, 1, .3, 1);
+}
+
+.catalog-page-transition {
+  animation-duration: .96s;
+  animation-timing-function: cubic-bezier(.2, .8, .2, 1);
 }
 
 .btn {
