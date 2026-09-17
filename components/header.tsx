@@ -75,7 +75,7 @@ export default function Header() {
           <Link href="/cart" className={`cart-link${pathname === "/cart" ? " active" : ""}`} aria-current={pathname === "/cart" ? "page" : undefined}>Cart <span>{count}</span></Link>
         </nav>
         <button type="button" className="menu-button" onClick={() => {
-          if (open) {
+          if (open && menuPathname === pathname) {
             setOpen(false);
           } else {
             setMenuPathname(pathname);
