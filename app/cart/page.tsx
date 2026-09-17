@@ -6,6 +6,7 @@ import { useState } from "react";
 import signatureCookie from "@/assets/cookies/choc-chip-cookie/turntable-clean/frame-01.png";
 import biscoffCookie from "@/assets/cookies/biscoff-white-chocolate-cookie/turntable-clean/frame-03.png";
 import { useCart } from "@/components/cart-context";
+import QuantityControl from "@/components/quantity-control";
 
 export default function Cart() {
   const { lines, total, remove, setQuantity } = useCart();
@@ -74,29 +75,12 @@ export default function Cart() {
                   <p>{new Intl.DateTimeFormat("en-AU", { dateStyle: "full", timeZone: "Australia/Melbourne" }).format(new Date(`${line.pickupDate}T12:00:00+10:00`))}<br />{line.pickupWindow}</p>
                 </div>
                 <div className="cart-row-actions">
-                  <div className="field quantity-field">
-                    <span>Quantity</span>
-                    <div className="quantity-stepper cart-quantity-stepper">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={line.quantity}
-                        onChange={(event) => {
-                          const value = event.target.value.replace(/\D/g, "");
-                          if (value) setQuantity(line.key, Number(value));
-                        }}
-                        aria-label={`Quantity for ${line.productName}`}
-                      />
-                      <div className="quantity-stepper-controls">
-                        <button type="button" onClick={() => setQuantity(line.key, line.quantity + 1)} disabled={line.quantity >= 99} aria-label={`Increase ${line.productName} quantity`}>
-                          <svg aria-hidden="true" viewBox="0 0 12 12" fill="none"><path d="m3 7.5 3-3 3 3" /></svg>
-                        </button>
-                        <button type="button" onClick={() => setQuantity(line.key, line.quantity - 1)} disabled={line.quantity <= 1} aria-label={`Decrease ${line.productName} quantity`}>
-                          <svg aria-hidden="true" viewBox="0 0 12 12" fill="none"><path d="m3 4.5 3 3 3-3" /></svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <QuantityControl
+                    value={line.quantity}
+                    inputId={`quantity-${line.key}`}
+                    inputAriaLabel={`Quantity for ${line.productName}`}
+                    onChange={(value) => setQuantity(line.key, value)}
+                  />
                   <button className="text-button" onClick={() => remove(line.key)}>Remove</button>
                 </div>
               </div>

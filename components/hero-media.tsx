@@ -1,17 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-const clips = [
-  "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4",
-  "https://videos.pexels.com/video-files/10551703/10551703-hd_1080_1920_30fps.mp4",
-  "https://videos.pexels.com/video-files/10835189/10835189-hd_1920_1080_24fps.mp4",
-  "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4",
+type Clip = { src: string; cutAt: number };
+type Layer = 0 | 1;
+
+const CLIPS: Clip[] = [
+  { src: "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4", cutAt: 7 },
+  { src: "https://videos.pexels.com/video-files/5309782/5309782-hd_1920_1080_30fps.mp4", cutAt: 7 },
+  { src: "https://videos.pexels.com/video-files/10835189/10835189-hd_1920_1080_24fps.mp4", cutAt: 7 },
+  { src: "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4", cutAt: 7 },
 ];
+
+const CROSSFADE_MS = 900;
+const PRIME_LEAD_SECONDS = 0.6; // start decoding the incoming clip this far ahead of the cut so the fade never stalls on startup
+
+function otherLayer(layer: Layer): Layer {
+  return layer === 0 ? 1 : 0;
+}
 
 export default function HeroMedia() {
   const [reduceMotion, setReduceMotion] = useState(true);
-  const [activeClip, setActiveClip] = useState(0);
+  const [hidden, setHidden] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [activeLayer, setActiveLayer] = useState<Layer>(0);
+  const [clipForLayer, setClipForLayer] = useState<[number, number]>([0, 1]);
+
+  const videoRefs = useRef<[HTMLVideoElement | null, HTMLVideoElement | null]>([null, null]);
+  const primedRef = useRef(false);
+  const transitioningRef = useRef(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -21,28 +38,92 @@ export default function HeroMedia() {
     return () => media.removeEventListener("change", update);
   }, []);
 
+  // Starts the incoming layer decoding (muted, hidden) well before the cut so the crossfade has no startup stutter.
+  const primeIncoming = useCallback((fromLayer: Layer) => {
+    if (primedRef.current) return;
+    const toVideo = videoRefs.current[otherLayer(fromLayer)];
+    if (!toVideo || toVideo.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return;
+    primedRef.current = true;
+    toVideo.currentTime = 0;
+    toVideo.play().catch(() => {
+      primedRef.current = false;
+    });
+  }, []);
+
+  // Cross-fades to the already-priming incoming layer; falls back to a cold start if priming hasn't happened yet.
+  const cutToNext = useCallback((fromLayer: Layer) => {
+    if (transitioningRef.current) return;
+    transitioningRef.current = true;
+
+    const toLayer = otherLayer(fromLayer);
+    const toVideo = videoRefs.current[toLayer];
+    if (!toVideo) {
+      transitioningRef.current = false;
+      return;
+    }
+
+    const reveal = () => {
+      setActiveLayer(toLayer);
+      videoRefs.current[fromLayer]?.pause();
+      primedRef.current = false;
+      window.setTimeout(() => {
+        // Queue the clip after next onto the now-hidden layer so it's ready for the following crossfade.
+        setClipForLayer((current) => {
+          const next: [number, number] = [...current];
+          next[fromLayer] = (current[toLayer] + 1) % CLIPS.length;
+          return next;
+        });
+        transitioningRef.current = false;
+      }, CROSSFADE_MS);
+    };
+
+    if (toVideo.paused) {
+      toVideo.currentTime = 0;
+      toVideo
+        .play()
+        .then(reveal)
+        .catch(() => setHidden(true));
+    } else {
+      reveal();
+    }
+  }, []);
+
+  // Falls back to the theme's plain black background, no broken-media icon, on any playback failure.
+  if (reduceMotion || hidden) return <div className="hero-media" aria-hidden="true" />;
+
   return (
     <div className="hero-media" aria-hidden="true">
-      {!reduceMotion && (
+      <div className={`hero-media-loading${ready ? " is-hidden" : ""}`}>
+        <div className="hero-media-loading-pulse" />
+      </div>
+      {([0, 1] as const).map((layer) => (
         <video
-          key={clips[activeClip]}
-          className="hero-video"
-          autoPlay
+          key={layer}
+          ref={(el) => {
+            videoRefs.current[layer] = el;
+          }}
+          className={`hero-video${activeLayer === layer ? " is-active" : ""}`}
+          autoPlay={layer === 0}
           muted
           playsInline
           preload="auto"
-          onTimeUpdate={(event) => {
-            const clipLimit = activeClip === 1 ? 3 : activeClip === 2 ? 5 : null;
-            if (clipLimit && event.currentTarget.currentTime >= clipLimit) {
-              setActiveClip((current) => (current + 1) % clips.length);
-            }
+          src={CLIPS[clipForLayer[layer]].src}
+          onPlaying={() => {
+            if (layer === 0) setReady(true);
           }}
-          onEnded={() => setActiveClip((current) => (current + 1) % clips.length)}
-          onError={() => setActiveClip((current) => (current + 1) % clips.length)}
-        >
-          <source src={clips[activeClip]} type="video/mp4" />
-        </video>
-      )}
+          onTimeUpdate={(event) => {
+            if (layer !== activeLayer) return;
+            const time = event.currentTarget.currentTime;
+            const cutAt = CLIPS[clipForLayer[layer]].cutAt;
+            if (time >= cutAt - PRIME_LEAD_SECONDS) primeIncoming(layer);
+            if (time >= cutAt) cutToNext(layer);
+          }}
+          onEnded={() => {
+            if (layer === activeLayer) cutToNext(layer);
+          }}
+          onError={() => setHidden(true)}
+        />
+      ))}
     </div>
   );
 }
