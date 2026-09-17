@@ -12,6 +12,22 @@ export default function Cart() {
   const { lines, total, remove, setQuantity } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [removingKey, setRemovingKey] = useState<string | null>(null);
+  const [removingLastItem, setRemovingLastItem] = useState(false);
+
+  function removeLine(key: string) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      remove(key);
+      return;
+    }
+    setRemovingLastItem(lines.length === 1);
+    setRemovingKey(key);
+    window.setTimeout(() => {
+      remove(key);
+      setRemovingKey(null);
+      setRemovingLastItem(false);
+    }, 460);
+  }
 
   async function checkout() {
     setBusy(true);
@@ -37,13 +53,12 @@ export default function Cart() {
 
   return (
     <>
-      <section className="page-hero"><div className="shell"><h1 className="page-title">Cart</h1></div></section>
+      <section className="page-hero"><div className="shell"><h1 className="page-title">Your order</h1></div></section>
       <section className="section cart-section">
         <div className="shell">
           {lines.length === 0 ? (
             <div className="cart-empty">
-              <h2>Nothing here yet.</h2>
-              <p>Your next box of crumbs is waiting.</p>
+              <h2>No crumbs left.</h2>
               <Link className="btn btn-dark btn-arrow" href="/cookies">
                 Explore crumbs
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
@@ -52,10 +67,10 @@ export default function Cart() {
               </Link>
             </div>
           ) : (
-            <div className="cart-layout">
+            <div className={`cart-layout${removingLastItem ? " is-last-removing" : ""}`}>
               <div className="cart-items">
                 {lines.map((line) => (
-              <div className="cart-row" key={line.key}>
+              <div className={`cart-row${removingKey === line.key ? " is-removing" : ""}`} key={line.key}>
                 <Link className="cart-product-link" href={`/cookies/${line.productSlug}`} aria-label={`View ${line.productName}`}>
                   <Image
                     className="cart-product-image"
@@ -81,7 +96,9 @@ export default function Cart() {
                     inputAriaLabel={`Quantity for ${line.productName}`}
                     onChange={(value) => setQuantity(line.key, value)}
                   />
-                  <button className="text-button" onClick={() => remove(line.key)}>Remove</button>
+                  <button className="text-button" onClick={() => removeLine(line.key)} disabled={removingKey === line.key}>
+                    {removingKey === line.key ? "Removing…" : "Remove"}
+                  </button>
                 </div>
               </div>
                 ))}
@@ -90,8 +107,8 @@ export default function Cart() {
                 <p className="cart-summary-heading">Order total</p>
                 <h2>${total.toFixed(2)} <span>AUD</span></h2>
                 <p>GST included. Pickup address provided in confirmation email.</p>
-                {error && <p className="field-error" role="alert">{error}</p>}
                 <button className="btn btn-dark" disabled={busy} onClick={checkout}>{busy ? "Starting secure checkout…" : "Checkout"}</button>
+                {error && <p className="field-error cart-checkout-error" role="alert">{error}</p>}
               </aside>
             </div>
           )}

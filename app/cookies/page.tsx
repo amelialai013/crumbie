@@ -10,7 +10,7 @@ export default function Crumbs() {
     <>
       <section className="page-hero">
         <div className="shell">
-          <h1 className="page-title">Crumbs</h1>
+          <h1 className="page-title">Crumb selection</h1>
         </div>
       </section>
       <section className="section section-warm cookie-catalog">
@@ -27,14 +27,14 @@ export default function Crumbs() {
                 <div className="product-card-body">
                   <div className="product-card-heading">
                     <h2>{product.name}</h2>
-                    <span className="price">From ${product.variants[0].price}</span>
+                    <span className="product-card-action">
+                      Order now
+                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                        <path d="m7 4.5 5.5 5.5L7 15.5" />
+                      </svg>
+                    </span>
                   </div>
-                  <span className="product-card-action">
-                    Order now
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
-                      <path d="m7 4.5 5.5 5.5L7 15.5" />
-                    </svg>
-                  </span>
+                  <span className="price">Boxes from ${product.variants[0].price}</span>
                 </div>
               </Link>
             ))}

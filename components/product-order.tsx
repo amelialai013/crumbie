@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { isDateClosed, pickupDates, type Product } from "@/lib/catalog";
 import { useCart } from "./cart-context";
@@ -22,10 +21,16 @@ export default function ProductOrder({ product }: { product: Product }) {
   const orderTotal = selectedVariant.price * (quantity || 1);
   const soldOut = product.soldOut || available.length === 0;
 
+  useEffect(() => {
+    if (!confirmation || confirmationClosing) return;
+    const timeoutId = window.setTimeout(() => setConfirmationClosing(true), 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [confirmation, confirmationClosing]);
+
   function submit() {
     const date = pickupDates.find((item) => item.id === dateId);
     if (!date) return;
-    const addedQuantity = quantity || 1;
+    const addedQuantity = quantity;
     add({
       productId: product.id,
       productSlug: product.slug,
@@ -76,7 +81,6 @@ export default function ProductOrder({ product }: { product: Product }) {
           />
         </div>
       </div>
-      <p className="fine-print">Orders close 72 hours before pickup. Pickup only in Ivanhoe, Victoria. Exact address provided in your confirmation email after purchase.</p>
       <div className="product-order-total" aria-live="polite">
         <strong>${orderTotal} <span>AUD</span></strong>
         <button type="button" className="btn btn-dark" onClick={submit} disabled={soldOut || !dateId}>
@@ -102,7 +106,7 @@ export default function ProductOrder({ product }: { product: Product }) {
             <p>{confirmation.quantity} × {confirmation.variant} · {product.name}</p>
           </div>
           <div className="cart-confirmation-actions">
-            <Link className="btn btn-dark" href="/cart">View cart</Link>
+            <a className="btn btn-dark" href="/cart">View cart</a>
             <button className="text-button" type="button" onClick={() => setConfirmationClosing(true)}>Close</button>
           </div>
         </div>,
