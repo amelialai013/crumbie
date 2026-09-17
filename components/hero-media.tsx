@@ -99,7 +99,7 @@ export default function HeroMedia() {
     failedClipsRef.current.add(clipIndex);
     const nextClip = Array.from({ length: CLIPS.length }, (_, offset) => (clipIndex + offset + 1) % CLIPS.length)
       .find((index) => !failedClipsRef.current.has(index));
-    if (nextClip === -1) {
+    if (nextClip === undefined) {
       setHidden(true);
       return;
     }
