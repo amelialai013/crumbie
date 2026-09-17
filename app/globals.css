@@ -625,6 +625,7 @@ body::-webkit-scrollbar {
 }
 .custom-order-notice a {
   margin-left: 8px;
+  white-space: nowrap;
 }
 .text-button {
   padding: 4px 0;
@@ -714,6 +715,10 @@ body::-webkit-scrollbar {
   .hero-logo-heading { width: min(390px, 88vw); margin-bottom: 8px; }
   .hero-content .actions { width: 100%; }
   .hero-content .actions .btn { flex: 1 1 240px; }
+  .custom-order-notice a {
+    display: inline-block;
+    margin-left: 0;
+  }
   .hero-media::after {
     background: linear-gradient(
       to bottom,
