@@ -23,7 +23,7 @@ export default function Header() {
   const isActive = (href: string) => pathname === href || (href === "/cookies" && pathname.startsWith("/cookies/"));
   const handleHomeClick = () => {
     setOpen(false);
-    if (pathname === "/") window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    if (pathname === "/") window.scrollTo({ top: 0, left: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   };
 
   useEffect(() => {

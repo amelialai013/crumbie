@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
+import "./motion.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import ScrollToTop from "@/components/scroll-to-top";
 import { CartProvider } from "@/components/cart-context";
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
@@ -25,7 +25,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		<html lang="en" className={dmSans.variable} data-scroll-behavior="smooth">
 			<body>
 				<CartProvider>
-					<ScrollToTop />
 					<Header />
 					<main>{children}</main>
 					<Footer />

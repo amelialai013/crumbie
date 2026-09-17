@@ -1,5 +1,7 @@
 "use client";
 
+import { motionDuration } from "@/lib/motion";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Clip = { src: string; cutAt: number };
@@ -12,7 +14,6 @@ const CLIPS: Clip[] = [
   { src: "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4", cutAt: 7 },
 ];
 
-const CROSSFADE_MS = 900;
 const PRIME_LEAD_SECONDS = 0.6; // start decoding the incoming clip this far ahead of the cut so the fade never stalls on startup
 
 function otherLayer(layer: Layer): Layer {
@@ -44,12 +45,6 @@ export default function HeroMedia() {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    if (!reduceMotion && !hidden) return;
-    const readyFrame = window.requestAnimationFrame(() => window.dispatchEvent(new Event("hero-media-ready")));
-    return () => window.cancelAnimationFrame(readyFrame);
-  }, [hidden, reduceMotion]);
-
   // Starts the incoming layer decoding (muted, hidden) well before the cut so the crossfade has no startup stutter.
   const primeIncoming = useCallback((fromLayer: Layer) => {
     if (primedRef.current) return;
@@ -76,9 +71,9 @@ export default function HeroMedia() {
 
     const reveal = () => {
       setActiveLayer(toLayer);
-      videoRefs.current[fromLayer]?.pause();
       primedRef.current = false;
       transitionTimeoutRef.current = window.setTimeout(() => {
+        videoRefs.current[fromLayer]?.pause();
         // Queue the clip after next onto the now-hidden layer so it's ready for the following crossfade.
         setClipForLayer((current) => {
           const next: [number, number] = [...current];
@@ -87,7 +82,7 @@ export default function HeroMedia() {
         });
         transitioningRef.current = false;
         transitionTimeoutRef.current = null;
-      }, CROSSFADE_MS);
+      }, motionDuration("media", 900));
     };
 
     if (toVideo.paused) {
@@ -140,7 +135,6 @@ export default function HeroMedia() {
           onPlaying={() => {
             if (layer === 0) {
               setReady(true);
-              window.dispatchEvent(new Event("hero-media-ready"));
             }
           }}
           onTimeUpdate={(event) => {

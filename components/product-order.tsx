@@ -1,6 +1,9 @@
 "use client";
 
+import { motionDuration } from "@/lib/motion";
+
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { isDateClosed, pickupDates, type Product } from "@/lib/catalog";
 import { useCart } from "./cart-context";
@@ -33,6 +36,16 @@ export default function ProductOrder({ product }: { product: Product }) {
     }, 5000);
     return () => window.clearTimeout(timeoutId);
   }, [confirmation, confirmationClosing]);
+
+  // Also dismiss if animations are disabled or motion preferences change mid-exit.
+  useEffect(() => {
+    if (!confirmationClosing) return;
+    const timeout = window.setTimeout(() => {
+      setConfirmation(null);
+      setConfirmationClosing(false);
+    }, motionDuration("exit", 320) + 40);
+    return () => window.clearTimeout(timeout);
+  }, [confirmationClosing]);
 
   function submit() {
     const date = pickupDates.find((item) => item.id === dateId);
@@ -122,7 +135,7 @@ export default function ProductOrder({ product }: { product: Product }) {
             <p>{confirmation.quantity} × {confirmation.variant} · {product.name}</p>
           </div>
           <div className="cart-confirmation-actions">
-            <a className="btn btn-dark" href="/cart">View cart</a>
+            <Link className="btn btn-dark" href="/cart">View cart</Link>
             <button className="text-button" type="button" onClick={closeConfirmation}>Close</button>
           </div>
         </div>,
