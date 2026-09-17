@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import signatureSide from "@/assets/cookies/choc-chip-cookie/turntable-natural/frame-08.png";
-import biscoffSide from "@/assets/cookies/biscoff-white-chocolate-cookie/turntable-natural/frame-01.png";
+import signatureSide from "@/assets/cookies/choc-chip-cookie/catalog.png";
+import biscoffSide from "@/assets/cookies/biscoff-white-chocolate-cookie/catalog.png";
 
 export default function ProductCookieImage({ name, variant }: { name: string; variant: "signature" | "biscoff" }) {
   return (
