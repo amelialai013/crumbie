@@ -888,11 +888,8 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
 .page-transition {
   animation: none;
 }
-.cart-page-transition .page-hero {
-  animation: cart-page-hero-in .7s cubic-bezier(.22, 1, .36, 1) both;
-}
-.cart-page-transition > .section {
-  animation: cart-page-content-in .8s cubic-bezier(.22, 1, .36, 1) .12s both;
+.secondary-page-transition {
+  animation: page-enter .55s cubic-bezier(.22, 1, .36, 1) both;
 }
 @keyframes page-enter {
   from {
@@ -904,14 +901,6 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
     transform: translateY(0);
   }
 }
-@keyframes cart-page-hero-in {
-  from { opacity: 0; clip-path: inset(0 0 100%); transform: translateY(-18px); }
-  to { opacity: 1; clip-path: inset(0); transform: translateY(0); }
-}
-@keyframes cart-page-content-in {
-  from { opacity: 0; transform: translateY(28px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 @keyframes checkout-error-in {
   from { opacity: 0; transform: translateY(-8px) scale(.98); }
   70% { opacity: 1; transform: translateY(2px) scale(1.01); }
@@ -921,8 +910,7 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
   .page-transition {
     animation: none;
   }
-  .cart-page-transition .page-hero,
-  .cart-page-transition > .section {
+  .secondary-page-transition {
     animation: none;
   }
   .cart-checkout-error {
