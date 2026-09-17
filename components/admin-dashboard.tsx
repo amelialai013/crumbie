@@ -39,8 +39,8 @@ export default function AdminDashboard() {
     <form className="form-card" onSubmit={login} style={{ maxWidth: 480, margin: "0 auto" }}>
       <h1 style={{ fontSize: "2.4rem" }}>Sign in</h1>
       <div className="field"><label htmlFor="password">Password</label><input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></div>
-      {error && <p className="field-error">{error}</p>}
       <button className="btn btn-dark">Sign in</button>
+      {error && <p className="field-error">{error}</p>}
     </form>
   );
 

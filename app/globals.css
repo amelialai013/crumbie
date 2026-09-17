@@ -93,6 +93,10 @@
   margin-top: 14px;
   animation: checkout-error-in .45s var(--motion-ease) both;
 }
+.enquiry-submit-error {
+  margin-top: 14px;
+  animation: checkout-error-in .45s var(--motion-ease) both;
+}
 .fine-print,
 .step span { color: var(--accent-readable); }
 @media(max-width:900px) { .nav-links { background: #070707; } }
@@ -470,6 +474,8 @@ body::-webkit-scrollbar {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   row-gap: 28px;
   column-gap: 32px;
+  position: relative;
+  z-index: 2;
 }
 .enquiry-field-group {
   display: flex;
@@ -1522,6 +1528,7 @@ body::-webkit-scrollbar {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+    margin-top: 32px;
   }
   .product-order-fields {
     grid-template-columns: 1fr;
@@ -1751,7 +1758,7 @@ body::-webkit-scrollbar {
   .cart-row {
     grid-template-columns: 96px 1fr;
     gap: 18px;
-    max-height: 348px;
+    max-height: 640px;
     padding-block: 32px 28px;
   }
   .cart-row img {
@@ -1761,11 +1768,16 @@ body::-webkit-scrollbar {
   .cart-row-actions {
     grid-column: 2;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: flex-end;
     justify-content: space-between;
+    gap: 16px 24px;
+  }
+  .cart-row-actions .field {
+    margin-bottom: 0;
   }
   .cart-row-actions .text-button {
-    margin-bottom: 16px;
+    margin-bottom: 0;
   }
 }
 
