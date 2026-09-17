@@ -10,4 +10,7 @@ export const products: Product[] = [
   { id:"product-seasonal", slug:"seasonal-box", name:"Biscoff Caramel", description:"A golden cookie with buttery caramel and creamy white chocolate, finished with a generous Biscoff crumb for a rich caramelised crunch.", ingredients:"Pickup dates close 72 hours before their scheduled start time, orders can be placed up until this time. Pickup is in Ivanhoe, Victoria. Exact address provided in your confirmation email after purchase.", allergens:"Contains gluten, dairy, eggs and soy. Made in a kitchen that handles peanuts and tree nuts; cross-contact is possible.", images:["https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=1400&q=88","https://images.unsplash.com/photo-1598373182133-52452f7691ef?auto=format&fit=crop&w=1400&q=88"], variants:[{id:"seasonal-6",label:"Box of 6",quantity:6,price:32},{id:"seasonal-12",label:"Box of 12",quantity:12,price:59}] },
 ];
 export const sharedKitchenWarning="Club Crumbie handles gluten, dairy, eggs, soy, peanuts and tree nuts. Cross-contact is possible, and we cannot accommodate allergy requests for standard boxes.";
-export function isDateClosed(date:PickupDate){const cutoff=new Date(`${date.date}T10:00:00+10:00`).getTime()-72*60*60*1000;return Boolean(date.soldOut)||Date.now()>=cutoff;}
+export function isDateClosed(date: PickupDate) {
+  const cutoff = new Date(`${date.date}T10:00:00+10:00`).getTime() - 72 * 60 * 60 * 1000;
+  return date.soldOut === true || Date.now() >= cutoff;
+}

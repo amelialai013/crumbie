@@ -1,4 +1,36 @@
-import type{Metadata,Viewport}from"next";import{DM_Sans}from"next/font/google";import"./globals.css";import Header from"@/components/header";import Footer from"@/components/footer";import ScrollToTop from"@/components/scroll-to-top";import{CartProvider}from"@/components/cart-context";
-const dmSans=DM_Sans({subsets:["latin"],variable:"--font-dm-sans",display:"swap"});
-export const viewport:Viewport={width:"device-width",initialScale:1};export const metadata:Metadata={metadataBase:new URL(process.env.NEXT_PUBLIC_SITE_URL||"https://crumbie.com.au"),title:{default:"Club Crumbie",template:"Club Crumbie — %s"},description:"Premium small-batch cookie boxes for pickup in Ivanhoe, Victoria.",openGraph:{title:"Club Crumbie",description:"Small-batch cookies, thoughtfully made in Ivanhoe.",type:"website"}};
-export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en" className={dmSans.variable}><body><CartProvider><ScrollToTop/><Header/><main>{children}</main><Footer/></CartProvider></body></html>}
+import type { Metadata, Viewport } from "next";
+import { DM_Sans } from "next/font/google";
+import "./globals.css";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import ScrollToTop from "@/components/scroll-to-top";
+import { CartProvider } from "@/components/cart-context";
+
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+export const metadata: Metadata = {
+	metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://crumbie.com.au"),
+	title: { default: "Club Crumbie", template: "Club Crumbie — %s" },
+	description: "Premium small-batch cookie boxes for pickup in Ivanhoe, Victoria.",
+	openGraph: {
+		title: "Club Crumbie",
+		description: "Small-batch cookies, thoughtfully made in Ivanhoe.",
+		type: "website",
+	},
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+	return (
+		<html lang="en" className={dmSans.variable}>
+			<body>
+				<CartProvider>
+					<ScrollToTop />
+					<Header />
+					<main>{children}</main>
+					<Footer />
+				</CartProvider>
+			</body>
+		</html>
+	);
+}

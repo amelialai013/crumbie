@@ -16,7 +16,9 @@ export default function AdminDashboard() {
 
   async function load() {
     const response = await fetch("/api/admin/dashboard");
-    if (response.ok) setData(await response.json());
+    if (response.ok) {
+      setData(await response.json());
+    }
   }
 
   useEffect(() => {

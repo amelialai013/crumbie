@@ -75,8 +75,13 @@ export default function CustomOrderForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(Object.fromEntries(formData)),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setErrorMessage(data && typeof data.error === "string" ? data.error : "We couldn’t send your message. Please try again.");
+      }
       setStatus(res.ok ? "done" : "error");
     } catch {
+      setErrorMessage("We couldn’t send your message. Please check your connection and try again.");
       setStatus("error");
     }
   }
