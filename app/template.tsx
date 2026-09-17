@@ -8,5 +8,5 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   const transitionClass = pathname === "/cart" ? "page-transition cart-page-transition" : "page-transition";
 
-  return <div key={pathname} className={transitionClass}><PageLoader />{children}</div>;
+  return <><PageLoader /><div key={pathname} className={transitionClass}>{children}</div></>;
 }

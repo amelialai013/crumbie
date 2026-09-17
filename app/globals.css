@@ -60,7 +60,6 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 1px solid rgba(201, 173, 148, .35);
   background: radial-gradient(circle, rgba(201, 173, 148, .8) 0%, rgba(201, 173, 148, 0) 72%);
   animation: hero-loading-pulse 1.8s ease-in-out infinite;
 }
@@ -258,6 +257,10 @@ body::-webkit-scrollbar {
 .site-header.home-header + main .hero {
   min-height: 100svh;
 }
+body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
+  visibility: hidden;
+  pointer-events: none;
+}
 
 /* Shared route loading state. */
 .site-loading {
@@ -318,11 +321,14 @@ body::-webkit-scrollbar {
 .page-loader {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 40;
   overflow: hidden;
   background: #070707;
   color: #f7f7f5;
-  animation: page-loader-in .7s ease both;
+}
+.page-loader.is-closing {
+  opacity: 0;
+  transition: opacity .08s ease;
 }
 .home-page-loader-inner {
   position: absolute;
@@ -999,12 +1005,17 @@ body::-webkit-scrollbar {
 }
 .cookie-catalog .price {
   display: block;
-  margin-top: auto;
-  padding-top: 20px;
   flex: 0 0 auto;
   color: #f7f7f5;
   font-size: .9rem;
   font-weight: 500;
+}
+.cookie-catalog .product-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 20px;
 }
 .cookie-catalog .product-card-body > p {
   max-width: 520px;

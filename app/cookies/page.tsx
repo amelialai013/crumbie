@@ -27,6 +27,9 @@ export default function Crumbs() {
                 <div className="product-card-body">
                   <div className="product-card-heading">
                     <h2>{product.name}</h2>
+                  </div>
+                  <div className="product-card-footer">
+                    <span className="price">Boxes from ${product.variants[0].price}</span>
                     <span className="product-card-action">
                       Order now
                       <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
@@ -34,7 +37,6 @@ export default function Crumbs() {
                       </svg>
                     </span>
                   </div>
-                  <span className="price">Boxes from ${product.variants[0].price}</span>
                 </div>
               </Link>
             ))}

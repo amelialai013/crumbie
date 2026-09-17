@@ -42,14 +42,35 @@ export function RouteSkeleton() {
 export default function PageLoader() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(true);
+  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
     if (pathname !== "/") return;
 
+    const minimumDisplayMs = 80;
+    const exitDurationMs = 80;
+    const loaderStartedAt = performance.now();
     let pageLoaded = document.readyState === "complete";
     let heroReady = false;
+    let minimumDisplayTimeout: number | undefined;
+    let hideTimeout: number | undefined;
+    let isHiding = false;
+    const hideLoader = () => {
+      if (isHiding) return;
+      isHiding = true;
+      setExiting(true);
+      hideTimeout = window.setTimeout(() => setVisible(false), exitDurationMs);
+    };
     const dismiss = () => {
-      if (pageLoaded && heroReady) setVisible(false);
+      if (!pageLoaded || !heroReady) return;
+      const remaining = minimumDisplayMs - (performance.now() - loaderStartedAt);
+      if (remaining > 0) {
+        if (minimumDisplayTimeout === undefined) {
+          minimumDisplayTimeout = window.setTimeout(hideLoader, remaining);
+        }
+        return;
+      }
+      hideLoader();
     };
     const handlePageLoad = () => {
       pageLoaded = true;
@@ -57,13 +78,18 @@ export default function PageLoader() {
     };
     const handleHeroReady = () => {
       heroReady = true;
+      document.body.classList.add("home-hero-ready");
       dismiss();
     };
-    const fallback = window.setTimeout(() => setVisible(false), 5000);
+    document.body.classList.remove("home-hero-ready");
+    const fallback = window.setTimeout(hideLoader, 5000);
     window.addEventListener("load", handlePageLoad, { once: true });
     window.addEventListener("hero-media-ready", handleHeroReady, { once: true });
     return () => {
       window.clearTimeout(fallback);
+      if (minimumDisplayTimeout !== undefined) window.clearTimeout(minimumDisplayTimeout);
+      if (hideTimeout !== undefined) window.clearTimeout(hideTimeout);
+      document.body.classList.remove("home-hero-ready");
       window.removeEventListener("load", handlePageLoad);
       window.removeEventListener("hero-media-ready", handleHeroReady);
     };
@@ -84,12 +110,6 @@ export default function PageLoader() {
   if (!visible || pathname !== "/") return null;
 
   return (
-    <div className="page-loader" role="status" aria-live="polite" aria-label="Loading Club Crumbie">
-      <div className="home-page-loader-inner" aria-hidden="true">
-        <div className="site-loading-mark"><span /><span /></div>
-        <p>Club Crumbie</p>
-        <div className="site-loading-track"><span /></div>
-      </div>
-    </div>
+    <div className={`page-loader${exiting ? " is-closing" : ""}`} role="status" aria-label="Loading Club Crumbie" />
   );
 }

@@ -7,7 +7,7 @@ type Layer = 0 | 1;
 
 const CLIPS: Clip[] = [
   { src: "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4", cutAt: 7 },
-  { src: "https://videos.pexels.com/video-files/5309782/5309782-hd_1920_1080_30fps.mp4", cutAt: 7 },
+  { src: "https://videos.pexels.com/video-files/34484013/34484013-hd_1920_1080_30fps.mp4", cutAt: 7 },
   { src: "https://videos.pexels.com/video-files/10835189/10835189-hd_1920_1080_24fps.mp4", cutAt: 7 },
   { src: "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4", cutAt: 7 },
 ];
@@ -27,6 +27,7 @@ export default function HeroMedia() {
   const [clipForLayer, setClipForLayer] = useState<[number, number]>([0, 1]);
 
   const videoRefs = useRef<[HTMLVideoElement | null, HTMLVideoElement | null]>([null, null]);
+  const failedClipsRef = useRef<Set<number>>(new Set());
   const primedRef = useRef(false);
   const transitioningRef = useRef(false);
 
@@ -94,6 +95,22 @@ export default function HeroMedia() {
     }
   }, []);
 
+  const handleVideoError = useCallback((layer: Layer, clipIndex: number) => {
+    failedClipsRef.current.add(clipIndex);
+    const nextClip = Array.from({ length: CLIPS.length }, (_, offset) => (clipIndex + offset + 1) % CLIPS.length)
+      .find((index) => !failedClipsRef.current.has(index));
+    if (nextClip === -1) {
+      setHidden(true);
+      return;
+    }
+
+    setClipForLayer((current) => {
+      const next: [number, number] = [...current];
+      next[layer] = nextClip;
+      return next;
+    });
+  }, []);
+
   // Falls back to the theme's plain black background, no broken-media icon, on any playback failure.
   if (reduceMotion || hidden) return <div className="hero-media" aria-hidden="true" />;
 
@@ -130,7 +147,7 @@ export default function HeroMedia() {
           onEnded={() => {
             if (layer === activeLayer) cutToNext(layer);
           }}
-          onError={() => setHidden(true)}
+          onError={() => handleVideoError(layer, clipForLayer[layer])}
         />
       ))}
     </div>
