@@ -21,6 +21,10 @@ export default function Header() {
   const { count } = useCart();
   const menuVisible = open && menuPathname === pathname;
   const isActive = (href: string) => pathname === href || (href === "/cookies" && pathname.startsWith("/cookies/"));
+  const handleHomeClick = () => {
+    setOpen(false);
+    if (pathname === "/") window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     const updateHeader = () => setScrolled(window.scrollY > 8);
@@ -59,7 +63,7 @@ export default function Header() {
   return (
     <header className={`site-header${pathname === "/" ? " home-header" : ""}${scrolled ? " scrolled" : ""}${menuVisible ? " menu-open" : ""}`}>
       <div className="nav-shell">
-        <Link href="/" className="brand" onClick={() => setOpen(false)} aria-label="Club Crumbie home">
+        <Link href="/" className="brand" onClick={handleHomeClick} aria-label="Club Crumbie home">
           <Image src={pictureLogoWhite} alt="Club Crumbie" priority quality={100} sizes="52px" />
         </Link>
         <nav id="primary-navigation" className={menuVisible ? "nav-links open" : "nav-links"} aria-label="Primary navigation" aria-hidden={!menuVisible ? undefined : false}>
