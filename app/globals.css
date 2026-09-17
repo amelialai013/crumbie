@@ -638,6 +638,16 @@ body::-webkit-scrollbar {
 .btn-arrow:hover svg {
   transform: translateX(3px);
 }
+.how-it-works-cta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 32px;
+}
+@media (max-width: 900px) {
+  .how-it-works-cta {
+    justify-content: flex-start;
+  }
+}
 .hero-logo-heading {
   width: min(640px, 68vw);
   margin: 0 0 10px;

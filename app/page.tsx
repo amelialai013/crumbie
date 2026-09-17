@@ -4,6 +4,7 @@ import { products } from "@/lib/catalog";
 import whiteLogo from "@/brand/logo/new-logo/text-white.png";
 import HeroMedia from "@/components/hero-media";
 import ProductCookieImage from "@/components/product-cookie-image";
+import SectionReveal from "@/components/section-reveal";
 
 export default function Home() {
   return (
@@ -26,7 +27,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section">
+      <SectionReveal className="section how-it-works">
         <div className="shell">
           <div className="split-heading">
             <div><h2>How it works</h2></div>
@@ -45,8 +46,16 @@ export default function Home() {
               <p>Complete payment and receive immediate confirmation.</p>
             </div>
           </div>
+          <div className="how-it-works-cta">
+            <Link className="btn btn-dark btn-arrow" href="/cookies">
+              Order now
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                <path d="m7 4.5 5.5 5.5L7 15.5" />
+              </svg>
+            </Link>
+          </div>
         </div>
-      </section>
+      </SectionReveal>
 
       <section className="section section-warm cookie-catalog home-product-catalog">
         <div className="shell">

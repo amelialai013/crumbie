@@ -96,6 +96,77 @@
   from { transform: scale(1.065); }
   to { transform: scale(1); }
 }
+
+/* Desktop: steps stay hidden until the whole section is in view, then reveal one after another
+   on a timer. Borders fade in alongside their step so the frame and dividers appear with each reveal. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 901px) {
+  .how-it-works .steps {
+    border-color: transparent;
+    transition: border-color var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works .step {
+    opacity: 0;
+    transform: translateY(20px);
+    border-color: transparent;
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease),
+      border-color var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works.is-visible .steps,
+  .how-it-works.is-visible .step {
+    border-color: var(--line);
+  }
+  .how-it-works.is-visible .step {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .how-it-works.is-visible .steps,
+  .how-it-works.is-visible .step:nth-child(1) { transition-delay: 0ms; }
+  .how-it-works.is-visible .step:nth-child(2) { transition-delay: 220ms; }
+  .how-it-works.is-visible .step:nth-child(3) { transition-delay: 440ms; }
+  .how-it-works .how-it-works-cta {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works.is-visible .how-it-works-cta {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 560ms;
+  }
+}
+
+/* Mobile: the stacked column is often taller than the viewport, so each step reveals on its
+   own, in order, as it individually scrolls into view instead of waiting on the whole section. */
+@media (prefers-reduced-motion: no-preference) and (max-width: 900px) {
+  .how-it-works .steps {
+    border-color: transparent;
+    transition: border-color var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works .step {
+    opacity: 0;
+    transform: translateY(20px);
+    border-color: transparent;
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease),
+      border-color var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works .steps:has(.step.is-visible) {
+    border-color: var(--line);
+  }
+  .how-it-works .step.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    border-color: var(--line);
+  }
+  .how-it-works .how-it-works-cta {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works .steps:has(.step:last-child.is-visible) ~ .how-it-works-cta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto !important; }
   *, *::before, *::after {
