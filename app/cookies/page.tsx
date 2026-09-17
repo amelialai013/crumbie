@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
 import { products } from "@/lib/catalog";
-import SectionReveal from "@/components/section-reveal";
 
 export const metadata: Metadata = { title: "Crumbs" };
 
@@ -14,7 +13,7 @@ export default function Crumbs() {
           <h1 className="page-title">Crumb selection</h1>
         </div>
       </section>
-      <SectionReveal className="section section-warm cookie-catalog" itemSelector=".product-card">
+      <section className="section section-warm cookie-catalog crumbs-catalog">
         <div className="shell">
           <div className="product-grid">
             {products.map((product) => (
@@ -44,7 +43,7 @@ export default function Crumbs() {
           </div>
           <div className="notice custom-order-notice">Need another quantity or something entirely your own? <Link href="/contact-us">Contact us</Link></div>
         </div>
-      </SectionReveal>
+      </section>
     </>
   );
 }

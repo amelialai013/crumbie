@@ -1,4 +1,5 @@
 import { sharedKitchenWarning } from "@/lib/catalog";
+import SectionReveal from "@/components/section-reveal";
 
 export default function Policy() {
   return (
@@ -8,7 +9,7 @@ export default function Policy() {
           <h1 className="page-title">Crumbie policies</h1>
         </div>
       </section>
-      <section className="section policy-section">
+      <SectionReveal className="section policy-section" itemSelector=".policy-content > *">
         <div className="shell">
           <div className="prose policy-content">
             <h2>Pickup</h2>
@@ -25,7 +26,7 @@ export default function Policy() {
             <p>A custom-order form submission is an enquiry only. It does not confirm availability, pricing or an order.</p>
           </div>
         </div>
-      </section>
+      </SectionReveal>
     </>
   );
 }

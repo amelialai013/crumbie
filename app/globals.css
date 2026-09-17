@@ -298,7 +298,7 @@ body::-webkit-scrollbar {
   opacity: .65;
 }
 .nav-actions {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 16px;
 }
@@ -447,6 +447,7 @@ body::-webkit-scrollbar {
 @media(max-width:900px) {
   .menu-button { display: inline-flex; }
   .mobile-cart-link { display: inline-flex; }
+  .nav-actions { display: flex; }
   .enquiry-layout { grid-template-columns: 1fr; }
   .enquiry-intro { min-height: 540px; border-right: 0; border-bottom: 1px solid var(--line); }
 }
@@ -682,7 +683,7 @@ body::-webkit-scrollbar {
 .how-it-works-cta {
   display: flex;
   justify-content: flex-end;
-  margin-top: 32px;
+  margin-top: 56px;
 }
 @media (max-width: 900px) {
   .how-it-works-cta {
@@ -1469,7 +1470,7 @@ body::-webkit-scrollbar {
   letter-spacing: -.01em;
 }
 .cart-confirmation p {
-  margin: 4px 0 0;
+  margin: 1px 0 0;
   color: #625f5b;
   font-size: .88rem;
   line-height: 1.5;
@@ -1577,7 +1578,7 @@ body::-webkit-scrollbar {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
-    margin-top: 32px;
+    margin-top: 56px;
   }
   .product-order-fields {
     grid-template-columns: 1fr;

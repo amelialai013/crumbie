@@ -206,22 +206,47 @@
   .about-section .prose > *:nth-child(5).is-visible { transition-delay: 400ms; }
 }
 
-/* Each product card reveals on its own, in order, as it individually scrolls into view
-   (same reasoning as the about section: this section can be taller than the viewport). */
+/* Each policy heading/paragraph reveals on its own, in order, as it individually scrolls
+   into view (same reasoning as the about section: this page is far taller than the viewport). */
 @media (prefers-reduced-motion: no-preference) {
-  .cookie-catalog .product-card {
+  .policy-content > * {
     opacity: 0;
     transform: translateY(20px);
     transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
   }
-  .cookie-catalog .product-card.is-visible {
+  .policy-content > *.is-visible {
     opacity: 1;
     transform: translateY(0);
   }
-  .cookie-catalog .product-card:nth-child(1).is-visible { transition-delay: 0ms; }
-  .cookie-catalog .product-card:nth-child(2).is-visible { transition-delay: 140ms; }
-  .cookie-catalog .product-card:nth-child(3).is-visible { transition-delay: 280ms; }
-  .cookie-catalog .product-card:nth-child(4).is-visible { transition-delay: 420ms; }
+}
+
+/* Each product card reveals on its own, in order, as it individually scrolls into view
+   (same reasoning as the about section: this section can be taller than the viewport). */
+@media (prefers-reduced-motion: no-preference) {
+  .home-product-catalog .product-card {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+  }
+  .home-product-catalog .product-card.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .home-product-catalog .product-card:nth-child(1).is-visible { transition-delay: 0ms; }
+  .home-product-catalog .product-card:nth-child(2).is-visible { transition-delay: 140ms; }
+  .home-product-catalog .product-card:nth-child(3).is-visible { transition-delay: 280ms; }
+  .home-product-catalog .product-card:nth-child(4).is-visible { transition-delay: 420ms; }
+
+  /* The Crumbs page catalog is often the first thing on the page, so it cascades in on
+     load instead of waiting on scroll. */
+  .crumbs-catalog .product-card {
+    opacity: 0;
+    animation: field-group-reveal var(--motion-fast) var(--motion-ease) both;
+  }
+  .crumbs-catalog .product-card:nth-child(1) { animation-delay: 0ms; }
+  .crumbs-catalog .product-card:nth-child(2) { animation-delay: 80ms; }
+  .crumbs-catalog .product-card:nth-child(3) { animation-delay: 160ms; }
+  .crumbs-catalog .product-card:nth-child(4) { animation-delay: 240ms; }
 }
 
 /* Form field groups cascade in on load rather than on scroll, since this section sits

@@ -44,7 +44,7 @@ export default function SectionReveal({
           }
         }
       },
-      { threshold: 0.4 }
+      { threshold: 0.1 }
     );
     items.forEach((item) => itemObserver.observe(item));
 
