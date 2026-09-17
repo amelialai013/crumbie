@@ -9,14 +9,16 @@ import { useCart } from "@/components/cart-context";
 import QuantityControl from "@/components/quantity-control";
 
 export default function Cart() {
-  const { lines, total, remove, setQuantity } = useCart();
+  const { lines, total, ready, remove, setQuantity } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [removingKey, setRemovingKey] = useState<string | null>(null);
   const [removingLastItem, setRemovingLastItem] = useState(false);
+  const [emptyAppearing, setEmptyAppearing] = useState(false);
 
   function removeLine(key: string) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (lines.length === 1) setEmptyAppearing(true);
       remove(key);
       return;
     }
@@ -26,6 +28,7 @@ export default function Cart() {
       remove(key);
       setRemovingKey(null);
       setRemovingLastItem(false);
+      if (lines.length === 1) setEmptyAppearing(true);
     }, 460);
   }
 
@@ -56,8 +59,8 @@ export default function Cart() {
       <section className="page-hero"><div className="shell"><h1 className="page-title">Your order</h1></div></section>
       <section className="section cart-section">
         <div className="shell">
-          {lines.length === 0 ? (
-            <div className="cart-empty">
+          {!ready ? null : lines.length === 0 ? (
+            <div className={`cart-empty${emptyAppearing ? " is-appearing" : ""}`}>
               <h2>No crumbs left.</h2>
               <Link className="btn btn-dark btn-arrow" href="/cookies">
                 Explore crumbs

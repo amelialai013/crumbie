@@ -913,6 +913,9 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
   .secondary-page-transition {
     animation: none;
   }
+  .cart-empty.is-appearing {
+    animation: none;
+  }
   .cart-checkout-error {
     animation: none;
   }
@@ -1795,10 +1798,12 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
   align-items: center;
   justify-content: center;
   text-align: center;
-  animation: cart-empty-in .6s cubic-bezier(.22, 1, .36, 1) both;
+}
+.cart-empty.is-appearing {
+  animation: cart-empty-in .42s cubic-bezier(.22, 1, .36, 1) both;
 }
 @keyframes cart-empty-in {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .cart-empty h2 {
