@@ -914,9 +914,11 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
 @keyframes page-enter {
   from {
     opacity: .98;
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 @keyframes checkout-error-in {
