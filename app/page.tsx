@@ -57,7 +57,7 @@ export default function Home() {
         </div>
       </SectionReveal>
 
-      <section className="section section-warm cookie-catalog home-product-catalog">
+      <SectionReveal className="section section-warm cookie-catalog home-product-catalog" itemSelector=".product-card">
         <div className="shell">
           <div className="split-heading">
             <div><h2>Crumbs for<br />every craving</h2></div>
@@ -89,7 +89,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </SectionReveal>
     </>
   );
 }

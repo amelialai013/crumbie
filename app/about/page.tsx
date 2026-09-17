@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import aboutUsImage from "@/assets/images/about-us.png";
+import SectionReveal from "@/components/section-reveal";
 
 export const metadata: Metadata = { title: "About" };
 
@@ -11,14 +12,14 @@ export default function About() {
       <section className="page-hero">
         <div className="shell"><h1 className="page-title">Crumbie beginnings</h1></div>
       </section>
-      <section className="section about-section">
+      <SectionReveal className="section about-section" itemSelector=".about-image, .prose > *">
         <div className="shell content-grid">
           <div className="relative about-image">
             <Image src={aboutUsImage} alt="Baker preparing ingredients in a kitchen" fill sizes="(max-width: 900px) 100vw, 50vw" quality={100} />
           </div>
           <div className="prose">
             <h2>Our story</h2>
-            <p>Club Crumbie began with two girls who love baking and a shared belief that the best things are made with patience and care. We make considered drops that give each collection room to explore depth, richness and quality, from thoughtful flavours to beautiful textures. The result is familiar, but made with a little more intention.</p>
+            <p>Club Crumbie began with two girls who love baking and have a shared belief that the best things are made with patience and care. We make considered drops that give each collection room to explore depth, richness and quality. The result is familiar, but made with a little more intention.</p>
             <h2>Small batch by design</h2>
             <p>Each release is made in small quantities, giving us room to refine every detail and share something fresh, thoughtful and worth returning to.</p>
             <Link className="btn btn-dark btn-arrow" href="/cookies">
@@ -29,7 +30,7 @@ export default function About() {
             </Link>
           </div>
         </div>
-      </section>
+      </SectionReveal>
     </>
   );
 }

@@ -84,7 +84,7 @@ export default function ProductOrder({ product }: { product: Product }) {
       </div>
       <div className="product-order-fields">
         <div className="field">
-          <span className="field-label" id="variant-label">Box size</span>
+          <span className="field-label" id="variant-label">Size</span>
           <PremiumSelect
             labelId="variant-label"
             value={variantId}

@@ -4,10 +4,18 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * Desktop: adds "is-visible" to the section once it is fully within the viewport, and the
- * steps cascade in on a timer (see motion.css). Mobile: the stacked layout is often taller
- * than the viewport, so instead each step reveals on its own as it scrolls into view.
+ * matched items cascade in on a timer (see motion.css). Mobile: stacked layouts are often
+ * taller than the viewport, so instead each item reveals on its own as it scrolls into view.
  */
-export default function SectionReveal({ children, className }: { children: ReactNode; className?: string }) {
+export default function SectionReveal({
+  children,
+  className,
+  itemSelector = ".step",
+}: {
+  children: ReactNode;
+  className?: string;
+  itemSelector?: string;
+}) {
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -26,25 +34,25 @@ export default function SectionReveal({ children, className }: { children: React
     );
     sectionObserver.observe(section);
 
-    const steps = section.querySelectorAll(".step");
-    const stepObserver = new IntersectionObserver(
+    const items = section.querySelectorAll(itemSelector);
+    const itemObserver = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
             entry.target.classList.add("is-visible");
-            stepObserver.unobserve(entry.target);
+            itemObserver.unobserve(entry.target);
           }
         }
       },
       { threshold: 0.4 }
     );
-    steps.forEach((step) => stepObserver.observe(step));
+    items.forEach((item) => itemObserver.observe(item));
 
     return () => {
       sectionObserver.disconnect();
-      stepObserver.disconnect();
+      itemObserver.disconnect();
     };
-  }, []);
+  }, [itemSelector]);
 
   return (
     <section ref={ref} className={`${className ?? ""} ${visible ? "is-visible" : ""}`.trim()}>
