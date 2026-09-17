@@ -84,16 +84,25 @@ export default function Header() {
           ))}
           <Link href="/cart" className={`cart-link${pathname === "/cart" ? " active" : ""}`} aria-current={pathname === "/cart" ? "page" : undefined}>Cart <span>{count}</span></Link>
         </nav>
-        <button type="button" className="menu-button" onClick={() => {
-          if (open && menuPathname === pathname) {
-            setOpen(false);
-          } else {
-            setMenuPathname(pathname);
-            setOpen(true);
-          }
-        }} aria-expanded={menuVisible} aria-controls="primary-navigation">
-          {menuVisible ? "Close" : "Menu"}
-        </button>
+        <div className="nav-actions">
+          <Link href="/cart" className="mobile-cart-link" aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="M4 6h12l-1 10a1.5 1.5 0 0 1-1.5 1.35h-7A1.5 1.5 0 0 1 5 16L4 6Z" />
+              <path d="M7 6V5a3 3 0 0 1 6 0v1" />
+            </svg>
+            <span>{count}</span>
+          </Link>
+          <button type="button" className="menu-button" onClick={() => {
+            if (open && menuPathname === pathname) {
+              setOpen(false);
+            } else {
+              setMenuPathname(pathname);
+              setOpen(true);
+            }
+          }} aria-expanded={menuVisible} aria-controls="primary-navigation">
+            {menuVisible ? "Close" : "Menu"}
+          </button>
+        </div>
       </div>
     </header>
   );

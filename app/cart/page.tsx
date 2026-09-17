@@ -25,8 +25,12 @@ export default function Cart() {
 
   function removeLine(key: string) {
     if (removeTimeoutRef.current !== null) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      if (lines.length === 1) setEmptyAppearing(true);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      if (lines.length === 1) {
+        setEmptyAppearing(true);
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
       remove(key);
       return;
     }
@@ -36,7 +40,10 @@ export default function Cart() {
       remove(key);
       setRemovingKey(null);
       setRemovingLastItem(false);
-      if (lines.length === 1) setEmptyAppearing(true);
+      if (lines.length === 1) {
+        setEmptyAppearing(true);
+        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      }
       removeTimeoutRef.current = null;
     }, motionDuration("panel", 460));
   }
