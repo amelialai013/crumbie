@@ -34,6 +34,16 @@ export default function Header() {
   }, [pathname]);
 
   useEffect(() => {
+    const closeMenuOnNavigation = (event: MouseEvent) => {
+      if (!(event.target instanceof Element) || !event.target.closest("a[href]")) return;
+      setOpen(false);
+    };
+
+    document.addEventListener("click", closeMenuOnNavigation);
+    return () => document.removeEventListener("click", closeMenuOnNavigation);
+  }, []);
+
+  useEffect(() => {
     if (!menuVisible) return;
 
     const previousOverflow = document.body.style.overflow;
