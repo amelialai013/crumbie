@@ -315,6 +315,38 @@ body::-webkit-scrollbar {
   background: #c9ad94;
   animation: site-loading-progress 1.25s cubic-bezier(.22, 1, .36, 1) infinite;
 }
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  background: #070707;
+  color: #f7f7f5;
+  animation: page-loader-in .7s ease both;
+}
+.home-page-loader-inner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  background: radial-gradient(circle at 50% 42%, #191817 0, #0b0b0b 44%, #070707 78%);
+}
+.home-page-loader-inner p {
+  margin: 0;
+  color: #b5b3b0;
+  font-size: .78rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.home-page-loader-inner .site-loading-track {
+  width: 128px;
+}
+@keyframes page-loader-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 .route-loading {
   display: block;
   overflow-y: auto;

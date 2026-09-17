@@ -44,9 +44,30 @@ export default function PageLoader() {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setVisible(false), 700);
-    return () => window.clearTimeout(timeout);
-  }, []);
+    if (pathname !== "/") return;
+
+    let pageLoaded = document.readyState === "complete";
+    let heroReady = false;
+    const dismiss = () => {
+      if (pageLoaded && heroReady) setVisible(false);
+    };
+    const handlePageLoad = () => {
+      pageLoaded = true;
+      dismiss();
+    };
+    const handleHeroReady = () => {
+      heroReady = true;
+      dismiss();
+    };
+    const fallback = window.setTimeout(() => setVisible(false), 5000);
+    window.addEventListener("load", handlePageLoad, { once: true });
+    window.addEventListener("hero-media-ready", handleHeroReady, { once: true });
+    return () => {
+      window.clearTimeout(fallback);
+      window.removeEventListener("load", handlePageLoad);
+      window.removeEventListener("hero-media-ready", handleHeroReady);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (!visible || pathname !== "/") return;

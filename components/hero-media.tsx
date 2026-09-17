@@ -38,6 +38,12 @@ export default function HeroMedia() {
     return () => media.removeEventListener("change", update);
   }, []);
 
+  useEffect(() => {
+    if (!reduceMotion && !hidden) return;
+    const readyFrame = window.requestAnimationFrame(() => window.dispatchEvent(new Event("hero-media-ready")));
+    return () => window.cancelAnimationFrame(readyFrame);
+  }, [hidden, reduceMotion]);
+
   // Starts the incoming layer decoding (muted, hidden) well before the cut so the crossfade has no startup stutter.
   const primeIncoming = useCallback((fromLayer: Layer) => {
     if (primedRef.current) return;
@@ -109,7 +115,10 @@ export default function HeroMedia() {
           preload="auto"
           src={CLIPS[clipForLayer[layer]].src}
           onPlaying={() => {
-            if (layer === 0) setReady(true);
+            if (layer === 0) {
+              setReady(true);
+              window.dispatchEvent(new Event("hero-media-ready"));
+            }
           }}
           onTimeUpdate={(event) => {
             if (layer !== activeLayer) return;
