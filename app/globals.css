@@ -2093,3 +2093,116 @@ body:not(.home-hero-ready) main > .page-transition > .hero ~ .section {
     transform: none;
   }
 }
+
+:root {
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-ease-soft: cubic-bezier(.25, .8, .25, 1);
+}
+
+.site-header.home-header {
+  transition-duration: .5s;
+  transition-timing-function: var(--motion-ease-soft);
+}
+
+.hero-video {
+  transition: opacity 1.15s var(--motion-ease-soft);
+}
+
+.hero-media-loading {
+  transition: opacity .8s var(--motion-ease-soft);
+}
+
+.secondary-page-transition {
+  animation-duration: .7s;
+  animation-timing-function: var(--motion-ease);
+}
+
+.btn {
+  transition-duration: .3s;
+  transition-timing-function: var(--motion-ease-soft);
+}
+
+.btn:hover:not(:disabled) {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .2);
+}
+
+.menu-button {
+  transition-duration: .3s;
+  transition-timing-function: var(--motion-ease-soft);
+}
+
+@media(max-width:900px) {
+  .nav-links,
+  .nav-links.open {
+    transition-duration: .65s;
+    transition-timing-function: var(--motion-ease);
+  }
+
+  .nav-links > a:not(.cart-link) {
+    transition-duration: .7s;
+    transition-timing-function: var(--motion-ease);
+  }
+
+  .nav-links .cart-link {
+    transition-duration: .6s;
+    transition-timing-function: var(--motion-ease);
+  }
+}
+
+.cookie-catalog .product-card img {
+  transition-duration: 1s;
+  transition-timing-function: var(--motion-ease);
+}
+
+.cookie-explorer-object {
+  transition-duration: .28s;
+  transition-timing-function: var(--motion-ease-soft);
+}
+
+.cookie-explorer-object img {
+  transition-duration: .22s;
+  transition-timing-function: var(--motion-ease-soft);
+}
+
+.product-gallery-image {
+  animation-duration: .55s;
+  animation-timing-function: var(--motion-ease-soft);
+}
+
+.product-gallery-thumbnails button,
+.premium-select-trigger,
+.premium-select-menu li,
+.quantity-stepper-controls button {
+  transition-duration: .28s;
+  transition-timing-function: var(--motion-ease-soft);
+}
+
+.cart-confirmation {
+  animation-duration: .7s;
+  animation-timing-function: var(--motion-ease);
+}
+
+.cart-confirmation.is-closing {
+  animation-duration: .6s;
+  animation-timing-function: var(--motion-ease-soft);
+}
+
+.cart-confirmation-check {
+  animation-duration: .7s;
+  animation-timing-function: var(--motion-ease);
+}
+
+.cart-layout,
+.cart-row {
+  transition-duration: .58s;
+  transition-timing-function: var(--motion-ease);
+}
+
+@media(prefers-reduced-motion:reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
