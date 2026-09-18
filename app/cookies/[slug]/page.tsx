@@ -33,6 +33,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <span aria-current="page">{product.name}</span>
       </nav>
       <div className="shell product-detail-layout">
+        {product.slug === "signature-box" || product.slug === "seasonal-box" ? (
+          <CookieExplorer
+            key={product.slug}
+            name={product.name}
+            variant={product.slug === "seasonal-box" ? "biscoff" : "signature"}
+          />
+        ) : (
+          <ProductGallery images={product.images} name={product.name} />
+        )}
         <div className="product-detail-copy">
           <header className="product-detail-hero">
             <div className="product-detail-heading">
@@ -44,15 +53,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </header>
           <ProductOrder product={product} />
         </div>
-        {product.slug === "signature-box" || product.slug === "seasonal-box" ? (
-          <CookieExplorer
-            key={product.slug}
-            name={product.name}
-            variant={product.slug === "seasonal-box" ? "biscoff" : "signature"}
-          />
-        ) : (
-          <ProductGallery images={product.images} name={product.name} />
-        )}
       </div>
       <div className="shell product-facts">
         <section>
