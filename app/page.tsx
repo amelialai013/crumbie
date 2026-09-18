@@ -39,7 +39,7 @@ export default function Home() {
             </div>
             <div className="step">
               <h3>Select pickup</h3>
-              <p>Choose an available Ivanhoe pickup date and time.</p>
+              <p>Choose an available pickup date and time in Ivanhoe, Victoria.</p>
             </div>
             <div className="step">
               <h3>Pay securely</h3>
