@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { z } from "zod";
-import { isDateClosed, pickupDates, products } from "@/lib/catalog";
+import { isDateClosed, pickupDates } from "@/lib/catalog";
+import { getProducts } from "@/lib/catalog-store";
 import { setRecord } from "@/lib/store";
 
 const lineSchema = z.object({
@@ -13,6 +14,7 @@ const lineSchema = z.object({
 const schema = z.object({ lines: z.array(lineSchema).min(1).max(30) });
 
 export async function POST(req: Request) {
+	const products = await getProducts();
 	const parsed = schema.safeParse(await req.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: "Your cart is invalid." }, { status: 400 });
 

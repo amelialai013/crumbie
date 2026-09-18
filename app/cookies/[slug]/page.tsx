@@ -4,14 +4,17 @@ import { notFound } from "next/navigation";
 import CookieExplorer from "@/components/cookie-explorer";
 import ProductGallery from "@/components/product-gallery";
 import ProductOrder from "@/components/product-order";
-import { products, sharedKitchenWarning } from "@/lib/catalog";
+import { sharedKitchenWarning } from "@/lib/catalog";
+import { getProducts } from "@/lib/catalog-store";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await getProducts();
   return products.map((product) => ({ slug: product.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  const products = await getProducts();
   const product = products.find((item) => item.slug === slug);
   return product
     ? { title: product.name, description: product.description, openGraph: { title: product.name, description: product.description, images: [] }, twitter: { card: "summary", title: product.name, description: product.description, images: [] } }
@@ -20,6 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const products = await getProducts();
   const product = products.find((item) => item.slug === slug);
   if (!product) notFound();
 

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
-import { products } from "@/lib/catalog";
+import { getProducts } from "@/lib/catalog-store";
 
 export const metadata: Metadata = { title: "Crumbs" };
 
-export default function Crumbs() {
+export default async function Crumbs() {
+  const products = await getProducts();
   return (
     <>
       <section className="page-hero">

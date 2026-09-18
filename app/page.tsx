@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { products } from "@/lib/catalog";
+import { getProducts } from "@/lib/catalog-store";
 import whiteLogo from "@/brand/logo/new-logo/text-white.png";
 import HeroMedia from "@/components/hero-media";
 import ProductCookieImage from "@/components/product-cookie-image";
 import SectionReveal from "@/components/section-reveal";
 
-export default function Home() {
+export default async function Home() {
+  const products = await getProducts();
   return (
     <>
       <section className="hero">
