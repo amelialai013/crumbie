@@ -924,9 +924,15 @@ body::-webkit-scrollbar {
   gap: clamp(28px, 5vw, 72px);
   align-items: start;
 }
-.product-detail-copy { grid-column: 1; }
+.product-detail-copy {
+  grid-column: 1;
+  grid-row: 1;
+}
 .product-detail-layout > .cookie-explorer,
-.product-detail-layout > .product-gallery { grid-column: 2; }
+.product-detail-layout > .product-gallery {
+  grid-column: 2;
+  grid-row: 1;
+}
 .product-detail-hero {
   margin-bottom: clamp(32px, 5vw, 56px);
 }
