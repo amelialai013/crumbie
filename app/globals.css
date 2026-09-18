@@ -106,6 +106,66 @@
   }
 }
 
+.admin-section {
+  min-height: calc(100vh - 160px);
+  display: grid;
+  align-items: center;
+}
+.admin-auth {
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: 0;
+}
+.admin-auth h1 {
+  margin: 0 0 32px;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 400;
+}
+.admin-auth-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px;
+  align-items: end;
+}
+.admin-auth-row .field {
+  gap: 10px;
+  margin-bottom: 0;
+}
+.admin-auth-row .field label {
+  color: #d9d7d3;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.admin-auth-row .field input {
+  padding: 14px 0 18px;
+  border: 0;
+  border-bottom: 1px solid #494949;
+  background: transparent;
+  color: #fff;
+}
+.admin-auth-row .field input:focus {
+  outline: 0;
+  border-color: #fff;
+}
+.admin-auth-row .btn {
+  min-width: 140px;
+  min-height: 52px;
+  margin-bottom: 0;
+}
+.admin-auth > .field-error {
+  margin: 14px 0 0;
+}
+@media(max-width:640px) {
+  .admin-auth-row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .admin-auth-row .btn {
+    width: 100%;
+  }
+}
+
 /* Full-screen mobile navigation */
 @media(max-width:900px) {
   .site-header {

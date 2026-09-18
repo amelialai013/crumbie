@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Admin", robots: { index: false, foll
 
 export default function Admin() {
 	return (
-		<section className="section section-warm">
+		<section className="section section-warm admin-section">
 			<div className="shell">
 				<AdminDashboard />
 			</div>

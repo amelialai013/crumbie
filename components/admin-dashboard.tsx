@@ -36,10 +36,12 @@ export default function AdminDashboard() {
   }
 
   if (!data) return (
-    <form className="form-card" onSubmit={login} style={{ maxWidth: 480, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "2.4rem" }}>Sign in</h1>
-      <div className="field"><label htmlFor="password">Password</label><input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></div>
-      <button className="btn btn-dark">Sign in</button>
+    <form className="admin-auth" onSubmit={login}>
+      <h1>Admin portal</h1>
+      <div className="admin-auth-row">
+        <div className="field"><label htmlFor="password">Password</label><input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></div>
+        <button className="btn btn-dark">Sign in</button>
+      </div>
       {error && <p className="field-error">{error}</p>}
     </form>
   );
