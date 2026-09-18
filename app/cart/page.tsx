@@ -77,7 +77,7 @@ export default function Cart() {
         <div className="shell">
           {!ready ? null : lines.length === 0 ? (
             <div className={`cart-empty${emptyAppearing ? " is-appearing" : ""}`}>
-              <h2>No crumbs left.</h2>
+              <h2>No crumbs left</h2>
               <Link className="btn btn-dark btn-arrow" href="/cookies">
                 Explore crumbs
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
