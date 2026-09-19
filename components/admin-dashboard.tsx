@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
+  defaultProductAllergens,
+  defaultProductIngredients,
   isDateClosed,
   pickupDates as catalogPickupDates,
   products,
@@ -311,8 +313,8 @@ export default function AdminDashboard() {
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
-    ingredients: "",
-    allergens: "",
+    ingredients: defaultProductIngredients,
+    allergens: defaultProductAllergens,
     price6: "",
     price12: "",
   });
@@ -344,6 +346,10 @@ export default function AdminDashboard() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [tab]);
 
   async function login(event: React.FormEvent) {
     event.preventDefault();
@@ -425,8 +431,8 @@ export default function AdminDashboard() {
       slug,
       name: newProduct.name.trim(),
       description: newProduct.description.trim(),
-      ingredients: newProduct.ingredients.trim(),
-      allergens: newProduct.allergens.trim(),
+      ingredients: newProduct.ingredients.trim() || defaultProductIngredients,
+      allergens: newProduct.allergens.trim() || defaultProductAllergens,
       variants: [
         {
           id: `${slug}-6`,
@@ -462,8 +468,8 @@ export default function AdminDashboard() {
     setNewProduct({
       name: "",
       description: "",
-      ingredients: "",
-      allergens: "",
+      ingredients: defaultProductIngredients,
+      allergens: defaultProductAllergens,
       price6: "",
       price12: "",
     });
@@ -487,7 +493,7 @@ export default function AdminDashboard() {
 
   function startNewProduct() {
     setEditingProductId(null);
-    setNewProduct({ name: "", description: "", ingredients: "", allergens: "", price6: "", price12: "" });
+    setNewProduct({ name: "", description: "", ingredients: defaultProductIngredients, allergens: defaultProductAllergens, price6: "", price12: "" });
   }
 
   async function removeProduct(id: string) {
@@ -507,6 +513,61 @@ export default function AdminDashboard() {
       current.filter((product) => product.id !== id),
     );
     setProductStatus("Product removed");
+  }
+
+  function adjustProductPrice(field: "price6" | "price12", amount: number) {
+    const current = Number(newProduct[field]) || 0;
+    setNewProduct({
+      ...newProduct,
+      [field]: String(Math.max(0, current + amount)),
+    });
+  }
+
+  const optionalPolicySections = [
+    { number: 5, headingKey: "allergenHeading", bodyKey: "allergenCopy" },
+    { number: 6, headingKey: "enquiryHeading", bodyKey: "enquiryCopy" },
+  ] as const;
+
+  function renderContentField(field: ContentField) {
+    const value = content.fields[field.key] || "";
+    const id = `content-${field.key}`;
+
+    return (
+      <div className="field" key={field.key}>
+        <label htmlFor={id}>
+          {field.label} <span>({field.maxLength} characters max)</span>
+        </label>
+        {field.multiline ? (
+          <textarea
+            id={id}
+            rows={5}
+            maxLength={field.maxLength}
+            value={value}
+            onChange={(event) =>
+              setContent({
+                ...content,
+                fields: { ...content.fields, [field.key]: event.target.value },
+              })
+            }
+          />
+        ) : (
+          <input
+            id={id}
+            maxLength={field.maxLength}
+            value={value}
+            onChange={(event) =>
+              setContent({
+                ...content,
+                fields: { ...content.fields, [field.key]: event.target.value },
+              })
+            }
+          />
+        )}
+        <small className="admin-editor-count">
+          {value.length} / {field.maxLength}
+        </small>
+      </div>
+    );
   }
 
   async function selectTab(nextTab: string) {
@@ -712,7 +773,7 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4}>No orders yet.</td>
+                  <td colSpan={4}>No orders yet</td>
                 </tr>
               )}
             </tbody>
@@ -774,7 +835,7 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3}>No enquiries yet.</td>
+                  <td colSpan={3}>No enquiries yet</td>
                 </tr>
               )}
             </tbody>
@@ -811,37 +872,83 @@ export default function AdminDashboard() {
                 </div>
                 <div className="field">
                   <label htmlFor="product-price-6">Box of 6 price</label>
-                  <input
-                    id="product-price-6"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={newProduct.price6}
-                    onChange={(event) =>
-                      setNewProduct({
-                        ...newProduct,
-                        price6: event.target.value,
-                      })
-                    }
-                    required
-                  />
+                  <div className="quantity-stepper admin-number-stepper">
+                    <input
+                      id="product-price-6"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newProduct.price6}
+                      onChange={(event) =>
+                        setNewProduct({
+                          ...newProduct,
+                          price6: event.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <div className="quantity-stepper-controls">
+                      <button
+                        type="button"
+                        onClick={() => adjustProductPrice("price6", -1)}
+                        disabled={Number(newProduct.price6) <= 0}
+                        aria-label="Decrease box of 6 price"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                          <path d="M3 8h10" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => adjustProductPrice("price6", 1)}
+                        aria-label="Increase box of 6 price"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 3v10M3 8h10" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="field">
                   <label htmlFor="product-price-12">Box of 12 price</label>
-                  <input
-                    id="product-price-12"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={newProduct.price12}
-                    onChange={(event) =>
-                      setNewProduct({
-                        ...newProduct,
-                        price12: event.target.value,
-                      })
-                    }
-                    required
-                  />
+                  <div className="quantity-stepper admin-number-stepper">
+                    <input
+                      id="product-price-12"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newProduct.price12}
+                      onChange={(event) =>
+                        setNewProduct({
+                          ...newProduct,
+                          price12: event.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <div className="quantity-stepper-controls">
+                      <button
+                        type="button"
+                        onClick={() => adjustProductPrice("price12", -1)}
+                        disabled={Number(newProduct.price12) <= 0}
+                        aria-label="Decrease box of 12 price"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                          <path d="M3 8h10" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => adjustProductPrice("price12", 1)}
+                        aria-label="Increase box of 12 price"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 3v10M3 8h10" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="field">
                   <label htmlFor="product-description">Description</label>
@@ -1071,7 +1178,7 @@ export default function AdminDashboard() {
           const template = emailTemplates.find((item) => item.key === emailTemplateKey);
           if (!template) return null;
           return <form className="enquiry-form admin-editor" onSubmit={saveContent}>
-            <div className="admin-template-editor-heading"><button className="text-button" type="button" onClick={() => setEmailTemplateKey(null)}>Back to templates</button><h2>{template.name}</h2><p>{template.description}</p></div>
+            <div className="admin-template-editor-heading"><button className="text-button" type="button" onClick={() => setEmailTemplateKey(null)}><svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m10 3-5 5 5 5" /></svg>Back to templates</button><h2>{template.name}</h2><p>{template.description}</p></div>
             <div className="admin-editor-fields">
               <div className="field"><label htmlFor="email-template-subject">Subject <span>(140 characters max)</span></label><input id="email-template-subject" maxLength={140} value={content.fields[template.subjectField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.subjectField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.subjectField] || "").length} / 140</small></div>
               <div className="field"><label htmlFor="email-template-body">Body copy <span>(3000 characters max)</span></label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small></div>
@@ -1086,76 +1193,59 @@ export default function AdminDashboard() {
                 .filter(
                   (field) =>
                     !(tab === "policy" &&
-                    (content.removedFields || []).includes(field.key)),
+                    (content.removedFields || []).includes(field.key)) &&
+                    !(tab === "policy" &&
+                    optionalPolicySections.some(
+                      (section) =>
+                        field.key === section.headingKey ||
+                        field.key === section.bodyKey,
+                    )),
                 )
-                .map((field) => {
-                const value = content.fields[field.key] || "";
-                const id = `content-${field.key}`;
-                const optionalPolicyBody =
-                  tab === "policy" &&
-                  ["allergenCopy", "enquiryCopy"].includes(field.key);
-                return (
-                  <div className="field" key={field.key}>
-                    <label htmlFor={id}>
-                      {field.label}{" "}
-                      <span>({field.maxLength} characters max)</span>
-                    </label>
-                    {field.multiline ? (
-                      <textarea
-                        id={id}
-                        rows={5}
-                        maxLength={field.maxLength}
-                        value={value}
-                        onChange={(event) =>
-                          setContent({
-                            ...content,
-                            fields: {
-                              ...content.fields,
-                              [field.key]: event.target.value,
-                            },
-                          })
-                        }
-                      />
-                    ) : (
-                      <input
-                        id={id}
-                        maxLength={field.maxLength}
-                        value={value}
-                        onChange={(event) =>
-                          setContent({
-                            ...content,
-                            fields: {
-                              ...content.fields,
-                              [field.key]: event.target.value,
-                            },
-                          })
-                        }
-                      />
-                    )}
-                    <small className="admin-editor-count">
-                      {value.length} / {field.maxLength}
-                    </small>
-                    {optionalPolicyBody && (
-                      <button
-                        className="text-button"
-                        type="button"
-                        onClick={() =>
-                          setContent({
-                            ...content,
-                            removedFields: [
-                              ...(content.removedFields || []),
-                              field.key,
-                              field.key.replace("Copy", "Heading"),
-                            ],
-                          })
-                        }
+                .map(renderContentField)}
+              {tab === "policy" &&
+                optionalPolicySections
+                  .filter(
+                    (section) =>
+                      !(content.removedFields || []).includes(section.headingKey) &&
+                      !(content.removedFields || []).includes(section.bodyKey),
+                  )
+                  .map((section) => {
+                    const headingField = contentModules.policy.fields.find(
+                      (field) => field.key === section.headingKey,
+                    );
+                    const bodyField = contentModules.policy.fields.find(
+                      (field) => field.key === section.bodyKey,
+                    );
+                    if (!headingField || !bodyField) return null;
+                    return (
+                      <section
+                        className="admin-policy-editor-section"
+                        key={`policy-section-${section.number}`}
                       >
-                        Remove section
-                      </button>
-                    )}
-                  </div>
-                );
-                })}
+                        <div className="admin-policy-editor-section-heading">
+                          <h3>Section {section.number}</h3>
+                          <button
+                            className="text-button"
+                            type="button"
+                            onClick={() =>
+                              setContent({
+                                ...content,
+                                removedFields: [
+                                  ...(content.removedFields || []),
+                                  section.headingKey,
+                                  section.bodyKey,
+                                ],
+                              })
+                            }
+                          >
+                            Remove section
+                          </button>
+                        </div>
+                        {renderContentField(headingField)}
+                        {renderContentField(bodyField)}
+                      </section>
+                    );
+                  })}
               {tab === "policy" && (
                 <div className="admin-modal admin-policy-sections">
                   <div className="admin-policy-sections-heading">
@@ -1172,11 +1262,7 @@ export default function AdminDashboard() {
                           </svg>
                       </label>
                     </div>
-                    <div className="admin-modal-body">
-                    <p>
-                      Add a heading and body copy for any extra policy section.
-                    </p>
-                  </div>
+                    </div>
                   {(content.sections && content.sections.length
                     ? content.sections
                     : [{ heading: "", body: "" }]
@@ -1185,6 +1271,7 @@ export default function AdminDashboard() {
                       className="admin-policy-section"
                       key={`policy-section-${index}`}
                     >
+                      <h3>Section {index + 7}</h3>
                       <div className="field">
                         <label htmlFor={`policy-section-heading-${index}`}>
                           Heading <span>(80 characters max)</span>
@@ -1258,7 +1345,6 @@ export default function AdminDashboard() {
                     >
                       Add another policy section
                     </button>
-                  </div>
                   </div>
                 </div>
               )}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/session";
 import { getProducts } from "@/lib/catalog-store";
+import { defaultProductAllergens, defaultProductIngredients } from "@/lib/catalog";
 import { getRecord, saveRecord } from "@/lib/store";
 import { uploadMedia } from "@/lib/r2";
 import type { Product } from "@/lib/catalog";
@@ -30,7 +31,12 @@ export async function POST(request: Request) {
 				images.push(await uploadMedia(`products/${payload.slug}/${entry.name}`, new Uint8Array(await entry.arrayBuffer()), entry.type));
 			}
 		}
-		const product: Product = { ...payload, images };
+		const product: Product = {
+			...payload,
+			ingredients: payload.ingredients.trim() || defaultProductIngredients,
+			allergens: payload.allergens.trim() || defaultProductAllergens,
+			images,
+		};
 		await saveRecord("product", product);
 		return NextResponse.json(product, { status: 201 });
 	} catch (error) {
