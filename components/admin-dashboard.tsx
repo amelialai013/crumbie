@@ -263,6 +263,53 @@ const contentModules: Record<string, ContentModule> = {
       { key: "enquirySubject", label: "Subject", maxLength: 140 },
       { key: "enquiryBody", label: "Body copy", maxLength: 3000, multiline: true },
     ],
+    defaults: {
+      fields: {
+        confirmationSubject: "Your Club Crumbie order is confirmed",
+        confirmationBody: `Hi {{customerName}},
+
+Thanks for your order with Club Crumbie. We have received your payment and your cookie box is confirmed.
+
+Order number: {{orderNumber}}
+Pickup date: {{pickupDate}}
+Pickup window: {{pickupWindow}}
+Order total: {{orderTotal}}
+
+Pickup is in Ivanhoe, Victoria. We will include the exact address and any final collection details here.
+
+Please keep this email for your records. We look forward to sharing your crumbs with you.
+
+Club Crumbie`,
+        pickupReminderSubject: "Your Club Crumbie pickup is coming up",
+        pickupReminderBody: `Hi {{customerName}},
+
+Just a reminder that your Club Crumbie order is ready for pickup soon.
+
+Pickup date: {{pickupDate}}
+Pickup window: {{pickupWindow}}
+Order number: {{orderNumber}}
+
+Pickup is in Ivanhoe, Victoria. We will include the exact address and any collection instructions here.
+
+Please arrive during your pickup window so we can hand over your box while it is fresh.
+
+See you soon,
+Club Crumbie`,
+        enquirySubject: "New Club Crumbie enquiry from {{customerName}}",
+        enquiryBody: `A new enquiry has been submitted through the Club Crumbie Contact Us form.
+
+Name: {{customerName}}
+Email: {{customerEmail}}
+Phone: {{customerPhone}}
+
+Message:
+{{customerMessage}}
+
+Please reply to the customer directly when you are ready to follow up.
+
+Club Crumbie`,
+      },
+    },
   },
   settings: {
     fields: [
