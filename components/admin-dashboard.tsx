@@ -343,6 +343,7 @@ function mergeContent(
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<Data | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState("");
   const [tab, setTab] = useState("orders");
   const [content, setContent] = useState<Content>({ fields: {} });
@@ -397,6 +398,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [tab]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
 
   async function login(event: React.FormEvent) {
     event.preventDefault();
@@ -619,6 +629,7 @@ export default function AdminDashboard() {
 
   async function selectTab(nextTab: string) {
     setTab(nextTab);
+    setMenuOpen(false);
     setEmailTemplateKey(null);
     setContentStatus("");
     if (contentModules[nextTab]) {
@@ -710,7 +721,33 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-grid">
-      <aside className="admin-nav">
+      <button
+        className="admin-menu-toggle"
+        type="button"
+        aria-expanded={menuOpen}
+        aria-controls="admin-navigation"
+        onClick={() => setMenuOpen((isOpen) => !isOpen)}
+      >
+        <span className="admin-menu-toggle-copy">
+          <span>Section</span>
+        </span>
+        <span className="admin-menu-toggle-icon" aria-hidden="true">
+          {menuOpen ? "×" : "+"}
+        </span>
+      </button>
+      {menuOpen && (
+        <button
+          className="admin-nav-backdrop"
+          type="button"
+          aria-label="Close sections menu"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+      <aside
+        id="admin-navigation"
+        className={`admin-nav${menuOpen ? " is-open" : ""}`}
+        aria-label="Admin sections"
+      >
         {adminTabs.map((item) => (
           <button
             key={item}
