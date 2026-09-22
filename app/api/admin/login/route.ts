@@ -13,6 +13,14 @@ export async function POST(req: Request) {
 		timingSafeEqual(actualBuffer, expectedBuffer);
 
 	if (!valid) return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
-	await createAdminSession();
+	try {
+		await createAdminSession();
+	} catch (error) {
+		console.error("Admin session setup failed", error);
+		return NextResponse.json(
+			{ error: "Admin session is not configured." },
+			{ status: 503 },
+		);
+	}
 	return NextResponse.json({ ok: true });
 }
