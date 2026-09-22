@@ -4,6 +4,7 @@ import { motionDuration } from "@/lib/motion";
 
 import Image from "next/image";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import signatureCookie from "@/assets/cookies/choc-chip-cookie/turntable-clean/frame-01.png";
 import biscoffCookie from "@/assets/cookies/biscoff-white-chocolate-cookie/turntable-clean/frame-03.png";
@@ -11,7 +12,7 @@ import { useCart } from "@/components/cart-context";
 import QuantityControl from "@/components/quantity-control";
 
 export default function Cart() {
-  const { lines, total, ready, remove, setQuantity } = useCart();
+  const { lines, total, ready, remove, setQuantity, clear } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [removingKey, setRemovingKey] = useState<string | null>(null);
@@ -44,6 +45,25 @@ export default function Cart() {
         setEmptyAppearing(true);
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       }
+      removeTimeoutRef.current = null;
+    }, motionDuration("panel", 460));
+  }
+
+  function removeAll() {
+    if (removeTimeoutRef.current !== null) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      setEmptyAppearing(true);
+      clear();
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      return;
+    }
+    setRemovingLastItem(true);
+    removeTimeoutRef.current = window.setTimeout(() => {
+      clear();
+      setRemovingLastItem(false);
+      setEmptyAppearing(true);
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       removeTimeoutRef.current = null;
     }, motionDuration("panel", 460));
   }
@@ -101,12 +121,18 @@ export default function Cart() {
                   />
                 </Link>
                 <div className="cart-row-details">
-                  <h2><Link href={`/cookies/${line.productSlug}`}>{line.productName}</Link></h2>
-                  <div className="cart-row-variant">
-                    <p>{line.variantLabel}</p>
+                  <div className="cart-row-heading">
+                    <h2><Link href={`/cookies/${line.productSlug}`}>{line.productName}</Link></h2>
                     <p className="cart-line-price">${(line.unitPrice * line.quantity).toFixed(2)} AUD</p>
                   </div>
-                  <p>{new Intl.DateTimeFormat("en-AU", { dateStyle: "full", timeZone: "Australia/Melbourne" }).format(new Date(`${line.pickupDate}T12:00:00+10:00`))}<br />{line.pickupWindow}</p>
+                  <div className="cart-row-meta">
+                    <p>{line.variantLabel}</p>
+                    <p className="cart-row-pickup">
+                      <span>{new Intl.DateTimeFormat("en-AU", { dateStyle: "full", timeZone: "Australia/Melbourne" }).format(new Date(`${line.pickupDate}T12:00:00+10:00`))}</span>
+                      <span className="cart-row-meta-separator" aria-hidden="true"> · </span>
+                      <span>{line.pickupWindow.replace(/\s*[–-]\s*/, " – ")}</span>
+                    </p>
+                  </div>
                 </div>
                 <div className="cart-row-actions">
                   <QuantityControl
@@ -115,12 +141,16 @@ export default function Cart() {
                     inputAriaLabel={`Quantity for ${line.productName}`}
                     onChange={(value) => setQuantity(line.key, value)}
                   />
-                  <button className="text-button" onClick={() => removeLine(line.key)} disabled={removingKey === line.key}>
+                  <button className="text-button" onClick={() => removeLine(line.key)} disabled={removingKey === line.key || removingLastItem}>
                     {removingKey === line.key ? "Removing…" : "Remove"}
                   </button>
                 </div>
               </div>
                 ))}
+                <button className="text-button cart-remove-all" onClick={removeAll} disabled={removingLastItem}>
+                  <Trash2 aria-hidden="true" size={16} strokeWidth={1.75} />
+                  {removingLastItem ? "Clearing…" : "Clear cart"}
+                </button>
               </div>
               <aside className="summary cart-summary">
                 <p className="cart-summary-heading">Order total</p>

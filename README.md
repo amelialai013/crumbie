@@ -9,6 +9,14 @@ Production-oriented Next.js 16 storefront for Club Crumbie, a pickup-only cookie
 3. Run `npm run dev` and open `http://localhost:3000`.
 4. Forward Stripe test webhooks to `http://localhost:3000/api/stripe/webhook` and set the resulting signing secret.
 
+Use a Stripe sandbox for local development and a restricted API key with the minimum permissions needed to create Checkout Sessions. Store the key in `.env.local` as `STRIPE_SECRET_KEY`; never commit or paste it into chat. The cart redirects customers to Stripe-hosted Checkout for payment. Subscribe the webhook endpoint to `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.async_payment_failed`.
+
+The datastore accepts either `KV_REST_API_URL` and `KV_REST_API_TOKEN`, or Stripe Projects Upstash credentials named `UPSTASH_REST_URL` and `UPSTASH_REST_TOKEN`. Run `stripe projects env --pull` after provisioning or rotating the Upstash resource; the generated `.env` remains uncommitted.
+
+Resend sends an internal notification after a Contact Us enquiry is saved and sends the customer a confirmation after a paid order is recorded by the Stripe webhook. Configure `RESEND_API_KEY` and `CRUMBIE_NOTIFICATION_EMAIL` through Stripe Projects. Mail sends from `Club Crumbie <hello@clubcrumbie.com>` by default; `RESEND_FROM_EMAIL` can override that identity. The notification inbox can also be changed in Admin > Settings, and subjects and body copy can be changed in Admin > Email templates. Email delivery failures are logged without discarding saved enquiries, paid orders or webhook idempotency records.
+
+Stripe Tax is off by default. Before setting `STRIPE_AUTOMATIC_TAX_ENABLED=true`, configure the sandbox head-office address, confirm an active registration shows as **Collecting**, select the correct baked-goods product tax code with a tax advisor, and choose whether catalogue prices are `inclusive` or `exclusive`. Set those choices in `STRIPE_PRODUCT_TAX_CODE` and `STRIPE_TAX_BEHAVIOR`, then repeat and verify the setup in live mode before launch.
+
 Without external credentials the public catalogue builds normally. Checkout, custom-enquiry persistence and admin data intentionally return configuration errors instead of touching another business's resources.
 
 ## Routes

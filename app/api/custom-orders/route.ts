@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { sendEnquiryNotification } from "@/lib/email";
 import { saveRecord } from "@/lib/store";
 
 const schema = z.object({
@@ -25,6 +26,12 @@ export async function POST(req: Request) {
 		await saveRecord("custom-order", record);
 	} catch {
 		return NextResponse.json({ error: "Service is not configured." }, { status: 503 });
+	}
+
+	try {
+		await sendEnquiryNotification(record);
+	} catch (error) {
+		console.error("Unable to send enquiry notification", error);
 	}
 
 	return NextResponse.json({ ok: true }, { status: 201 });

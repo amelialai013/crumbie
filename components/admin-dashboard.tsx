@@ -401,11 +401,20 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!menuOpen) return;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === "Escape") setMenuOpen(false);
     }
     document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
   }, [menuOpen]);
 
   async function login(event: React.FormEvent) {
@@ -732,22 +741,29 @@ export default function AdminDashboard() {
           <span>Section</span>
         </span>
         <span className="admin-menu-toggle-icon" aria-hidden="true">
-          {menuOpen ? "×" : "+"}
+          +
         </span>
       </button>
-      {menuOpen && (
-        <button
-          className="admin-nav-backdrop"
-          type="button"
-          aria-label="Close sections menu"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
+      <button
+        className={`admin-nav-backdrop${menuOpen ? " is-open" : ""}`}
+        type="button"
+        aria-label="Close sections menu"
+        tabIndex={menuOpen ? 0 : -1}
+        onClick={() => setMenuOpen(false)}
+      />
       <aside
         id="admin-navigation"
         className={`admin-nav${menuOpen ? " is-open" : ""}`}
         aria-label="Admin sections"
       >
+        <button
+          className="admin-menu-close"
+          type="button"
+          aria-label="Close sections menu"
+          onClick={() => setMenuOpen(false)}
+        >
+          <span aria-hidden="true">×</span>
+        </button>
         {adminTabs.map((item) => (
           <button
             key={item}

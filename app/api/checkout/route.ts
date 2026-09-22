@@ -13,6 +13,25 @@ const lineSchema = z.object({
 });
 const schema = z.object({ lines: z.array(lineSchema).min(1).max(30) });
 
+type TaxConfig =
+	| { enabled: false }
+	| { enabled: true; productTaxCode: string; taxBehavior: "inclusive" | "exclusive" };
+
+function getTaxConfig(): TaxConfig | null {
+	if (process.env.STRIPE_AUTOMATIC_TAX_ENABLED !== "true") return { enabled: false };
+
+	const productTaxCode = process.env.STRIPE_PRODUCT_TAX_CODE?.trim();
+	const taxBehavior = process.env.STRIPE_TAX_BEHAVIOR;
+	if (!productTaxCode?.match(/^txcd_\d+$/) || (taxBehavior !== "inclusive" && taxBehavior !== "exclusive")) return null;
+
+	return { enabled: true, productTaxCode, taxBehavior };
+}
+
+const integrationIdentifier = (() => {
+	const suffix = Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) => String.fromCharCode(97 + (byte % 26))).join("");
+	return `clubcrumbie_${suffix}`;
+})();
+
 export async function POST(req: Request) {
 	const products = await getProducts();
 	const parsed = schema.safeParse(await req.json().catch(() => null));
@@ -44,6 +63,10 @@ export async function POST(req: Request) {
 	if (!process.env.STRIPE_SECRET_KEY) {
 		return NextResponse.json({ error: "Online checkout is temporarily unavailable. Please try again later." }, { status: 503 });
 	}
+	const tax = getTaxConfig();
+	if (!tax) {
+		return NextResponse.json({ error: "Online checkout tax settings are incomplete." }, { status: 503 });
+	}
 
 	const pendingId = crypto.randomUUID();
 	try {
@@ -53,14 +76,18 @@ export async function POST(req: Request) {
 		const session = await stripe.checkout.sessions.create({
 			mode: "payment",
 			currency: "aud",
+			integration_identifier: integrationIdentifier,
+			automatic_tax: { enabled: tax.enabled },
 			line_items: clean.map((line) => ({
 				quantity: line.quantity,
 				price_data: {
 					currency: "aud",
 					unit_amount: Math.round(line.unitPrice * 100),
+					tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
 					product_data: {
 						name: `${line.productName} — ${line.variantLabel}`,
 						description: `Pickup ${line.pickupDate}, ${line.pickupWindow}`,
+						tax_code: tax.enabled ? tax.productTaxCode : undefined,
 					},
 				},
 			})),
@@ -70,9 +97,9 @@ export async function POST(req: Request) {
 			cancel_url: `${origin}/cart`,
 			metadata: { pendingId },
 			payment_intent_data: { metadata: { pendingId } },
-		});
+		}, { idempotencyKey: pendingId });
 
-		if (!session.url) throw new Error("Stripe checkout URL missing");
+		if (!session.url) throw new Error("Stripe Checkout URL missing");
 		return NextResponse.json({ url: session.url });
 	} catch {
 		return NextResponse.json({ error: "Online checkout is temporarily unavailable. Please try again later." }, { status: 503 });

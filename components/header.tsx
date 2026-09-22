@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import pictureLogoWhite from "@/brand/logo/crumbie-picturelogo-white.png";
+import pictureLogoWhite from "@/brand/logo/crumbie-picturelogo-white.svg";
 import { useCart } from "./cart-context";
 
 const links = [
@@ -95,7 +95,7 @@ export default function Header() {
     <header className={`site-header${pathname === "/" ? " home-header" : ""}${scrolled ? " scrolled" : ""}${menuVisible ? " menu-open" : ""}`}>
       <div className="nav-shell">
         <Link href="/" className="brand" onClick={handleHomeClick} aria-label="Club Crumbie home">
-          <Image src={pictureLogoWhite} alt="Club Crumbie" priority quality={100} sizes="52px" />
+          <Image src={pictureLogoWhite} alt="Club Crumbie" priority unoptimized sizes="52px" />
         </Link>
         <nav id="primary-navigation" className={menuVisible ? "nav-links open" : "nav-links"} aria-label="Primary navigation" aria-hidden={!menuVisible ? undefined : false}>
           {links.map(([label, href]) => (

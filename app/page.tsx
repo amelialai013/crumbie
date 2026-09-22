@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProducts } from "@/lib/catalog-store";
 import whiteLogo from "@/brand/logo/new-logo/text-white.png";
+import whiteVerticalLogo from "@/assets/other/logo/white-vertical-logo-mobile.png";
 import HeroMedia from "@/components/hero-media";
 import ProductCookieImage from "@/components/product-cookie-image";
 import SectionReveal from "@/components/section-reveal";
@@ -14,7 +15,8 @@ export default async function Home() {
         <HeroMedia />
         <div className="hero-content">
           <h1 className="hero-logo-heading">
-            <Image className="hero-logo" src={whiteLogo} alt="Club Crumbie" priority quality={100} sizes="(max-width: 640px) 88vw, 640px" />
+            <Image className="hero-logo hero-logo-desktop" src={whiteLogo} alt="Club Crumbie" priority quality={100} sizes="640px" />
+            <Image className="hero-logo hero-logo-mobile" src={whiteVerticalLogo} alt="Club Crumbie" priority unoptimized />
           </h1>
           <div className="actions">
             <Link className="btn btn-dark btn-arrow" href="/cookies">
