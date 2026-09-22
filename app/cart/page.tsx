@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import signatureCookie from "@/assets/cookies/choc-chip-cookie/turntable-clean/frame-01.png";
+import signatureCookie from "@/assets/cookies/choc-chip-cookie/turntable-premium/frame-01.png";
 import biscoffCookie from "@/assets/cookies/biscoff-white-chocolate-cookie/turntable-clean/frame-03.png";
 import { useCart } from "@/components/cart-context";
 import QuantityControl from "@/components/quantity-control";
@@ -117,7 +117,8 @@ export default function Cart() {
                     alt={line.productName}
                     width={160}
                     height={160}
-                    sizes="(max-width: 640px) 96px, 160px"
+                    quality={100}
+                    sizes="160px"
                   />
                 </Link>
                 <div className="cart-row-details">
