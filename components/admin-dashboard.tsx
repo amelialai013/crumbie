@@ -340,6 +340,14 @@ function mergeContent(
   return { fields: { ...emptyContent(moduleName).fields, ...fields } };
 }
 
+function formatPickupDate(date: string) {
+  return new Date(`${date}T12:00:00`).toLocaleDateString("en-AU", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<Data | null>(null);
@@ -356,6 +364,9 @@ export default function AdminDashboard() {
   const [newPickupWindow, setNewPickupWindow] = useState("10:00am–12:00pm");
   const [pickupDateStatus, setPickupDateStatus] = useState("");
   const [adminNotice, setAdminNotice] = useState("");
+  const [pickupDatePendingRemoval, setPickupDatePendingRemoval] =
+    useState<PickupDate | null>(null);
+  const [removingPickupDateId, setRemovingPickupDateId] = useState("");
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
   const [productStatus, setProductStatus] = useState("");
@@ -424,6 +435,25 @@ export default function AdminDashboard() {
     return () => window.clearTimeout(timeout);
   }, [adminNotice]);
 
+  useEffect(() => {
+    if (!pickupDatePendingRemoval) return;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setPickupDatePendingRemoval(null);
+    }
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [pickupDatePendingRemoval]);
+
   async function login(event: React.FormEvent) {
     event.preventDefault();
     const response = await fetch("/api/admin/login", {
@@ -480,13 +510,17 @@ export default function AdminDashboard() {
     }
   }
 
-  async function removePickupDate(id: string) {
+  async function removePickupDate() {
+    if (!pickupDatePendingRemoval) return;
+    const { id } = pickupDatePendingRemoval;
+    setRemovingPickupDateId(id);
     setPickupDateStatus("Removing...");
     const response = await fetch(
       `/api/admin/pickup-dates?id=${encodeURIComponent(id)}`,
       { method: "DELETE" },
     );
     if (!response.ok) {
+      setRemovingPickupDateId("");
       setPickupDateStatus(
         (await response.json().catch(() => null))?.error ||
           "Unable to remove pickup date",
@@ -496,7 +530,10 @@ export default function AdminDashboard() {
     setManagedPickupDates((current) =>
       current.filter((date) => date.id !== id),
     );
-    setPickupDateStatus("Pickup date removed");
+    setRemovingPickupDateId("");
+    setPickupDatePendingRemoval(null);
+    setPickupDateStatus("");
+    setAdminNotice("Pickup date removed");
   }
 
   async function addProduct(event: React.FormEvent<HTMLFormElement>) {
@@ -797,6 +834,53 @@ export default function AdminDashboard() {
         {adminNotice && (
           <div className="admin-toast" role="status" aria-live="polite">
             {adminNotice}
+          </div>
+        )}
+        {pickupDatePendingRemoval && (
+          <div
+            className="admin-confirm-overlay"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget)
+                setPickupDatePendingRemoval(null);
+            }}
+          >
+            <div
+              aria-labelledby="pickup-remove-title"
+              aria-describedby="pickup-remove-copy"
+              aria-modal="true"
+              className="admin-confirm-modal"
+              role="dialog"
+            >
+              <div className="admin-confirm-kicker">Confirm removal</div>
+              <h2 id="pickup-remove-title">Remove this pickup date?</h2>
+              <p id="pickup-remove-copy">
+                This will remove{" "}
+                <strong>
+                  {formatPickupDate(pickupDatePendingRemoval.date)}
+                </strong>{" "}
+                from the checkout calendar. Customers will not be able to choose
+                this pickup window once it is removed.
+              </p>
+              <div className="admin-confirm-actions">
+                <button
+                  className="btn btn-light"
+                  type="button"
+                  onClick={() => setPickupDatePendingRemoval(null)}
+                  disabled={Boolean(removingPickupDateId)}
+                >
+                  Keep date
+                </button>
+                <button
+                  className="btn btn-dark admin-confirm-danger"
+                  type="button"
+                  onClick={() => void removePickupDate()}
+                  disabled={Boolean(removingPickupDateId)}
+                >
+                  {removingPickupDateId ? "Removing..." : "Yes, remove it"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
         <div className="admin-section-heading">
@@ -1246,13 +1330,7 @@ export default function AdminDashboard() {
                     >
                       <div>
                         <h2>
-                          {new Date(
-                            `${pickupDate.date}T12:00:00`,
-                          ).toLocaleDateString("en-AU", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "long",
-                          })}
+                          {formatPickupDate(pickupDate.date)}
                         </h2>
                         <p>{pickupDate.window}</p>
                       </div>
@@ -1265,7 +1343,9 @@ export default function AdminDashboard() {
                         <button
                           className="text-button"
                           type="button"
-                          onClick={() => void removePickupDate(pickupDate.id)}
+                          onClick={() =>
+                            setPickupDatePendingRemoval(pickupDate)
+                          }
                         >
                           Remove
                         </button>

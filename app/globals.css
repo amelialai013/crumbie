@@ -269,6 +269,58 @@
   transform: translateX(-50%);
   backdrop-filter: blur(16px);
 }
+.admin-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, .68);
+}
+.admin-confirm-modal {
+  width: min(480px, 100%);
+  padding: 30px;
+  border: 1px solid rgba(247, 247, 245, .16);
+  border-radius: 26px;
+  background: #0d0d0d;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .48);
+  color: #f7f7f5;
+}
+.admin-confirm-kicker {
+  margin-bottom: 14px;
+  color: #c9ad94;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.admin-confirm-modal h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.55rem);
+  font-weight: 400;
+}
+.admin-confirm-modal p {
+  margin: 18px 0 0;
+  color: rgba(247, 247, 245, .72);
+  line-height: 1.7;
+}
+.admin-confirm-modal strong {
+  color: #f7f7f5;
+  font-weight: 700;
+}
+.admin-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.admin-confirm-actions .btn {
+  flex: 1 1 180px;
+}
+.admin-confirm-danger {
+  border-color: #f7f7f5;
+}
 .admin-product-close {
   display: none;
 }
