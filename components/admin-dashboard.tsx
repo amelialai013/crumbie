@@ -357,6 +357,17 @@ function formatPickupDate(date: string) {
   });
 }
 
+function firstSaturdayOfNextMonth() {
+  const now = new Date();
+  const firstOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const dayOffset = (6 - firstOfNextMonth.getDay() + 7) % 7;
+  firstOfNextMonth.setDate(firstOfNextMonth.getDate() + dayOffset);
+  const year = firstOfNextMonth.getFullYear();
+  const month = String(firstOfNextMonth.getMonth() + 1).padStart(2, "0");
+  const day = String(firstOfNextMonth.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<Data | null>(null);
@@ -369,7 +380,9 @@ export default function AdminDashboard() {
   const [dashboardError, setDashboardError] = useState("");
   const [managedPickupDates, setManagedPickupDates] =
     useState<PickupDate[]>(catalogPickupDates);
-  const [newPickupDate, setNewPickupDate] = useState("");
+  const [newPickupDate, setNewPickupDate] = useState(() =>
+    firstSaturdayOfNextMonth(),
+  );
   const [newPickupWindow, setNewPickupWindow] = useState("10:00am–12:00pm");
   const [pickupDateStatus, setPickupDateStatus] = useState("");
   const [pickupFieldErrors, setPickupFieldErrors] = useState<
@@ -589,7 +602,7 @@ export default function AdminDashboard() {
         (left, right) => left.date.localeCompare(right.date),
       ),
     );
-    setNewPickupDate("");
+    setNewPickupDate(firstSaturdayOfNextMonth());
     setPickupDateStatus("");
     setPickupFieldErrors({});
     finishAdminAction("Pickup date successfully added");
@@ -1199,7 +1212,10 @@ export default function AdminDashboard() {
                   type="checkbox"
                   hidden
                   onChange={(event) => {
-                    if (event.target.checked) setPickupFieldErrors({});
+                    if (event.target.checked) {
+                      setPickupFieldErrors({});
+                      setNewPickupDate(firstSaturdayOfNextMonth());
+                    }
                   }}
                 />
                 <label
