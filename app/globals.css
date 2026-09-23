@@ -81,6 +81,11 @@
 .field input:focus,
 .field select:focus,
 .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field.has-error { border-color: #ff8f8f; }
+.field.has-error input,
+.field.has-error select,
+.field.has-error textarea { border-color: #ff8f8f; }
+.field.has-error label { color: #ff8f8f; }
 .prose { color: #c1bfbc; }
 .footer { background: #020202; }
 .footer-grid p,
@@ -293,6 +298,9 @@
     transform: rotate(360deg);
   }
 }
+.admin-toast-leaving {
+  animation: admin-toast-out .32s cubic-bezier(.4, 0, 1, 1) forwards;
+}
 @keyframes admin-toast-in {
   from {
     opacity: 0;
@@ -303,8 +311,21 @@
     transform: translate(-50%, 0);
   }
 }
+@keyframes admin-toast-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .admin-toast {
+    animation: none;
+  }
+  .admin-toast-leaving {
     animation: none;
   }
   .admin-toast-spinner {
@@ -1188,7 +1209,8 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   color: #f7f7f5;
 }
 .admin-generator-status {
-  color: #c9ad94 !important;
+  color: #ff8f8f !important;
+  font-size: .8rem;
 }
 .admin-reference-selection {
   display: grid;
