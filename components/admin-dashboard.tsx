@@ -142,7 +142,7 @@ const contentModules: Record<string, ContentModule> = {
   },
   about: {
     fields: [
-      { key: "pageTitle", label: "Heading", maxLength: 80 },
+      { key: "pageTitle", label: "Page heading", maxLength: 80 },
       { key: "storyHeading", label: "Heading", maxLength: 80 },
       {
         key: "storyCopy",
@@ -653,7 +653,7 @@ export default function AdminDashboard() {
     setEditingProductId(null);
     setProductImages([]);
     form.reset();
-    setProductStatus(wasEditing ? "Product saved" : "Product published");
+    setProductStatus("");
     setAdminNotice(wasEditing ? "Product saved" : "Product published");
     const productModalToggle = document.getElementById("product-modal-toggle");
     if (productModalToggle instanceof HTMLInputElement) {
@@ -704,7 +704,8 @@ export default function AdminDashboard() {
     setManagedProducts((current) =>
       current.filter((product) => product.id !== id),
     );
-    setProductStatus("Product removed");
+    setProductStatus("");
+    setAdminNotice("Product removed");
   }
 
   function adjustProductPrice(field: "price6" | "price12", amount: number) {
@@ -894,10 +895,13 @@ export default function AdminDashboard() {
         removedFields: content.removedFields,
       }),
     });
+    if (response.ok) {
+      setContentStatus("");
+      setAdminNotice(tab === "email templates" ? "Template saved" : "Saved");
+      return;
+    }
     setContentStatus(
-      response.ok
-        ? "Saved"
-        : (await response.json().catch(() => null))?.error || "Unable to save",
+      (await response.json().catch(() => null))?.error || "Unable to save",
     );
   }
 
