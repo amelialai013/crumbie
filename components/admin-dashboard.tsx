@@ -590,10 +590,11 @@ export default function AdminDashboard() {
     });
     if (!response.ok) {
       finishAdminAction();
-      setPickupDateStatus(
+      const message =
         (await response.json().catch(() => null))?.error ||
-          "Unable to save pickup date",
-      );
+        "Unable to save pickup date";
+      setPickupDateStatus("");
+      setPickupFieldErrors({ date: message });
       return;
     }
     const savedDate = await response.json();
@@ -764,6 +765,7 @@ export default function AdminDashboard() {
 
   function startNewProduct() {
     setEditingProductId(null);
+    setProductFieldErrors({});
     setNewProduct({ name: "", description: "", ingredients: defaultProductIngredients, allergens: defaultProductAllergens, price6: "", price12: "" });
     setProductImages([]);
     setReferenceImageFiles([]);
