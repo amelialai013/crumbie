@@ -390,6 +390,7 @@ export default function AdminDashboard() {
   const [imageDirection, setImageDirection] = useState("");
   const [generatedImageCount, setGeneratedImageCount] = useState(5);
   const [generationStatus, setGenerationStatus] = useState("");
+  const [descriptionStatus, setDescriptionStatus] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [emailTemplateKey, setEmailTemplateKey] = useState<string | null>(null);
 
@@ -769,6 +770,27 @@ export default function AdminDashboard() {
     setGenerationStatus(
       `${result.images.length} transparent PNGs generated. The side profile is the storefront cover; the remaining images rotate on the product page.`,
     );
+  }
+
+  async function generateProductDescription() {
+    if (!newProduct.name.trim()) {
+      setDescriptionStatus("Enter a product name before generating.");
+      return;
+    }
+
+    setDescriptionStatus("Generating description with OpenAI...");
+    const response = await fetch("/api/admin/products/generate-description", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newProduct.name.trim() }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result?.description) {
+      setDescriptionStatus(result?.error || "Unable to generate a description.");
+      return;
+    }
+    setNewProduct({ ...newProduct, description: result.description });
+    setDescriptionStatus("Description generated. Feel free to edit it before saving.");
   }
 
   const optionalPolicySections = [
@@ -1350,6 +1372,24 @@ export default function AdminDashboard() {
                     }
                     required
                   />
+                  <button
+                    type="button"
+                    className="btn btn-light"
+                    onClick={generateProductDescription}
+                    disabled={!config?.openai || descriptionStatus.startsWith("Generating")}
+                  >
+                    {descriptionStatus.startsWith("Generating")
+                      ? "Generating..."
+                      : "Generate description with OpenAI"}
+                  </button>
+                  {!config?.openai && (
+                    <p className="admin-generator-warning">
+                      Add <code>OPENAI_API_KEY</code> to enable generation.
+                    </p>
+                  )}
+                  {descriptionStatus && !descriptionStatus.startsWith("Generating") && (
+                    <p className="admin-generator-status">{descriptionStatus}</p>
+                  )}
                 </div>
                 <div className="field">
                   <label htmlFor="product-ingredients">Order information</label>

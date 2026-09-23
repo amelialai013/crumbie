@@ -50,3 +50,6 @@ public/uploads/
 .env
 .env.*
 !.env.example
+
+.impeccable/
+.playwright-mcp/
