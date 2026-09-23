@@ -477,6 +477,8 @@
   letter-spacing: 0;
 }
 .admin-editor .field {
+  position: relative;
+  z-index: 1;
   gap: 8px;
   margin-bottom: 20px;
   padding: 16px 18px 14px;
@@ -488,7 +490,8 @@
   margin-top: -1px;
 }
 .admin-editor .field:focus-within {
-  box-shadow: inset 0 0 0 1px var(--accent);
+  z-index: 2;
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 1px var(--accent);
 }
 .admin-editor .field input,
 .admin-editor .field textarea {
