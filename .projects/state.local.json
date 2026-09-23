@@ -3,7 +3,7 @@
   "project": {
     "catalog": "prod",
     "initializedAt": "2026-09-22T10:17:12.381Z",
-    "merchantDisplayName": null,
+    "merchantDisplayName": "Club Crumbie",
     "merchantId": "acct_1UIQ5MQgRotRf4R4",
     "projectId": "project_61VRoiVPXJZbfshUh16VRo2iFw8S22NaNcaNWf1Ue9Gq",
     "projectName": "crumbie"
@@ -26,13 +26,13 @@
       }
     },
     "upstash": {
-      "accountRequestId": "facctrq_61VRojdqfYqS2c4JP16VRo2iFw8S22NaNcaNWf1UeMQK",
+      "accountRequestId": "facctrq_61VS8MdV6CaXBxuTM16VRo2iFw8S22NaNcaNWf1UeFxY",
       "configuration": {},
-      "linkedAt": "2026-09-22T10:18:22.522Z",
+      "linkedAt": "2026-09-23T07:15:56.234Z",
       "providerId": "prvdr_61UVa3kQyvSOEnWgd5Naa",
       "providerName": "Upstash",
       "redirectUrl": null,
-      "requestedAt": "2026-09-22T10:18:22.522Z",
+      "requestedAt": "2026-09-23T07:15:56.234Z",
       "status": "complete"
     }
   },
