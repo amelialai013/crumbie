@@ -14,6 +14,14 @@ export async function getProducts(): Promise<Product[]> {
 	return Array.from(products.values()).map((product) => ({
 		...product,
 		slug: productSlugFromName(product.name),
+		imageMode:
+		  product.imageMode ||
+		  (product.images.some(
+		    (image) =>
+		      image.startsWith("/uploads/") || !image.includes("images.unsplash.com"),
+		  )
+		    ? "gallery"
+		    : undefined),
 	}));
 }
 

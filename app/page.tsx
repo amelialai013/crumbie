@@ -70,6 +70,7 @@ export default async function Home() {
               <Link className="product-card" href={`/cookies/${product.slug}`} key={product.id}>
                 <div className="relative product-card-render">
                   <ProductCookieImage
+                    image={product.imageMode === "gallery" ? product.images[0] : undefined}
                     name={product.name}
                     variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
                   />

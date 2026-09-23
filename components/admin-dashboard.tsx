@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import {
   defaultProductAllergens,
   defaultProductIngredients,
@@ -47,6 +48,7 @@ type Config = {
   store: boolean;
   stripe: boolean;
   resend: boolean;
+  openai: boolean;
   r2: boolean;
   session: boolean;
 };
@@ -347,13 +349,7 @@ function formatPickupDate(date: string) {
   });
 }
 
-function formatFileSize(size: number) {
-  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export default function AdminDashboard() {
-  const productImageInputRef = useRef<HTMLInputElement | null>(null);
   const [password, setPassword] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -378,6 +374,7 @@ export default function AdminDashboard() {
   const [removingPickupDateId, setRemovingPickupDateId] = useState("");
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [productStatus, setProductStatus] = useState("");
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -387,7 +384,12 @@ export default function AdminDashboard() {
     price6: "",
     price12: "",
   });
-  const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [referenceImageFiles, setReferenceImageFiles] = useState<File[]>([]);
+  const [referenceDropActive, setReferenceDropActive] = useState(false);
+  const [imageDirection, setImageDirection] = useState("");
+  const [generatedImageCount, setGeneratedImageCount] = useState(4);
+  const [generationStatus, setGenerationStatus] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [emailTemplateKey, setEmailTemplateKey] = useState<string | null>(null);
 
@@ -402,19 +404,41 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    void fetch("/api/admin/dashboard").then(async (response) => {
-      if (response.ok) {
-        setData(await response.json());
-        const configResponse = await fetch("/api/admin/config");
-        if (configResponse.ok) setConfig(await configResponse.json());
-        const pickupDatesResponse = await fetch("/api/admin/pickup-dates");
-        if (pickupDatesResponse.ok)
-          setManagedPickupDates(await pickupDatesResponse.json());
-        const productsResponse = await fetch("/api/admin/products");
-        if (productsResponse.ok)
-          setManagedProducts(await productsResponse.json());
+    async function loadAdminResources() {
+      const [
+        dashboardResult,
+        configResult,
+        pickupDatesResult,
+        productsResult,
+      ] = await Promise.allSettled([
+        fetch("/api/admin/dashboard"),
+        fetch("/api/admin/config"),
+        fetch("/api/admin/pickup-dates"),
+        fetch("/api/admin/products"),
+      ]);
+
+      if (
+        dashboardResult.status === "fulfilled" &&
+        dashboardResult.value.ok
+      ) {
+        setData(await dashboardResult.value.json());
       }
-    });
+      if (configResult.status === "fulfilled" && configResult.value.ok) {
+        setConfig(await configResult.value.json());
+      }
+      if (
+        pickupDatesResult.status === "fulfilled" &&
+        pickupDatesResult.value.ok
+      ) {
+        setManagedPickupDates(await pickupDatesResult.value.json());
+      }
+      if (productsResult.status === "fulfilled" && productsResult.value.ok) {
+        setManagedProducts(await productsResult.value.json());
+      }
+      setProductsLoaded(true);
+    }
+
+    void loadAdminResources();
   }, []);
 
   useEffect(() => {
@@ -571,8 +595,10 @@ export default function AdminDashboard() {
 
   async function addProduct(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setProductStatus(editingProductId ? "Saving..." : "Publishing...");
-    const formData = new FormData(event.currentTarget);
+    const wasEditing = Boolean(editingProductId);
+    setProductStatus(wasEditing ? "Saving..." : "Publishing...");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const slug = productSlugFromName(newProduct.name);
     const product = {
       id: editingProductId || `product-${slug}`,
@@ -581,6 +607,8 @@ export default function AdminDashboard() {
       description: newProduct.description.trim(),
       ingredients: newProduct.ingredients.trim() || defaultProductIngredients,
       allergens: newProduct.allergens.trim() || defaultProductAllergens,
+      images: productImages,
+      imageMode: productImages.length > 0 ? "gallery" : undefined,
       variants: [
         {
           id: `${slug}-6`,
@@ -622,9 +650,15 @@ export default function AdminDashboard() {
       price12: "",
     });
     setEditingProductId(null);
-    setProductImageFiles([]);
-    event.currentTarget.reset();
-    setProductStatus(editingProductId ? "Product saved" : "Product published");
+    setProductImages([]);
+    form.reset();
+    setProductStatus(wasEditing ? "Product saved" : "Product published");
+    setAdminNotice(wasEditing ? "Product saved" : "Product published");
+    const productModalToggle = document.getElementById("product-modal-toggle");
+    if (productModalToggle instanceof HTMLInputElement) {
+      productModalToggle.checked = false;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
 
   function editProduct(product: Product) {
@@ -637,16 +671,20 @@ export default function AdminDashboard() {
       price6: String(product.variants.find((variant) => variant.quantity === 6)?.price || ""),
       price12: String(product.variants.find((variant) => variant.quantity === 12)?.price || ""),
     });
-    setProductImageFiles([]);
-    if (productImageInputRef.current) productImageInputRef.current.value = "";
+    setProductImages(product.images);
+    setReferenceImageFiles([]);
+    setImageDirection("");
+    setGenerationStatus("");
     (document.getElementById("product-modal-toggle") as HTMLInputElement).checked = true;
   }
 
   function startNewProduct() {
     setEditingProductId(null);
     setNewProduct({ name: "", description: "", ingredients: defaultProductIngredients, allergens: defaultProductAllergens, price6: "", price12: "" });
-    setProductImageFiles([]);
-    if (productImageInputRef.current) productImageInputRef.current.value = "";
+    setProductImages([]);
+    setReferenceImageFiles([]);
+    setImageDirection("");
+    setGenerationStatus("");
   }
 
   async function removeProduct(id: string) {
@@ -676,18 +714,60 @@ export default function AdminDashboard() {
     });
   }
 
-  function syncProductImageInput(files: File[]) {
-    if (productImageInputRef.current) {
-      const transfer = new DataTransfer();
-      files.forEach((file) => transfer.items.add(file));
-      productImageInputRef.current.files = transfer.files;
-    }
-    setProductImageFiles(files);
+  function removeProductImage(index: number) {
+    setProductImages((current) =>
+      current.filter((_, currentIndex) => currentIndex !== index),
+    );
   }
 
-  function removeSelectedProductImage(indexToRemove: number) {
-    syncProductImageInput(
-      productImageFiles.filter((_, index) => index !== indexToRemove),
+  function setReferenceImages(files: File[]) {
+    const images = files.filter((file) => file.type.startsWith("image/"));
+    const selected = images.slice(0, 5);
+    setReferenceImageFiles(selected);
+    if (files.length > 5) {
+      setGenerationStatus("Use up to five reference photos.");
+    } else if (files.length !== images.length) {
+      setGenerationStatus("Only image files can be used as reference photos.");
+    } else {
+      setGenerationStatus("");
+    }
+  }
+
+  function removeReferenceImage(index: number) {
+    setReferenceImageFiles((current) =>
+      current.filter((_, currentIndex) => currentIndex !== index),
+    );
+    setGenerationStatus("");
+  }
+
+  async function generateProductImage() {
+    if (!newProduct.name.trim()) {
+      setGenerationStatus("Enter a product name before generating.");
+      return;
+    }
+    if (!referenceImageFiles.length) {
+      setGenerationStatus("Add at least one reference photo before generating.");
+      return;
+    }
+
+    setGenerationStatus("Generating images with OpenAI...");
+    const formData = new FormData();
+    formData.set("name", newProduct.name.trim());
+    formData.set("direction", imageDirection.trim());
+    formData.set("count", String(generatedImageCount));
+    referenceImageFiles.forEach((file) => formData.append("references", file));
+    const response = await fetch("/api/admin/product-images/generate", {
+      method: "POST",
+      body: formData,
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !Array.isArray(result?.images)) {
+      setGenerationStatus(result?.error || "Unable to generate an image.");
+      return;
+    }
+    setProductImages(result.images);
+    setGenerationStatus(
+      `${result.images.length} transparent PNGs generated. The side profile is the storefront cover; the remaining images rotate on the product page.`,
     );
   }
 
@@ -1301,36 +1381,69 @@ export default function AdminDashboard() {
                     required
                   />
                 </div>
-                <div className="field">
-                  <label htmlFor="product-images">Product images</label>
-                  <input
-                    id="product-images"
-                    ref={productImageInputRef}
-                    name="images"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    required={!editingProductId}
-                    onChange={(event) =>
-                      setProductImageFiles(
-                        Array.from(event.target.files ?? []),
-                      )
-                    }
-                  />
-                  {productImageFiles.length > 0 && (
-                    <ul className="admin-selected-files">
-                      {productImageFiles.map((file, index) => (
-                        <li
-                          key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
-                        >
-                          <span>
-                            {file.name}
-                            <small>{formatFileSize(file.size)}</small>
-                          </span>
+                <fieldset className="admin-image-generator">
+                  <legend>Product imagery</legend>
+                  <p>
+                    Add up to five reference photos and generate the complete
+                    storefront image set. OpenAI automatically creates a
+                    side-profile image, like the Signature Crumbie, as the
+                    storefront cover; the remaining images become the
+                    rotatable product-page view. Generating a new set replaces
+                    the current product imagery.
+                  </p>
+                  {!config?.openai && (
+                    <p className="admin-generator-warning">
+                      Add <code>OPENAI_API_KEY</code> to enable generation.
+                    </p>
+                  )}
+                  <label
+                    className={`admin-reference-dropzone${referenceDropActive ? " is-active" : ""}`}
+                    htmlFor="product-image-references"
+                    tabIndex={0}
+                    onDragEnter={(event) => {
+                      event.preventDefault();
+                      setReferenceDropActive(true);
+                    }}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDragLeave={(event) => {
+                      if (event.currentTarget === event.target) {
+                        setReferenceDropActive(false);
+                      }
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      setReferenceDropActive(false);
+                      setReferenceImages(Array.from(event.dataTransfer.files));
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        document.getElementById("product-image-references")?.click();
+                      }
+                    }}
+                  >
+                    <span>Drop reference photos here</span>
+                    <small>or browse files · up to 5 images · 10MB each</small>
+                    <input
+                      id="product-image-references"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(event) =>
+                        setReferenceImages(Array.from(event.target.files ?? []))
+                      }
+                    />
+                  </label>
+                  {referenceImageFiles.length > 0 && (
+                    <ul className="admin-reference-selection" aria-label="Selected reference photos">
+                      {referenceImageFiles.map((file, index) => (
+                        <li key={`${file.name}-${file.lastModified}`}>
+                          <span>{file.name}</span>
                           <button
                             className="text-button"
                             type="button"
-                            onClick={() => removeSelectedProductImage(index)}
+                            onClick={() => removeReferenceImage(index)}
+                            aria-label={`Remove ${file.name}`}
                           >
                             Remove
                           </button>
@@ -1338,7 +1451,72 @@ export default function AdminDashboard() {
                       ))}
                     </ul>
                   )}
-                </div>
+                  <label htmlFor="product-image-count">Images to generate</label>
+                  <select
+                    id="product-image-count"
+                    value={generatedImageCount}
+                    onChange={(event) => setGeneratedImageCount(Number(event.target.value))}
+                  >
+                    <option value={1}>1 image</option>
+                    <option value={2}>2 images</option>
+                    <option value={3}>3 images</option>
+                    <option value={4}>4 images (recommended)</option>
+                  </select>
+                  <label htmlFor="product-image-direction">
+                    Additional creative direction <span>(optional)</span>
+                  </label>
+                  <textarea
+                    id="product-image-direction"
+                    rows={3}
+                    maxLength={500}
+                    value={imageDirection}
+                    onChange={(event) => setImageDirection(event.target.value)}
+                    placeholder="For example: show a broken edge and generous chocolate chunks."
+                  />
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    disabled={!config?.openai || generationStatus.startsWith("Generating")}
+                    onClick={generateProductImage}
+                  >
+                    {generationStatus.startsWith("Generating")
+                      ? "Generating..."
+                      : `Generate ${generatedImageCount} image${generatedImageCount === 1 ? "" : "s"} with OpenAI`}
+                  </button>
+                  {generationStatus && (
+                    <p className="admin-generator-status" role="status">
+                      {generationStatus}
+                    </p>
+                  )}
+                  {productImages.length > 0 && (
+                    <ol className="admin-product-images">
+                      {productImages.map((image, index) => (
+                        <li key={image}>
+                          <Image
+                            src={image}
+                            alt=""
+                            width={56}
+                            height={44}
+                            unoptimized={!image.includes("images.unsplash.com")}
+                          />
+                          <div>
+                            <strong>{index === 0 ? "Automatic storefront cover" : `Rotation frame ${index}`}</strong>
+                            <span>{image.split("/").pop()}</span>
+                          </div>
+                          <div className="admin-product-image-actions">
+                            <button
+                              className="text-button"
+                              type="button"
+                              onClick={() => removeProductImage(index)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </fieldset>
                 </div>
               </div>
               <div className="admin-product-form-actions">
@@ -1346,6 +1524,11 @@ export default function AdminDashboard() {
                 {productStatus && <span>{productStatus}</span>}
               </div>
             </form>
+            {!productsLoaded ? (
+              <p className="admin-products-loading" role="status">
+                Loading products...
+              </p>
+            ) : (
             <div className="admin-record-grid">
               {managedProducts.map((product) => (
                 <article className="admin-record" key={product.id}>
@@ -1377,6 +1560,7 @@ export default function AdminDashboard() {
                 </article>
               ))}
             </div>
+            )}
           </>
         )}
         {tab === "pickup dates" && (

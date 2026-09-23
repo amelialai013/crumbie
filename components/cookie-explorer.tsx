@@ -23,11 +23,25 @@ import biscoff08 from "@/assets/cookies/biscoff-white-chocolate-cookie/turntable
 const signatureFrames: StaticImageData[] = [frame01, frame02, frame03, frame04, frame05, frame06, frame07, frame08];
 const biscoffFrames: StaticImageData[] = [biscoff01, biscoff02, biscoff03, biscoff04, biscoff05, biscoff06, biscoff07, biscoff08];
 
-export default function CookieExplorer({ name, variant = "signature" }: { name: string; variant?: "signature" | "biscoff" }) {
-  const frames = variant === "biscoff" ? biscoffFrames : signatureFrames;
-  const initialRotation = variant === "biscoff" ? 2 : 0;
+export default function CookieExplorer({
+  name,
+  variant = "signature",
+  images,
+  initialFrame,
+}: {
+  name: string;
+  variant?: "signature" | "biscoff";
+  images?: string[];
+  initialFrame?: number;
+}) {
+  const frames: Array<StaticImageData | string> = images?.length
+    ? images
+    : variant === "biscoff"
+      ? biscoffFrames
+      : signatureFrames;
+  const initialRotation = initialFrame ?? (variant === "biscoff" ? 2 : 0);
   const wrap = (value: number) => (value % frames.length + frames.length) % frames.length;
-  const [rotation, setRotation] = useState(initialRotation);
+  const [rotation, setRotation] = useState(wrap(initialRotation));
   const [dragging, setDragging] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [tilt, setTilt] = useState(0);
@@ -77,12 +91,14 @@ export default function CookieExplorer({ name, variant = "signature" }: { name: 
           const opacity = Math.max(0, 1 - distance);
           return (
             <Image
-              key={frame.src}
+              key={typeof frame === "string" ? frame : frame.src}
               src={frame}
               alt=""
+              className={typeof frame === "string" && /\.jpe?g(?:$|\?)/i.test(frame) ? "cookie-explorer-legacy-jpeg" : undefined}
               fill
               priority
               draggable={false}
+              unoptimized={typeof frame === "string" && !frame.includes("images.unsplash.com")}
               sizes="(max-width: 900px) 100vw, 46vw"
               style={{ opacity }}
             />

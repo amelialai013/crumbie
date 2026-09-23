@@ -1,5 +1,5 @@
 export type PickupDate = { id: string; date: string; window: string; soldOut?: boolean };
-export type Product = { id:string; slug:string; name:string; description:string; ingredients:string; allergens:string; images:string[]; variants:{id:string;label:string;quantity:number;price:number}[]; soldOut?:boolean; soldOutDates?:string[] };
+export type Product = { id:string; slug:string; name:string; description:string; ingredients:string; allergens:string; images:string[]; imageMode?: "gallery"; variants:{id:string;label:string;quantity:number;price:number}[]; soldOut?:boolean; soldOutDates?:string[] };
 export function productSlugFromName(name: string) {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
