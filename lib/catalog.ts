@@ -6,6 +6,7 @@ export const pickupDates: PickupDate[] = [
   { id:"pickup-1", date:"2026-09-12", window:"10:00am–12:00pm" },
   { id:"pickup-2", date:"2026-09-19", window:"10:00am–12:00pm" },
   { id:"pickup-3", date:"2026-09-26", window:"10:00am–12:00pm" },
+  { id:"pickup-2027-01-01", date:"2027-01-01", window:"10:00am–12:00pm" },
 ];
 export const products: Product[] = [
   { id:"product-signature", slug:"signature-box", name:"Signature Crumbie", description:"A thick chocolate chip cookie with crisp, golden edges and a soft, tender centre, packed with generous chunks of rich chocolate in every bite.", ingredients:defaultProductIngredients, allergens:defaultProductAllergens, images:["https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=1400&q=88","https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1400&q=88"], variants:[{id:"signature-6",label:"Box of 6",quantity:6,price:30},{id:"signature-12",label:"Box of 12",quantity:12,price:55}] },
