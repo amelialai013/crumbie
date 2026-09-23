@@ -365,6 +365,7 @@ export default function AdminDashboard() {
   const [newPickupWindow, setNewPickupWindow] = useState("10:00am–12:00pm");
   const [pickupDateStatus, setPickupDateStatus] = useState("");
   const [adminNotice, setAdminNotice] = useState("");
+  const [adminBusyMessage, setAdminBusyMessage] = useState("");
   const [pickupDatePendingRemoval, setPickupDatePendingRemoval] =
     useState<PickupDate | null>(null);
   const [blockedPickupDateRemoval, setBlockedPickupDateRemoval] = useState<{
@@ -470,6 +471,19 @@ export default function AdminDashboard() {
     return () => window.clearTimeout(timeout);
   }, [adminNotice]);
 
+  function beginAdminAction(busyMessage: string) {
+    setAdminNotice("");
+    setAdminBusyMessage(busyMessage);
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }
+
+  function finishAdminAction(successMessage?: string) {
+    setAdminBusyMessage("");
+    if (!successMessage) return;
+    setAdminNotice(successMessage);
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }
+
   useEffect(() => {
     if (!pickupDatePendingRemoval && !blockedPickupDateRemoval) return;
     const previousHtmlOverflow = document.documentElement.style.overflow;
@@ -521,12 +535,14 @@ export default function AdminDashboard() {
   async function addPickupDate(event: React.FormEvent) {
     event.preventDefault();
     setPickupDateStatus("Saving...");
+    beginAdminAction("Adding pickup date…");
     const response = await fetch("/api/admin/pickup-dates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ date: newPickupDate, window: newPickupWindow }),
     });
     if (!response.ok) {
+      finishAdminAction();
       setPickupDateStatus(
         (await response.json().catch(() => null))?.error ||
           "Unable to save pickup date",
@@ -541,7 +557,7 @@ export default function AdminDashboard() {
     );
     setNewPickupDate("");
     setPickupDateStatus("");
-    setAdminNotice("Pickup date successfully added");
+    finishAdminAction("Pickup date successfully added");
     const pickupModalToggle = document.getElementById("pickup-modal-toggle");
     if (pickupModalToggle instanceof HTMLInputElement) {
       pickupModalToggle.checked = false;
@@ -553,12 +569,14 @@ export default function AdminDashboard() {
     const { id } = pickupDatePendingRemoval;
     setRemovingPickupDateId(id);
     setPickupDateStatus("Removing...");
+    beginAdminAction("Removing pickup date…");
     const response = await fetch(
       `/api/admin/pickup-dates?id=${encodeURIComponent(id)}`,
       { method: "DELETE" },
     );
     if (!response.ok) {
       setRemovingPickupDateId("");
+      finishAdminAction();
       setPickupDateStatus(
         (await response.json().catch(() => null))?.error ||
           "Unable to remove pickup date",
@@ -571,7 +589,7 @@ export default function AdminDashboard() {
     setRemovingPickupDateId("");
     setPickupDatePendingRemoval(null);
     setPickupDateStatus("");
-    setAdminNotice("Pickup date successfully removed");
+    finishAdminAction("Pickup date successfully removed");
   }
 
   function orderCountForPickupDate(pickupDate: PickupDate) {
@@ -598,6 +616,7 @@ export default function AdminDashboard() {
     event.preventDefault();
     const wasEditing = Boolean(editingProductId);
     setProductStatus(wasEditing ? "Saving..." : "Publishing...");
+    beginAdminAction(wasEditing ? "Saving product…" : "Publishing product…");
     const form = event.currentTarget;
     const formData = new FormData(form);
     const slug = productSlugFromName(newProduct.name);
@@ -631,6 +650,7 @@ export default function AdminDashboard() {
       body: formData,
     });
     if (!response.ok) {
+      finishAdminAction();
       setProductStatus(
         (await response.json().catch(() => null))?.error ||
           "Unable to publish product",
@@ -654,12 +674,11 @@ export default function AdminDashboard() {
     setProductImages([]);
     form.reset();
     setProductStatus("");
-    setAdminNotice(wasEditing ? "Product successfully saved" : "Product successfully published");
+    finishAdminAction(wasEditing ? "Product successfully saved" : "Product successfully published");
     const productModalToggle = document.getElementById("product-modal-toggle");
     if (productModalToggle instanceof HTMLInputElement) {
       productModalToggle.checked = false;
     }
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
 
   function editProduct(product: Product) {
@@ -690,11 +709,13 @@ export default function AdminDashboard() {
 
   async function removeProduct(id: string) {
     setProductStatus("Removing...");
+    beginAdminAction("Removing product…");
     const response = await fetch(
       `/api/admin/products?id=${encodeURIComponent(id)}`,
       { method: "DELETE" },
     );
     if (!response.ok) {
+      finishAdminAction();
       setProductStatus(
         (await response.json().catch(() => null))?.error ||
           "Unable to remove product",
@@ -705,7 +726,7 @@ export default function AdminDashboard() {
       current.filter((product) => product.id !== id),
     );
     setProductStatus("");
-    setAdminNotice("Product successfully removed");
+    finishAdminAction("Product successfully removed");
   }
 
   function adjustProductPrice(field: "price6" | "price12", amount: number) {
@@ -885,6 +906,9 @@ export default function AdminDashboard() {
       return;
     }
     setContentStatus("Saving...");
+    beginAdminAction(
+      tab === "email templates" ? "Saving template…" : "Saving changes…",
+    );
     const response = await fetch("/api/admin/content", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -897,9 +921,12 @@ export default function AdminDashboard() {
     });
     if (response.ok) {
       setContentStatus("");
-      setAdminNotice(tab === "email templates" ? "Template successfully saved" : "Changes successfully saved");
+      finishAdminAction(
+        tab === "email templates" ? "Template successfully saved" : "Changes successfully saved",
+      );
       return;
     }
+    finishAdminAction();
     setContentStatus(
       (await response.json().catch(() => null))?.error || "Unable to save",
     );
@@ -990,7 +1017,17 @@ export default function AdminDashboard() {
         </button>
       </aside>
       <section>
-        {adminNotice && (
+        {adminBusyMessage && (
+          <div
+            className="admin-toast admin-toast-loading"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="admin-toast-spinner" aria-hidden="true" />
+            <span>{adminBusyMessage}</span>
+          </div>
+        )}
+        {!adminBusyMessage && adminNotice && (
           <div className="admin-toast" role="status" aria-live="polite">
             <span>{adminNotice}</span>
             <button

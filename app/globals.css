@@ -272,6 +272,44 @@
   text-align: left;
   transform: translateX(-50%);
   backdrop-filter: blur(16px);
+  animation: admin-toast-in .32s cubic-bezier(.16, 1, .3, 1);
+}
+.admin-toast-loading {
+  justify-content: flex-start;
+  border-color: rgba(247, 247, 245, .2);
+  background: rgba(13, 13, 13, .92);
+}
+.admin-toast-spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(247, 247, 245, .28);
+  border-top-color: #f7f7f5;
+  animation: admin-toast-spin .7s linear infinite;
+}
+@keyframes admin-toast-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes admin-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-toast {
+    animation: none;
+  }
+  .admin-toast-spinner {
+    animation-duration: 1.4s;
+  }
 }
 .admin-toast span {
   min-width: 0;
