@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { z } from "zod";
-import { isDateClosed, pickupDates } from "@/lib/catalog";
-import { getProducts } from "@/lib/catalog-store";
+import { isDateClosed } from "@/lib/catalog";
+import { getProducts, getPickupDates } from "@/lib/catalog-store";
 import { setRecord } from "@/lib/store";
 
 const lineSchema = z.object({
@@ -33,7 +33,7 @@ const integrationIdentifier = (() => {
 })();
 
 export async function POST(req: Request) {
-	const products = await getProducts();
+	const [products, pickupDates] = await Promise.all([getProducts(), getPickupDates()]);
 	const parsed = schema.safeParse(await req.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: "Your cart is invalid." }, { status: 400 });
 
@@ -44,7 +44,12 @@ export async function POST(req: Request) {
 		const pickup = pickupDates.find((item) => item.id === line.pickupDateId);
 
 		if (!product || !variant || !pickup || product.soldOut || product.soldOutDates?.includes(pickup.id) || isDateClosed(pickup)) {
-			return NextResponse.json({ error: "An item or pickup date is no longer available." }, { status: 409 });
+			const error = !product || !variant || product.soldOut
+        ? "This product or box size is no longer available. Please remove it and choose another box."
+        : !pickup || product.soldOutDates?.includes(pickup.id) || pickup.soldOut
+          ? `${product.name}: this pickup is no longer available. Please remove it and choose another pickup date.`
+          : `${product.name}: orders for ${pickup.date} (${pickup.window}) have closed. Orders close 72 hours before pickup. Please remove this item and choose an available pickup date.`;
+      return NextResponse.json({ error }, { status: 409 });
 		}
 
 		clean.push({

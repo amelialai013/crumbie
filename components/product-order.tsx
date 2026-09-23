@@ -5,12 +5,12 @@ import { motionDuration } from "@/lib/motion";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { isDateClosed, pickupDates, type Product } from "@/lib/catalog";
+import { isDateClosed, type PickupDate, type Product } from "@/lib/catalog";
 import { useCart } from "./cart-context";
 import PremiumSelect from "./premium-select";
 import QuantityControl from "./quantity-control";
 
-export default function ProductOrder({ product }: { product: Product }) {
+export default function ProductOrder({ product, pickupDates }: { product: Product; pickupDates: PickupDate[] }) {
   const { add } = useCart();
   const available = pickupDates
     .filter((date) => !isDateClosed(date) && !product.soldOutDates?.includes(date.id))

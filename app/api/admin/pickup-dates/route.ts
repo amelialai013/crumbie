@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/session";
-import { pickupDates as catalogPickupDates, type PickupDate } from "@/lib/catalog";
-import { listRecords, saveRecord } from "@/lib/store";
+import { type PickupDate } from "@/lib/catalog";
+import { saveRecord } from "@/lib/store";
 
-type PickupDateRecord = PickupDate & { removed?: boolean };
+import { getPickupDates } from "@/lib/catalog-store";
 
 function validDate(value: unknown): value is string {
 	return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T12:00:00`).getTime());
@@ -11,10 +11,7 @@ function validDate(value: unknown): value is string {
 
 export async function GET() {
 	if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-	const stored = await listRecords<PickupDateRecord>("pickup-date");
-	const dates = new Map<string, PickupDateRecord>(catalogPickupDates.map((date) => [date.id, date]));
-	stored.forEach((date) => dates.set(date.id, date));
-	return NextResponse.json(Array.from(dates.values()).filter((date) => !date.removed && date.date).sort((left, right) => left.date.localeCompare(right.date)));
+	return NextResponse.json(await getPickupDates());
 }
 
 export async function DELETE(request: Request) {
