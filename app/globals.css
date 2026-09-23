@@ -251,6 +251,24 @@
   background: #f7f7f5;
   color: #070707;
 }
+.admin-toast {
+  position: fixed;
+  top: 96px;
+  left: 50%;
+  z-index: 90;
+  width: min(420px, calc(100vw - 40px));
+  padding: 16px 22px;
+  border: 1px solid rgba(201, 173, 148, .5);
+  border-radius: 999px;
+  background: rgba(13, 13, 13, .94);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .32);
+  color: #f7f7f5;
+  font-size: .92rem;
+  font-weight: 600;
+  text-align: center;
+  transform: translateX(-50%);
+  backdrop-filter: blur(16px);
+}
 .admin-product-close {
   display: none;
 }

@@ -355,6 +355,7 @@ export default function AdminDashboard() {
   const [newPickupDate, setNewPickupDate] = useState("");
   const [newPickupWindow, setNewPickupWindow] = useState("10:00am–12:00pm");
   const [pickupDateStatus, setPickupDateStatus] = useState("");
+  const [adminNotice, setAdminNotice] = useState("");
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
   const [productStatus, setProductStatus] = useState("");
@@ -417,6 +418,12 @@ export default function AdminDashboard() {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!adminNotice) return;
+    const timeout = window.setTimeout(() => setAdminNotice(""), 3600);
+    return () => window.clearTimeout(timeout);
+  }, [adminNotice]);
+
   async function login(event: React.FormEvent) {
     event.preventDefault();
     const response = await fetch("/api/admin/login", {
@@ -465,7 +472,12 @@ export default function AdminDashboard() {
       ),
     );
     setNewPickupDate("");
-    setPickupDateStatus("Pickup date added");
+    setPickupDateStatus("");
+    setAdminNotice("Pickup date added");
+    const pickupModalToggle = document.getElementById("pickup-modal-toggle");
+    if (pickupModalToggle instanceof HTMLInputElement) {
+      pickupModalToggle.checked = false;
+    }
   }
 
   async function removePickupDate(id: string) {
@@ -782,6 +794,11 @@ export default function AdminDashboard() {
         </button>
       </aside>
       <section>
+        {adminNotice && (
+          <div className="admin-toast" role="status" aria-live="polite">
+            {adminNotice}
+          </div>
+        )}
         <div className="admin-section-heading">
           <div className="admin-section-title">
             <h1>{tab}</h1>
