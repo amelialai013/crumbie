@@ -422,7 +422,7 @@
 }
 .admin-editor .field textarea::-webkit-scrollbar,
 .admin-product-form .field textarea::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 .admin-editor .field textarea::-webkit-scrollbar-track,
 .admin-product-form .field textarea::-webkit-scrollbar-track {
@@ -430,7 +430,7 @@
 }
 .admin-editor .field textarea::-webkit-scrollbar-thumb,
 .admin-product-form .field textarea::-webkit-scrollbar-thumb {
-  border: 3px solid #090909;
+  border: 2px solid #090909;
   border-radius: 999px;
   background: rgba(201, 173, 148, .7);
 }
@@ -485,7 +485,7 @@
   top: 50%;
   left: 50%;
   z-index: 70;
-  width: min(920px, calc(100vw - 48px));
+  width: min(640px, calc(100vw - 48px));
   max-height: calc(100vh - 48px);
   overflow-y: auto;
   padding: 84px 28px 28px;
@@ -710,12 +710,12 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
   color: var(--muted);
 }
 .admin-policy-section {
-  margin-bottom: 24px;
-  padding-bottom: 0;
+  margin: 0;
+  padding: 24px 28px 28px;
   border-bottom: 0;
 }
 .admin-policy-section h3 {
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   color: var(--ink);
   font-size: 1.05rem;
   font-weight: 500;
@@ -1033,6 +1033,9 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
 .admin-add-date .admin-modal-actions {
   width: 100%;
 }
+.admin-modal.admin-policy-sections {
+  width: min(640px, calc(100vw - 48px));
+}
 @media(max-width:900px) {
   .admin-menu-toggle {
     position: relative;
@@ -1207,6 +1210,7 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
     width: min(452px, calc(100vw - 48px));
   }
   .admin-policy-sections .admin-policy-sections-heading {
+    box-sizing: border-box;
     flex: 0 0 auto;
     width: 100%;
   }
@@ -1215,6 +1219,7 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
     padding: 20px;
   }
   .admin-policy-sections .admin-modal-actions {
+    box-sizing: border-box;
     width: 100%;
     padding: 16px 20px;
   }
