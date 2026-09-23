@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 const clips = [
   { src: "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4", cutAt: 7 },
-  { src: "https://videos.pexels.com/video-files/34484013/34484013-hd_1920_1080_30fps.mp4", cutAt: 7 },
   { src: "https://videos.pexels.com/video-files/10835189/10835189-hd_1920_1080_24fps.mp4", cutAt: 7 },
   { src: "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4", cutAt: 7 },
 ];
