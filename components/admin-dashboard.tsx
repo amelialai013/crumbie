@@ -541,7 +541,7 @@ export default function AdminDashboard() {
     );
     setNewPickupDate("");
     setPickupDateStatus("");
-    setAdminNotice("Pickup date added");
+    setAdminNotice("Pickup date successfully added");
     const pickupModalToggle = document.getElementById("pickup-modal-toggle");
     if (pickupModalToggle instanceof HTMLInputElement) {
       pickupModalToggle.checked = false;
@@ -571,7 +571,7 @@ export default function AdminDashboard() {
     setRemovingPickupDateId("");
     setPickupDatePendingRemoval(null);
     setPickupDateStatus("");
-    setAdminNotice("Pickup date removed");
+    setAdminNotice("Pickup date successfully removed");
   }
 
   function orderCountForPickupDate(pickupDate: PickupDate) {
@@ -654,7 +654,7 @@ export default function AdminDashboard() {
     setProductImages([]);
     form.reset();
     setProductStatus("");
-    setAdminNotice(wasEditing ? "Product saved" : "Product published");
+    setAdminNotice(wasEditing ? "Product successfully saved" : "Product successfully published");
     const productModalToggle = document.getElementById("product-modal-toggle");
     if (productModalToggle instanceof HTMLInputElement) {
       productModalToggle.checked = false;
@@ -705,7 +705,7 @@ export default function AdminDashboard() {
       current.filter((product) => product.id !== id),
     );
     setProductStatus("");
-    setAdminNotice("Product removed");
+    setAdminNotice("Product successfully removed");
   }
 
   function adjustProductPrice(field: "price6" | "price12", amount: number) {
@@ -897,7 +897,7 @@ export default function AdminDashboard() {
     });
     if (response.ok) {
       setContentStatus("");
-      setAdminNotice(tab === "email templates" ? "Template saved" : "Saved");
+      setAdminNotice(tab === "email templates" ? "Template successfully saved" : "Changes successfully saved");
       return;
     }
     setContentStatus(
