@@ -15,9 +15,11 @@ The datastore accepts either `KV_REST_API_URL` and `KV_REST_API_TOKEN`, or Strip
 
 Resend sends an internal notification after a Contact Us enquiry is saved and sends the customer a confirmation after a paid order is recorded by the Stripe webhook. Configure `RESEND_API_KEY` and `CRUMBIE_NOTIFICATION_EMAIL` through Stripe Projects. Mail sends from `Club Crumbie <hello@clubcrumbie.com>` by default; `RESEND_FROM_EMAIL` can override that identity. The notification inbox can also be changed in Admin > Settings, and subjects and body copy can be changed in Admin > Email templates. Email delivery failures are logged without discarding saved enquiries, paid orders or webhook idempotency records.
 
+To generate polished product imagery from Admin > Products, configure `OPENAI_API_KEY`. In the single Product imagery area, upload up to five reference photos, set optional creative direction, choose one to four generated images, and generate the gallery with OpenAI. The generator saves the returned JPEGs to the configured R2 bucket (or local development uploads); their order controls the storefront cover and product-page gallery after the product is saved. OpenAI API billing is separate from ChatGPT and Codex subscriptions.
+
 Stripe Tax is off by default. Before setting `STRIPE_AUTOMATIC_TAX_ENABLED=true`, configure the sandbox head-office address, confirm an active registration shows as **Collecting**, select the correct baked-goods product tax code with a tax advisor, and choose whether catalogue prices are `inclusive` or `exclusive`. Set those choices in `STRIPE_PRODUCT_TAX_CODE` and `STRIPE_TAX_BEHAVIOR`, then repeat and verify the setup in live mode before launch.
 
-Without external credentials the public catalogue builds normally. Checkout, custom-enquiry persistence and admin data intentionally return configuration errors instead of touching another business's resources.
+Without external credentials the public catalogue builds normally. During local development, admin data is persisted in `.local/store.json` and uploaded product images in `public/uploads`; these fallbacks are unavailable in production, where the configured datastore and R2 bucket are required. Checkout and custom-enquiry persistence return configuration errors until their production services are configured.
 
 ## Routes
 

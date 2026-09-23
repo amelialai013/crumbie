@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import CookieExplorer from "@/components/cookie-explorer";
-import ProductGallery from "@/components/product-gallery";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
 import { getProducts, getPickupDates } from "@/lib/catalog-store";
@@ -48,14 +47,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <span aria-current="page">{product.name}</span>
       </nav>
       <div className="shell product-detail-layout">
-        {product.id === "product-signature" || product.id === "product-seasonal" ? (
+        {product.imageMode !== "gallery" && (product.id === "product-signature" || product.id === "product-seasonal") ? (
           <CookieExplorer
             key={product.slug}
             name={product.name}
             variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
           />
         ) : (
-          <ProductGallery images={product.images} name={product.name} />
+          <CookieExplorer
+            key={product.slug}
+            name={product.name}
+            images={product.images}
+            initialFrame={Math.min(1, Math.max(0, product.images.length - 1))}
+          />
         )}
         <div className="product-detail-copy">
           <header className="product-detail-hero">

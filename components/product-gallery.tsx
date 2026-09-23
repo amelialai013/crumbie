@@ -20,6 +20,7 @@ export default function ProductGallery({ images, name }: { images: string[]; nam
           alt={`${name} — image ${activeIndex + 1}`}
           fill
           priority={activeIndex === 0}
+          unoptimized={!images[activeIndex].includes("images.unsplash.com")}
           sizes="(max-width: 900px) 100vw, 56vw"
         />
         {images.length > 1 && (
@@ -48,7 +49,13 @@ export default function ProductGallery({ images, name }: { images: string[]; nam
               aria-label={`Show image ${index + 1} of ${images.length}`}
               aria-pressed={index === activeIndex}
             >
-              <Image src={image} alt="" fill sizes="88px" />
+              <Image
+                src={image}
+                alt=""
+                fill
+                sizes="88px"
+                unoptimized={!image.includes("images.unsplash.com")}
+              />
               <span>{String(index + 1).padStart(2, "0")}</span>
             </button>
           ))}
