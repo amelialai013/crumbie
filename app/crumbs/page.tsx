@@ -3,7 +3,7 @@ import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
 import { getProducts } from "@/lib/catalog-store";
 
-export const metadata: Metadata = { title: "Crumb selection" };
+export const metadata: Metadata = { title: "Crumbs" };
 
 export default async function Crumbs() {
   const products = await getProducts();

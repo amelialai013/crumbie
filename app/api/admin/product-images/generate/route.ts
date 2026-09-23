@@ -5,7 +5,7 @@ import { productSlugFromName } from "@/lib/catalog";
 
 const MAX_REFERENCE_IMAGES = 5;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-const MAX_GENERATED_IMAGES = 4;
+const MAX_GENERATED_IMAGES = 5;
 
 function imageFile(value: FormDataEntryValue): value is File {
 	return value instanceof File && value.size > 0;
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 	}
 	if (!Number.isInteger(count) || count < 1 || count > MAX_GENERATED_IMAGES) {
 		return NextResponse.json(
-			{ error: "Choose between one and four generated images." },
+			{ error: "Choose between one and five generated images." },
 			{ status: 400 },
 		);
 	}
@@ -74,6 +74,7 @@ export async function POST(request: Request) {
 				"This is the opening product-page view: show the same whole cookie front-on, centred, and facing the camera. It must read as the primary image in a rotatable cookie view, not an overhead flat-lay or side profile.",
 				"This is the next rotation frame: show the same whole cookie from a low right three-quarter angle. Preserve the front-on composition's scale, background, lighting, and exact cookie identity.",
 				"This is the final rotation frame: show the same whole cookie from a low left three-quarter angle. It must complete a coherent rotation sequence with the front-on and right three-quarter frames; do not break, crop, or add props to the cookie.",
+				"This is an additional rotation frame filling the gap between the two three-quarter angles: show the same whole cookie from directly behind, a straight-on back view with the far edge nearest the camera. It must read as a distinct angle from every other frame in the sequence, completing a fuller 360-degree turntable, while preserving the exact same cookie identity, scale, lighting, and background.",
 			];
 			const shotDirection =
 				shotDirections[index] ??

@@ -388,7 +388,7 @@ export default function AdminDashboard() {
   const [referenceImageFiles, setReferenceImageFiles] = useState<File[]>([]);
   const [referenceDropActive, setReferenceDropActive] = useState(false);
   const [imageDirection, setImageDirection] = useState("");
-  const [generatedImageCount, setGeneratedImageCount] = useState(4);
+  const [generatedImageCount, setGeneratedImageCount] = useState(5);
   const [generationStatus, setGenerationStatus] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [emailTemplateKey, setEmailTemplateKey] = useState<string | null>(null);
@@ -1460,7 +1460,8 @@ export default function AdminDashboard() {
                     <option value={1}>1 image</option>
                     <option value={2}>2 images</option>
                     <option value={3}>3 images</option>
-                    <option value={4}>4 images (recommended)</option>
+                    <option value={4}>4 images</option>
+                    <option value={5}>5 images (recommended)</option>
                   </select>
                   <label htmlFor="product-image-direction">
                     Additional creative direction <span>(optional)</span>

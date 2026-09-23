@@ -4,7 +4,7 @@ import Link from "next/link";
 import aboutUsImage from "@/assets/images/about-us.png";
 import SectionReveal from "@/components/section-reveal";
 
-export const metadata: Metadata = { title: "Crumbie beginnings" };
+export const metadata: Metadata = { title: "About" };
 
 export default function About() {
   return (
