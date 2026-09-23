@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   defaultProductAllergens,
   defaultProductIngredients,
   isDateClosed,
   pickupDates as catalogPickupDates,
+  productSlugFromName,
   products,
   type Product,
 } from "@/lib/catalog";
@@ -22,6 +23,7 @@ type Order = {
   lines?: Array<{
     productName?: string;
     variantLabel?: string;
+    pickupDateId?: string;
     pickupDate?: string;
     pickupWindow?: string;
     status?: string;
@@ -83,9 +85,6 @@ const emailTemplates: EmailTemplate[] = [
   { key: "enquiryNotification", name: "Enquiry notification", description: "Sent when a customer submits the Contact Us form.", subjectField: "enquirySubject", bodyField: "enquiryBody" },
 ];
 
-function productSlug(name: string) {
-  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
 const contentModules: Record<string, ContentModule> = {
   homepage: {
     fields: [
@@ -348,7 +347,13 @@ function formatPickupDate(date: string) {
   });
 }
 
+function formatFileSize(size: number) {
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function AdminDashboard() {
+  const productImageInputRef = useRef<HTMLInputElement | null>(null);
   const [password, setPassword] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -366,6 +371,10 @@ export default function AdminDashboard() {
   const [adminNotice, setAdminNotice] = useState("");
   const [pickupDatePendingRemoval, setPickupDatePendingRemoval] =
     useState<PickupDate | null>(null);
+  const [blockedPickupDateRemoval, setBlockedPickupDateRemoval] = useState<{
+    pickupDate: PickupDate;
+    orderCount: number;
+  } | null>(null);
   const [removingPickupDateId, setRemovingPickupDateId] = useState("");
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
@@ -378,6 +387,7 @@ export default function AdminDashboard() {
     price6: "",
     price12: "",
   });
+  const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [emailTemplateKey, setEmailTemplateKey] = useState<string | null>(null);
 
@@ -436,14 +446,17 @@ export default function AdminDashboard() {
   }, [adminNotice]);
 
   useEffect(() => {
-    if (!pickupDatePendingRemoval) return;
+    if (!pickupDatePendingRemoval && !blockedPickupDateRemoval) return;
     const previousHtmlOverflow = document.documentElement.style.overflow;
     const previousBodyOverflow = document.body.style.overflow;
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setPickupDatePendingRemoval(null);
+      if (event.key === "Escape") {
+        setPickupDatePendingRemoval(null);
+        setBlockedPickupDateRemoval(null);
+      }
     }
 
     document.addEventListener("keydown", closeOnEscape);
@@ -452,7 +465,7 @@ export default function AdminDashboard() {
       document.documentElement.style.overflow = previousHtmlOverflow;
       document.body.style.overflow = previousBodyOverflow;
     };
-  }, [pickupDatePendingRemoval]);
+  }, [blockedPickupDateRemoval, pickupDatePendingRemoval]);
 
   async function login(event: React.FormEvent) {
     event.preventDefault();
@@ -536,11 +549,31 @@ export default function AdminDashboard() {
     setAdminNotice("Pickup date removed");
   }
 
+  function orderCountForPickupDate(pickupDate: PickupDate) {
+    const orders = (data?.orders || []) as Order[];
+    return orders.filter((order) =>
+      order.lines?.some(
+        (line) =>
+          line.pickupDateId === pickupDate.id ||
+          line.pickupDate === pickupDate.date,
+      ),
+    ).length;
+  }
+
+  function requestPickupDateRemoval(pickupDate: PickupDate) {
+    const orderCount = orderCountForPickupDate(pickupDate);
+    if (orderCount > 0) {
+      setBlockedPickupDateRemoval({ pickupDate, orderCount });
+      return;
+    }
+    setPickupDatePendingRemoval(pickupDate);
+  }
+
   async function addProduct(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setProductStatus(editingProductId ? "Saving..." : "Publishing...");
     const formData = new FormData(event.currentTarget);
-    const slug = productSlug(newProduct.name);
+    const slug = productSlugFromName(newProduct.name);
     const product = {
       id: editingProductId || `product-${slug}`,
       slug,
@@ -589,6 +622,7 @@ export default function AdminDashboard() {
       price12: "",
     });
     setEditingProductId(null);
+    setProductImageFiles([]);
     event.currentTarget.reset();
     setProductStatus(editingProductId ? "Product saved" : "Product published");
   }
@@ -603,12 +637,16 @@ export default function AdminDashboard() {
       price6: String(product.variants.find((variant) => variant.quantity === 6)?.price || ""),
       price12: String(product.variants.find((variant) => variant.quantity === 12)?.price || ""),
     });
+    setProductImageFiles([]);
+    if (productImageInputRef.current) productImageInputRef.current.value = "";
     (document.getElementById("product-modal-toggle") as HTMLInputElement).checked = true;
   }
 
   function startNewProduct() {
     setEditingProductId(null);
     setNewProduct({ name: "", description: "", ingredients: defaultProductIngredients, allergens: defaultProductAllergens, price6: "", price12: "" });
+    setProductImageFiles([]);
+    if (productImageInputRef.current) productImageInputRef.current.value = "";
   }
 
   async function removeProduct(id: string) {
@@ -636,6 +674,21 @@ export default function AdminDashboard() {
       ...newProduct,
       [field]: String(Math.max(0, current + amount)),
     });
+  }
+
+  function syncProductImageInput(files: File[]) {
+    if (productImageInputRef.current) {
+      const transfer = new DataTransfer();
+      files.forEach((file) => transfer.items.add(file));
+      productImageInputRef.current.files = transfer.files;
+    }
+    setProductImageFiles(files);
+  }
+
+  function removeSelectedProductImage(indexToRemove: number) {
+    syncProductImageInput(
+      productImageFiles.filter((_, index) => index !== indexToRemove),
+    );
   }
 
   const optionalPolicySections = [
@@ -833,7 +886,16 @@ export default function AdminDashboard() {
       <section>
         {adminNotice && (
           <div className="admin-toast" role="status" aria-live="polite">
-            {adminNotice}
+            <span>{adminNotice}</span>
+            <button
+              aria-label="Dismiss notification"
+              type="button"
+              onClick={() => setAdminNotice("")}
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                <path d="m5 5 10 10M15 5 5 15" />
+              </svg>
+            </button>
           </div>
         )}
         {pickupDatePendingRemoval && (
@@ -852,7 +914,6 @@ export default function AdminDashboard() {
               className="admin-confirm-modal"
               role="dialog"
             >
-              <div className="admin-confirm-kicker">Confirm removal</div>
               <h2 id="pickup-remove-title">Remove this pickup date?</h2>
               <p id="pickup-remove-copy">
                 This will remove{" "}
@@ -878,6 +939,50 @@ export default function AdminDashboard() {
                   disabled={Boolean(removingPickupDateId)}
                 >
                   {removingPickupDateId ? "Removing..." : "Yes, remove it"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {blockedPickupDateRemoval && (
+          <div
+            className="admin-confirm-overlay"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget)
+                setBlockedPickupDateRemoval(null);
+            }}
+          >
+            <div
+              aria-labelledby="pickup-blocked-title"
+              aria-describedby="pickup-blocked-copy"
+              aria-modal="true"
+              className="admin-confirm-modal"
+              role="dialog"
+            >
+              <h2 id="pickup-blocked-title">This pickup date has orders</h2>
+              <p id="pickup-blocked-copy">
+                You cannot remove{" "}
+                <strong>
+                  {formatPickupDate(blockedPickupDateRemoval.pickupDate.date)}
+                </strong>{" "}
+                until you move all orders that have chosen this date to a
+                different pickup date.
+              </p>
+              <p>
+                {blockedPickupDateRemoval.orderCount}{" "}
+                {blockedPickupDateRemoval.orderCount === 1
+                  ? "order is"
+                  : "orders are"}{" "}
+                currently using this pickup date.
+              </p>
+              <div className="admin-confirm-actions">
+                <button
+                  className="btn btn-light"
+                  type="button"
+                  onClick={() => setBlockedPickupDateRemoval(null)}
+                >
+                  Got it
                 </button>
               </div>
             </div>
@@ -1200,12 +1305,39 @@ export default function AdminDashboard() {
                   <label htmlFor="product-images">Product images</label>
                   <input
                     id="product-images"
+                    ref={productImageInputRef}
                     name="images"
                     type="file"
                     accept="image/*"
                     multiple
                     required={!editingProductId}
+                    onChange={(event) =>
+                      setProductImageFiles(
+                        Array.from(event.target.files ?? []),
+                      )
+                    }
                   />
+                  {productImageFiles.length > 0 && (
+                    <ul className="admin-selected-files">
+                      {productImageFiles.map((file, index) => (
+                        <li
+                          key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
+                        >
+                          <span>
+                            {file.name}
+                            <small>{formatFileSize(file.size)}</small>
+                          </span>
+                          <button
+                            className="text-button"
+                            type="button"
+                            onClick={() => removeSelectedProductImage(index)}
+                          >
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
                 </div>
               </div>
@@ -1343,9 +1475,7 @@ export default function AdminDashboard() {
                         <button
                           className="text-button"
                           type="button"
-                          onClick={() =>
-                            setPickupDatePendingRemoval(pickupDate)
-                          }
+                          onClick={() => requestPickupDateRemoval(pickupDate)}
                         >
                           Remove
                         </button>

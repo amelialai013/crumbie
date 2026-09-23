@@ -1,5 +1,8 @@
 export type PickupDate = { id: string; date: string; window: string; soldOut?: boolean };
 export type Product = { id:string; slug:string; name:string; description:string; ingredients:string; allergens:string; images:string[]; variants:{id:string;label:string;quantity:number;price:number}[]; soldOut?:boolean; soldOutDates?:string[] };
+export function productSlugFromName(name: string) {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
 export const defaultProductIngredients = "Pickup dates close 72 hours before their scheduled start time, orders can be placed up until this time. Pickup is in Ivanhoe, Victoria. Exact address provided in your confirmation email after purchase.";
 export const defaultProductAllergens = "Contains gluten, dairy, eggs and soy. Made in a kitchen that handles peanuts and tree nuts; cross-contact is possible.";
 export const pickupDates: PickupDate[] = [
@@ -9,8 +12,8 @@ export const pickupDates: PickupDate[] = [
   { id:"pickup-2027-01-01", date:"2027-01-01", window:"10:00am–12:00pm" },
 ];
 export const products: Product[] = [
-  { id:"product-signature", slug:"signature-box", name:"Signature Crumbie", description:"A thick chocolate chip cookie with crisp, golden edges and a soft, tender centre, packed with generous chunks of rich chocolate in every bite.", ingredients:defaultProductIngredients, allergens:defaultProductAllergens, images:["https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=1400&q=88","https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1400&q=88"], variants:[{id:"signature-6",label:"Box of 6",quantity:6,price:30},{id:"signature-12",label:"Box of 12",quantity:12,price:55}] },
-  { id:"product-seasonal", slug:"seasonal-box", name:"Biscoff Caramel", description:"A golden cookie with buttery caramel and creamy white chocolate, finished with a generous Biscoff crumb for a rich caramelised crunch.", ingredients:defaultProductIngredients, allergens:defaultProductAllergens, images:["https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=1400&q=88","https://images.unsplash.com/photo-1598373182133-52452f7691ef?auto=format&fit=crop&w=1400&q=88"], variants:[{id:"seasonal-6",label:"Box of 6",quantity:6,price:32},{id:"seasonal-12",label:"Box of 12",quantity:12,price:59}] },
+  { id:"product-signature", slug:productSlugFromName("Signature Crumbie"), name:"Signature Crumbie", description:"A thick chocolate chip cookie with crisp, golden edges and a soft, tender centre, packed with generous chunks of rich chocolate in every bite.", ingredients:defaultProductIngredients, allergens:defaultProductAllergens, images:["https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=1400&q=88","https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1400&q=88"], variants:[{id:"signature-6",label:"Box of 6",quantity:6,price:30},{id:"signature-12",label:"Box of 12",quantity:12,price:55}] },
+  { id:"product-seasonal", slug:productSlugFromName("Biscoff Caramel"), name:"Biscoff Caramel", description:"A golden cookie with buttery caramel and creamy white chocolate, finished with a generous Biscoff crumb for a rich caramelised crunch.", ingredients:defaultProductIngredients, allergens:defaultProductAllergens, images:["https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=1400&q=88","https://images.unsplash.com/photo-1598373182133-52452f7691ef?auto=format&fit=crop&w=1400&q=88"], variants:[{id:"seasonal-6",label:"Box of 6",quantity:6,price:32},{id:"seasonal-12",label:"Box of 12",quantity:12,price:59}] },
 ];
 export const sharedKitchenWarning="Club Crumbie handles gluten, dairy, eggs, soy, peanuts and tree nuts. Cross-contact is possible, and we cannot accommodate allergy requests for standard boxes.";
 export function isDateClosed(date: PickupDate) {

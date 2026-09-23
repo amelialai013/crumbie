@@ -71,7 +71,7 @@ export default async function Home() {
                 <div className="relative product-card-render">
                   <ProductCookieImage
                     name={product.name}
-                    variant={product.slug === "seasonal-box" ? "biscoff" : "signature"}
+                    variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
                   />
                 </div>
                 <div className="product-card-body">

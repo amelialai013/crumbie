@@ -1,5 +1,5 @@
 import "server-only";
-import { products as catalogProducts, pickupDates as catalogPickupDates, type PickupDate, type Product } from "@/lib/catalog";
+import { products as catalogProducts, pickupDates as catalogPickupDates, productSlugFromName, type PickupDate, type Product } from "@/lib/catalog";
 import { listRecords } from "@/lib/store";
 
 type ProductRecord = Product & { removed?: boolean };
@@ -11,7 +11,10 @@ export async function getProducts(): Promise<Product[]> {
 		if (product.removed) products.delete(product.id);
 		else products.set(product.id, product);
 	});
-	return Array.from(products.values());
+	return Array.from(products.values()).map((product) => ({
+		...product,
+		slug: productSlugFromName(product.name),
+	}));
 }
 
 /** Shared by the storefront, admin and checkout so availability cannot diverge. */

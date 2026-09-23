@@ -10,6 +10,7 @@ import signatureCookie from "@/assets/cookies/choc-chip-cookie/turntable-premium
 import biscoffCookie from "@/assets/cookies/biscoff-white-chocolate-cookie/turntable-clean/frame-03.png";
 import { useCart } from "@/components/cart-context";
 import QuantityControl from "@/components/quantity-control";
+import { productSlugFromName } from "@/lib/catalog";
 
 export default function Cart() {
   const { lines, total, ready, remove, setQuantity, clear } = useCart();
@@ -108,12 +109,14 @@ export default function Cart() {
           ) : (
             <div className={`cart-layout${removingLastItem ? " is-last-removing" : ""}`}>
               <div className="cart-items">
-                {lines.map((line) => (
+                {lines.map((line) => {
+                  const canonicalProductSlug = productSlugFromName(line.productName);
+                  return (
               <div className={`cart-row${removingKey === line.key ? " is-removing" : ""}`} key={line.key}>
-                <Link className="cart-product-link" href={`/cookies/${line.productSlug}`} aria-label={`View ${line.productName}`}>
+                <Link className="cart-product-link" href={`/cookies/${canonicalProductSlug}`} aria-label={`View ${line.productName}`}>
                   <Image
                     className="cart-product-image"
-                    src={line.productSlug === "seasonal-box" ? biscoffCookie : signatureCookie}
+                    src={line.productId === "product-seasonal" ? biscoffCookie : signatureCookie}
                     alt={line.productName}
                     width={160}
                     height={160}
@@ -123,7 +126,7 @@ export default function Cart() {
                 </Link>
                 <div className="cart-row-details">
                   <div className="cart-row-heading">
-                    <h2><Link href={`/cookies/${line.productSlug}`}>{line.productName}</Link></h2>
+                    <h2><Link href={`/cookies/${canonicalProductSlug}`}>{line.productName}</Link></h2>
                     <p className="cart-line-price">${(line.unitPrice * line.quantity).toFixed(2)} AUD</p>
                   </div>
                   <div className="cart-row-meta">
@@ -147,7 +150,8 @@ export default function Cart() {
                   </button>
                 </div>
               </div>
-                ))}
+                  );
+                })}
                 <button className="text-button cart-remove-all" onClick={removeAll} disabled={removingLastItem}>
                   <Trash2 aria-hidden="true" size={16} strokeWidth={1.75} />
                   {removingLastItem ? "Clearing…" : "Clear cart"}

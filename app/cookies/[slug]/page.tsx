@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import CookieExplorer from "@/components/cookie-explorer";
 import ProductGallery from "@/components/product-gallery";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
 import { getProducts, getPickupDates } from "@/lib/catalog-store";
+
+const legacyProductSlugs: Record<string, string> = {
+  "signature-box": "signature-crumbie",
+  "seasonal-box": "biscoff-caramel",
+};
 
 export async function generateStaticParams() {
   const products = await getProducts();
@@ -28,6 +33,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const [products, pickupDates] = await Promise.all([getProducts(), getPickupDates()]);
   const product = products.find((item) => item.slug === slug);
+  if (!product && legacyProductSlugs[slug]) {
+    redirect(`/cookies/${legacyProductSlugs[slug]}`);
+  }
   if (!product) notFound();
 
   return (
@@ -40,11 +48,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <span aria-current="page">{product.name}</span>
       </nav>
       <div className="shell product-detail-layout">
-        {product.slug === "signature-box" || product.slug === "seasonal-box" ? (
+        {product.id === "product-signature" || product.id === "product-seasonal" ? (
           <CookieExplorer
             key={product.slug}
             name={product.name}
-            variant={product.slug === "seasonal-box" ? "biscoff" : "signature"}
+            variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
           />
         ) : (
           <ProductGallery images={product.images} name={product.name} />

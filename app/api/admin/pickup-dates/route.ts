@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/session";
 import { type PickupDate } from "@/lib/catalog";
-import { saveRecord } from "@/lib/store";
+import { listRecords, saveRecord } from "@/lib/store";
 
 import { getPickupDates } from "@/lib/catalog-store";
+
+type Order = {
+	lines?: Array<{
+		pickupDateId?: string;
+		pickupDate?: string;
+	}>;
+};
 
 function validDate(value: unknown): value is string {
 	return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T12:00:00`).getTime());
@@ -19,6 +26,25 @@ export async function DELETE(request: Request) {
 	const id = new URL(request.url).searchParams.get("id");
 	if (!id) return NextResponse.json({ error: "Pickup date id is required" }, { status: 400 });
 	try {
+		const pickupDate = (await getPickupDates()).find((date) => date.id === id);
+		const orders = await listRecords<Order>("order");
+		const orderCount = orders.filter((order) =>
+			order.lines?.some(
+				(line) =>
+					line.pickupDateId === id ||
+					(Boolean(pickupDate?.date) && line.pickupDate === pickupDate?.date),
+			),
+		).length;
+		if (orderCount > 0) {
+			return NextResponse.json(
+				{
+					error:
+						"You cannot remove this pickup date until you move all orders that have chosen that date to a different date.",
+					orderCount,
+				},
+				{ status: 409 },
+			);
+		}
 		await saveRecord("pickup-date", { id, date: "", window: "", removed: true });
 		return NextResponse.json({ ok: true });
 	} catch (error) {
