@@ -1163,8 +1163,33 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
   .admin-add-date {
     grid-template-columns: 1fr;
   }
+  .admin-modal-header {
+    gap: 16px;
+    padding: 20px 20px 16px;
+  }
+  .admin-modal-header h2 {
+    min-width: 0;
+    font-size: clamp(1.65rem, 7vw, 2rem);
+    line-height: 1.04;
+  }
+  .admin-modal-header .admin-product-close,
+  .admin-modal-header .admin-pickup-close,
+  .admin-modal-header .admin-policy-close {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    min-height: 48px;
+  }
+  .admin-add-date .admin-modal-body {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
   .admin-add-date .btn {
     width: 100%;
+  }
+  .admin-add-date .admin-modal-header .admin-pickup-close {
+    width: 48px;
+    min-height: 48px;
   }
   .admin-signout {
     top: -56px;
