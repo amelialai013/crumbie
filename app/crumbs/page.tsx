@@ -3,7 +3,7 @@ import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
 import { getProducts } from "@/lib/catalog-store";
 
-export const metadata: Metadata = { title: "Crumbs" };
+export const metadata: Metadata = { title: "Crumb selection" };
 
 export default async function Crumbs() {
   const products = await getProducts();
@@ -18,7 +18,7 @@ export default async function Crumbs() {
         <div className="shell">
           <div className="product-grid">
             {products.map((product) => (
-              <Link className="product-card" href={`/cookies/${product.slug}`} key={product.id}>
+              <Link className="product-card" href={`/crumbs/${product.slug}`} key={product.id}>
                 <div className="relative product-card-render">
                   <ProductCookieImage
                     image={product.imageMode === "gallery" ? product.images[0] : undefined}

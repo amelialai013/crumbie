@@ -19,7 +19,7 @@ export default async function Home() {
             <Image className="hero-logo hero-logo-mobile" src={whiteVerticalLogo} alt="Club Crumbie" priority unoptimized />
           </h1>
           <div className="actions">
-            <Link className="btn btn-dark btn-arrow" href="/cookies">
+            <Link className="btn btn-dark btn-arrow" href="/crumbs">
               Explore crumbs
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                 <path d="m7 4.5 5.5 5.5L7 15.5" />
@@ -50,7 +50,7 @@ export default async function Home() {
             </div>
           </div>
           <div className="how-it-works-cta">
-            <Link className="btn btn-dark btn-arrow" href="/cookies">
+            <Link className="btn btn-dark btn-arrow" href="/crumbs">
               Order now
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                 <path d="m7 4.5 5.5 5.5L7 15.5" />
@@ -67,7 +67,7 @@ export default async function Home() {
           </div>
           <div className="product-grid">
             {products.map((product) => (
-              <Link className="product-card" href={`/cookies/${product.slug}`} key={product.id}>
+              <Link className="product-card" href={`/crumbs/${product.slug}`} key={product.id}>
                 <div className="relative product-card-render">
                   <ProductCookieImage
                     image={product.imageMode === "gallery" ? product.images[0] : undefined}

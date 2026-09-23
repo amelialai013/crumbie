@@ -9,7 +9,7 @@ import { useCart } from "./cart-context";
 
 const links = [
   ["About", "/about"],
-  ["Crumbs", "/cookies"],
+  ["Crumbs", "/crumbs"],
   ["Contact us", "/contact-us"],
 ];
 
@@ -20,7 +20,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const { count } = useCart();
   const menuVisible = open && menuPathname === pathname;
-  const isActive = (href: string) => pathname === href || (href === "/cookies" && pathname.startsWith("/cookies/"));
+  const isActive = (href: string) => pathname === href || (href === "/crumbs" && pathname.startsWith("/crumbs/"));
   const handleHomeClick = () => {
     setOpen(false);
     if (pathname === "/") window.scrollTo({ top: 0, left: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });

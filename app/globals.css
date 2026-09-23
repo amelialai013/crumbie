@@ -3528,3 +3528,28 @@ body {
     transform: none;
   }
 }
+
+.not-found-hero {
+  min-height: calc(100svh - 80px);
+  display: flex;
+  align-items: center;
+  border-bottom: 0;
+  padding: 60px 0;
+}
+.not-found-content {
+  max-width: 620px;
+}
+.not-found-content .fine-print {
+  display: block;
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.not-found-content .page-title {
+  margin-bottom: 20px;
+}
+.not-found-content .lede {
+  margin-bottom: 8px;
+}

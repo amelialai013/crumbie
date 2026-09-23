@@ -99,7 +99,7 @@ export default function Cart() {
           {!ready ? null : lines.length === 0 ? (
             <div className={`cart-empty${emptyAppearing ? " is-appearing" : ""}`}>
               <h2>No crumbs left</h2>
-              <Link className="btn btn-dark btn-arrow" href="/cookies">
+              <Link className="btn btn-dark btn-arrow" href="/crumbs">
                 Explore crumbs
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                   <path d="m7 4.5 5.5 5.5L7 15.5" />
@@ -113,7 +113,7 @@ export default function Cart() {
                   const canonicalProductSlug = productSlugFromName(line.productName);
                   return (
               <div className={`cart-row${removingKey === line.key ? " is-removing" : ""}`} key={line.key}>
-                <Link className="cart-product-link" href={`/cookies/${canonicalProductSlug}`} aria-label={`View ${line.productName}`}>
+                <Link className="cart-product-link" href={`/crumbs/${canonicalProductSlug}`} aria-label={`View ${line.productName}`}>
                   <Image
                     className="cart-product-image"
                     src={line.productId === "product-seasonal" ? biscoffCookie : signatureCookie}
@@ -126,7 +126,7 @@ export default function Cart() {
                 </Link>
                 <div className="cart-row-details">
                   <div className="cart-row-heading">
-                    <h2><Link href={`/cookies/${canonicalProductSlug}`}>{line.productName}</Link></h2>
+                    <h2><Link href={`/crumbs/${canonicalProductSlug}`}>{line.productName}</Link></h2>
                     <p className="cart-line-price">${(line.unitPrice * line.quantity).toFixed(2)} AUD</p>
                   </div>
                   <div className="cart-row-meta">

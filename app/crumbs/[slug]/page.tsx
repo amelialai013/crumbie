@@ -33,14 +33,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const [products, pickupDates] = await Promise.all([getProducts(), getPickupDates()]);
   const product = products.find((item) => item.slug === slug);
   if (!product && legacyProductSlugs[slug]) {
-    redirect(`/cookies/${legacyProductSlugs[slug]}`);
+    redirect(`/crumbs/${legacyProductSlugs[slug]}`);
   }
   if (!product) notFound();
 
   return (
     <section className="section section-warm product-detail-section">
       <nav className="shell breadcrumb" aria-label="Breadcrumb">
-        <Link href="/cookies">Crumbs</Link>
+        <Link href="/crumbs">Crumbs</Link>
         <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
           <path d="m6 3.5 4.5 4.5L6 12.5" />
         </svg>
