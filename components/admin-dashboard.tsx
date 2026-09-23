@@ -498,7 +498,6 @@ export default function AdminDashboard() {
     setAdminNotice("");
     setAdminNoticeLeaving(false);
     setAdminBusyMessage(busyMessage);
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
 
   function finishAdminAction(successMessage?: string) {
@@ -1068,16 +1067,6 @@ export default function AdminDashboard() {
         </button>
       </aside>
       <section>
-        {adminBusyMessage && (
-          <div
-            className="admin-toast admin-toast-loading"
-            role="status"
-            aria-live="polite"
-          >
-            <span className="admin-toast-spinner" aria-hidden="true" />
-            <span>{adminBusyMessage}</span>
-          </div>
-        )}
         {!adminBusyMessage && adminNotice && (
           <div
             className={`admin-toast${adminNoticeLeaving ? " admin-toast-leaving" : ""}`}
@@ -1666,8 +1655,31 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="admin-product-form-actions">
-                <button className="btn btn-dark">{editingProductId ? "Save product" : "Publish product"}</button>
-                {productStatus && <span>{productStatus}</span>}
+                <button
+                  className={`btn btn-dark${
+                    productStatus === "Saving..." || productStatus === "Publishing..."
+                      ? " btn-loading"
+                      : ""
+                  }`}
+                  disabled={
+                    productStatus === "Saving..." || productStatus === "Publishing..."
+                  }
+                >
+                  {(productStatus === "Saving..." ||
+                    productStatus === "Publishing...") && (
+                    <span className="btn-spinner" aria-hidden="true" />
+                  )}
+                  {productStatus === "Saving..."
+                    ? "Saving…"
+                    : productStatus === "Publishing..."
+                      ? "Publishing…"
+                      : editingProductId
+                        ? "Save product"
+                        : "Publish product"}
+                </button>
+                {productStatus &&
+                  productStatus !== "Saving..." &&
+                  productStatus !== "Publishing..." && <span>{productStatus}</span>}
               </div>
             </form>
             {!productsLoaded ? (
@@ -1752,8 +1764,20 @@ export default function AdminDashboard() {
               </div>
               </div>
               <div className="admin-modal-actions">
-                <button className="btn btn-dark">Add pickup date</button>
-                {pickupDateStatus && <span>{pickupDateStatus}</span>}
+                <button
+                  className={`btn btn-dark${
+                    pickupDateStatus === "Saving..." ? " btn-loading" : ""
+                  }`}
+                  disabled={pickupDateStatus === "Saving..."}
+                >
+                  {pickupDateStatus === "Saving..." && (
+                    <span className="btn-spinner" aria-hidden="true" />
+                  )}
+                  {pickupDateStatus === "Saving..." ? "Adding…" : "Add pickup date"}
+                </button>
+                {pickupDateStatus && pickupDateStatus !== "Saving..." && (
+                  <span>{pickupDateStatus}</span>
+                )}
               </div>
             </form>
             <div
@@ -1844,7 +1868,7 @@ export default function AdminDashboard() {
               <div className="field"><label htmlFor="email-template-subject">Subject <span>(140 characters max)</span></label><input id="email-template-subject" maxLength={140} value={content.fields[template.subjectField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.subjectField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.subjectField] || "").length} / 140</small></div>
               <div className="field"><label htmlFor="email-template-body">Body copy <span>(3000 characters max)</span></label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small></div>
             </div>
-            <div className="admin-editor-actions"><button className="btn btn-light">Save template</button>{contentStatus && <span>{contentStatus}</span>}</div>
+            <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..."}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save template"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
           </form>;
         })()}
         {contentModules[tab] && tab !== "email templates" && (
@@ -2011,8 +2035,20 @@ export default function AdminDashboard() {
               )}
             </div>
             <div className="admin-editor-actions">
-              <button className="btn btn-light">Save changes</button>
-              {contentStatus && <span>{contentStatus}</span>}
+              <button
+                className={`btn btn-light${
+                  contentStatus === "Saving..." ? " btn-loading" : ""
+                }`}
+                disabled={contentStatus === "Saving..."}
+              >
+                {contentStatus === "Saving..." && (
+                  <span className="btn-spinner" aria-hidden="true" />
+                )}
+                {contentStatus === "Saving..." ? "Saving…" : "Save changes"}
+              </button>
+              {contentStatus && contentStatus !== "Saving..." && (
+                <span>{contentStatus}</span>
+              )}
             </div>
           </form>
         )}
