@@ -283,7 +283,7 @@
 .admin-nav .admin-signout {
   position: static;
   align-self: flex-start;
-  margin-top: 16px;
+  margin-top: 32px;
   min-height: 50px;
   padding: 0 28px;
   text-align: center;
@@ -1134,7 +1134,7 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
   }
   .admin-nav .admin-signout {
     width: 100%;
-    margin-top: auto;
+    margin-top: 32px;
   }
 }
 @media(prefers-reduced-motion:reduce) and (max-width:900px) {
