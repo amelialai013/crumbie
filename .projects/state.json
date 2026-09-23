@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "providers": {
+    "resend": {
+      "name": "Resend"
+    },
+    "upstash": {
+      "name": "Upstash"
+    }
+  },
+  "resources": {
+    "resend-email": {
+      "name": "resend-email",
+      "providerName": "Resend",
+      "serviceId": "email"
+    },
+    "resend-plan": {
+      "name": "resend-plan",
+      "providerName": "Resend",
+      "serviceId": "free"
+    },
+    "store": {
+      "name": "store",
+      "providerName": "Upstash",
+      "serviceId": "redis"
+    }
+  },
+  "environments": {
+    "default": {
+      "output": ".env",
+      "resources": [
+        {
+          "resourceName": "resend-email"
+        },
+        {
+          "resourceName": "resend-plan"
+        },
+        {
+          "resourceName": "store"
+        }
+      ],
+      "variables": [
+        {
+          "variableName": "notification-email",
+          "envKey": "CRUMBIE_NOTIFICATION_EMAIL"
+        }
+      ]
+    }
+  },
+  "variables": {
+    "notification-email": {
+      "name": "notification-email",
+      "backendId": "fprjvar_61VRp6k1PhYpyVYhU16VRo2iFw8S22NaNcaNWf1Ue648"
+    }
+  }
+}

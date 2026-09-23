@@ -97,8 +97,10 @@ export default function PremiumSelect({
               onPointerEnter={() => setHighlightedIndex(index)}
               onClick={() => select(index)}
             >
-              <span>{option.label}</span>
-              {option.detail && <small>{option.detail}</small>}
+              <span className="premium-select-option-copy">
+                <span>{option.label}</span>
+                {option.detail && <small>{option.detail}</small>}
+              </span>
               {option.value === value && <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m3.5 8 3 3 6-6" /></svg>}
             </li>
           ))}

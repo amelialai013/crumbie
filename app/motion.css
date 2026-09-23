@@ -1,0 +1,323 @@
+/* One motion scale for route reveals, controls and media. Durations are in ms
+   so the reveal controller can read the same values as CSS. */
+:root {
+  --motion-fast: 280ms;
+  --motion-panel: 620ms;
+  --motion-reveal: 1400ms;
+  --motion-stagger: 140ms;
+  --motion-media: 1200ms;
+  --motion-exit: 420ms;
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-fade: cubic-bezier(.25, .1, .25, 1);
+}
+
+.site-header.home-header { transition-duration: var(--motion-panel); }
+.hero-video { transition: opacity var(--motion-media) var(--motion-fade); }
+
+/* Hero logo and CTAs cascade in on load, mirroring the About section's staggered reveal. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-content .hero-logo-heading,
+  .hero-content .actions > * {
+    opacity: 0;
+    animation: hero-content-reveal var(--motion-panel) var(--motion-ease) both;
+  }
+  .hero-content .hero-logo-heading { animation-delay: 80ms; }
+  .hero-content .actions > *:nth-child(1) { animation-delay: 240ms; }
+  .hero-content .actions > *:nth-child(2) { animation-delay: 320ms; }
+}
+@keyframes hero-content-reveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-media-loading { transition: opacity var(--motion-panel) var(--motion-fade); }
+
+.btn, .menu-button, .product-gallery-thumbnails button,
+.premium-select-trigger, .premium-select-menu li, .quantity-stepper-controls button {
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--motion-ease);
+}
+.cookie-catalog .product-card img {
+  transition: transform var(--motion-reveal) var(--motion-ease);
+}
+/* Keep direct manipulation responsive; never add a slow ease to dragging. */
+.cookie-explorer-object { transition: transform 180ms var(--motion-ease); }
+.cookie-explorer.is-dragging .cookie-explorer-object { transition: none; }
+.product-gallery-image,
+.cart-empty.is-appearing { animation-duration: var(--motion-panel); animation-timing-function: var(--motion-ease); }
+.cart-confirmation, .cart-confirmation-check {
+  animation-duration: var(--motion-panel);
+  animation-timing-function: var(--motion-ease);
+}
+.cart-confirmation.is-closing {
+  animation-duration: var(--motion-exit);
+  animation-timing-function: var(--motion-fade);
+}
+.cart-layout, .cart-row {
+  transition-duration: var(--motion-panel);
+  transition-timing-function: var(--motion-ease);
+}
+.cart-row.is-removing { filter: none; }
+
+@media (max-width: 900px) {
+  .nav-links {
+    transition: opacity var(--motion-panel) var(--motion-fade),
+      transform var(--motion-panel) var(--motion-ease),
+      visibility 0s linear var(--motion-panel);
+  }
+  .nav-links.open { transition-delay: 0s; }
+  .nav-links > a:not(.cart-link), .nav-links .cart-link {
+    transition-duration: var(--motion-fast), var(--motion-panel), var(--motion-panel);
+    transition-timing-function: var(--motion-ease);
+  }
+  .nav-links:not(.open) > a { transition-delay: 0s; }
+}
+
+.cart-layout,
+.cart-row,
+.cookie-explorer-hint,
+.product-gallery-thumbnails button {
+  transition-duration: var(--motion-panel);
+}
+
+/* Native scroll timelines add depth without intercepting scrolling.
+   Unsupported browsers retain the ordinary reveal and static composition. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (min-width: 901px) {
+    .hero {
+      view-timeline-name: --hero-view;
+      view-timeline-axis: block;
+    }
+    .hero-media {
+      animation: hero-scroll-depth linear both;
+      animation-timeline: --hero-view;
+      animation-range: exit 0% exit 100%;
+    }
+    .about-image {
+      overflow: hidden;
+      view-timeline-name: --about-view;
+      view-timeline-axis: block;
+    }
+    .about-image img {
+      animation: editorial-image-settle linear both;
+      animation-timeline: --about-view;
+      animation-range: entry 0% cover 70%;
+    }
+  }
+}
+@keyframes hero-scroll-depth {
+  from { transform: scale(1); }
+  to { transform: translateY(8%) scale(1.08); }
+}
+@keyframes editorial-image-settle {
+  from { transform: scale(1.065); }
+  to { transform: scale(1); }
+}
+
+/* Desktop: steps stay hidden until the whole section is in view, then reveal one after another
+   on a timer. Borders fade in alongside their step so the frame and dividers appear with each reveal. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 901px) {
+  .how-it-works .steps {
+    border-color: transparent;
+    transition: border-color var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works .step {
+    opacity: 0;
+    transform: translateY(20px);
+    border-color: transparent;
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease),
+      border-color var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works.is-visible .steps,
+  .how-it-works.is-visible .step {
+    border-color: var(--line);
+  }
+  .how-it-works.is-visible .step {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .how-it-works.is-visible .steps,
+  .how-it-works.is-visible .step:nth-child(1) { transition-delay: 0ms; }
+  .how-it-works.is-visible .step:nth-child(2) { transition-delay: 220ms; }
+  .how-it-works.is-visible .step:nth-child(3) { transition-delay: 440ms; }
+  .how-it-works .how-it-works-cta {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works.is-visible .how-it-works-cta {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 560ms;
+  }
+}
+
+/* Mobile: the stacked column is often taller than the viewport, so each step reveals on its
+   own, in order, as it individually scrolls into view instead of waiting on the whole section. */
+@media (prefers-reduced-motion: no-preference) and (max-width: 900px) {
+  .how-it-works .steps {
+    border-color: transparent;
+    transition: border-color var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works .step {
+    opacity: 0;
+    transform: translateY(20px);
+    border-color: transparent;
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease),
+      border-color var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works .steps:has(.step.is-visible) {
+    border-color: var(--line);
+  }
+  .how-it-works .step.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    border-color: var(--line);
+  }
+  .how-it-works .how-it-works-cta {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+  }
+  .how-it-works .steps:has(.step:last-child.is-visible) ~ .how-it-works-cta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The about image and each piece of prose reveal on their own, in order, as they individually
+   scroll into view (the section is often taller than the viewport so it may never be fully
+   contained, which is why this doesn't gate on the whole section like How it works does). */
+@media (prefers-reduced-motion: no-preference) {
+  .about-section .about-image,
+  .about-section .prose > * {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+  }
+  .about-section .about-image.is-visible,
+  .about-section .prose > *.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .about-section .prose > *:nth-child(1).is-visible { transition-delay: 80ms; }
+  .about-section .prose > *:nth-child(2).is-visible { transition-delay: 160ms; }
+  .about-section .prose > *:nth-child(3).is-visible { transition-delay: 240ms; }
+  .about-section .prose > *:nth-child(4).is-visible { transition-delay: 320ms; }
+  .about-section .prose > *:nth-child(5).is-visible { transition-delay: 400ms; }
+}
+
+/* Each policy heading/paragraph reveals on its own, in order, as it individually scrolls
+   into view (same reasoning as the about section: this page is far taller than the viewport). */
+@media (prefers-reduced-motion: no-preference) {
+  .policy-content > * {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+  }
+  .policy-content > *.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Each product card reveals on its own, in order, as it individually scrolls into view
+   (same reasoning as the about section: this section can be taller than the viewport). */
+@media (prefers-reduced-motion: no-preference) {
+  .home-product-catalog .product-card {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+  }
+  .home-product-catalog .product-card.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .home-product-catalog .product-card:nth-child(1).is-visible { transition-delay: 0ms; }
+  .home-product-catalog .product-card:nth-child(2).is-visible { transition-delay: 140ms; }
+  .home-product-catalog .product-card:nth-child(3).is-visible { transition-delay: 280ms; }
+  .home-product-catalog .product-card:nth-child(4).is-visible { transition-delay: 420ms; }
+
+  /* The Crumbs page catalog is often the first thing on the page, so it cascades in on
+     load instead of waiting on scroll. */
+  .crumbs-catalog .product-card {
+    opacity: 0;
+    animation: field-group-reveal var(--motion-fast) var(--motion-ease) both;
+  }
+  .crumbs-catalog .product-card:nth-child(1) { animation-delay: 0ms; }
+  .crumbs-catalog .product-card:nth-child(2) { animation-delay: 80ms; }
+  .crumbs-catalog .product-card:nth-child(3) { animation-delay: 160ms; }
+  .crumbs-catalog .product-card:nth-child(4) { animation-delay: 240ms; }
+}
+
+/* Form field groups cascade in on load rather than on scroll, since this section sits
+   right below the page hero and is typically in view already. */
+@media (prefers-reduced-motion: no-preference) {
+  .custom-order-section .enquiry-field-group,
+  .custom-order-section .enquiry-submit {
+    opacity: 0;
+    animation: field-group-reveal var(--motion-fast) var(--motion-ease) both;
+  }
+  .custom-order-section .enquiry-fields-row .enquiry-field-group:nth-child(1) { animation-delay: 0ms; }
+  .custom-order-section .enquiry-fields-row .enquiry-field-group:nth-child(2) { animation-delay: 60ms; }
+  .custom-order-section .enquiry-fields-row .enquiry-field-group:nth-child(3) { animation-delay: 120ms; }
+  .custom-order-section .enquiry-fields-row .enquiry-field-group:nth-child(4) { animation-delay: 180ms; }
+  .custom-order-section form > .enquiry-field-group { animation-delay: 240ms; }
+  .custom-order-section .enquiry-submit { animation-delay: 300ms; }
+}
+@keyframes field-group-reveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cart content cascades in on load, whether it's the empty state or a populated cart. */
+@media (prefers-reduced-motion: no-preference) {
+  .cart-empty h2,
+  .cart-empty .btn {
+    opacity: 0;
+    animation: field-group-reveal var(--motion-panel) var(--motion-ease) both;
+  }
+  .cart-empty h2 { animation-delay: 0ms; }
+  .cart-empty .btn { animation-delay: 160ms; }
+
+  .cart-items .cart-row,
+  .cart-summary {
+    opacity: 0;
+    animation: field-group-reveal var(--motion-panel) var(--motion-ease) both;
+  }
+  .cart-items .cart-row:nth-child(1) { animation-delay: 0ms; }
+  .cart-items .cart-row:nth-child(2) { animation-delay: 140ms; }
+  .cart-items .cart-row:nth-child(3) { animation-delay: 280ms; }
+  .cart-items .cart-row:nth-child(4) { animation-delay: 420ms; }
+  .cart-summary { animation-delay: 140ms; }
+}
+
+/* Product detail content cascades in on load: heading, description, order form, then the image. */
+@media (prefers-reduced-motion: no-preference) {
+  .product-detail-heading h1,
+  .product-detail-heading p,
+  .product-order-heading,
+  .product-order-fields,
+  .product-order-total,
+  .cookie-explorer,
+  .product-gallery {
+    opacity: 0;
+    animation: field-group-reveal var(--motion-panel) var(--motion-ease) both;
+  }
+  .product-detail-heading h1 { animation-delay: 0ms; }
+  .product-detail-heading p { animation-delay: 140ms; }
+  .product-order-heading { animation-delay: 280ms; }
+  .product-order-fields { animation-delay: 420ms; }
+  .product-order-total { animation-delay: 560ms; }
+  .cookie-explorer,
+  .product-gallery {
+    animation-delay: 140ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import CookieExplorer from "@/components/cookie-explorer";
 import ProductGallery from "@/components/product-gallery";
 import ProductOrder from "@/components/product-order";
-import { products, sharedKitchenWarning } from "@/lib/catalog";
+import { sharedKitchenWarning } from "@/lib/catalog";
+import { getProducts, getPickupDates } from "@/lib/catalog-store";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await getProducts();
   return products.map((product) => ({ slug: product.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  const products = await getProducts();
   const product = products.find((item) => item.slug === slug);
   return product
     ? { title: product.name, description: product.description, openGraph: { title: product.name, description: product.description, images: [] }, twitter: { card: "summary", title: product.name, description: product.description, images: [] } }
@@ -19,7 +23,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  // Availability must reflect admin changes and the current ordering cutoff.
+  await connection();
   const { slug } = await params;
+  const [products, pickupDates] = await Promise.all([getProducts(), getPickupDates()]);
   const product = products.find((item) => item.slug === slug);
   if (!product) notFound();
 
@@ -32,19 +39,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </svg>
         <span aria-current="page">{product.name}</span>
       </nav>
-      <header className="shell product-detail-hero">
-        <div className="product-detail-heading">
-          <h1 className="page-title">{product.name}</h1>
-          <div>
-            <p>{product.description}</p>
-            <span>From ${product.variants[0].price} AUD</span>
-          </div>
-        </div>
-      </header>
       <div className="shell product-detail-layout">
-        <div className="product-detail-copy">
-          <ProductOrder product={product} />
-        </div>
         {product.slug === "signature-box" || product.slug === "seasonal-box" ? (
           <CookieExplorer
             key={product.slug}
@@ -54,10 +49,21 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         ) : (
           <ProductGallery images={product.images} name={product.name} />
         )}
+        <div className="product-detail-copy">
+          <header className="product-detail-hero">
+            <div className="product-detail-heading">
+              <h1 className="page-title">{product.name}</h1>
+              <div>
+                <p>{product.description}</p>
+              </div>
+            </div>
+          </header>
+          <ProductOrder product={product} pickupDates={pickupDates} />
+        </div>
       </div>
       <div className="shell product-facts">
         <section>
-          <h2>Inside the box</h2>
+          <h2>Order information</h2>
           <p>{product.ingredients}</p>
         </section>
         <section>

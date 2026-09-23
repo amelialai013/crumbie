@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 
 const clips = [
-  { src: "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4" },
-  { src: "https://videos.pexels.com/video-files/10835189/10835189-hd_1920_1080_24fps.mp4", playUntil: 5 },
-  { src: "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4" },
+  { src: "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4", cutAt: 7 },
+  { src: "https://videos.pexels.com/video-files/34484013/34484013-hd_1920_1080_30fps.mp4", cutAt: 7 },
+  { src: "https://videos.pexels.com/video-files/10835189/10835189-hd_1920_1080_24fps.mp4", cutAt: 7 },
+  { src: "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4", cutAt: 7 },
 ];
 
 const crossfadeDuration = 1800;
@@ -43,10 +44,7 @@ export default function HeroMedia() {
   function findNextReadyClip(fromIndex: number) {
     for (let offset = 1; offset < clips.length; offset += 1) {
       const candidate = (fromIndex + offset) % clips.length;
-      if (
-        readyClipsRef.current.has(candidate) &&
-        !failedClipsRef.current.has(candidate)
-      ) {
+      if (readyClipsRef.current.has(candidate) && !failedClipsRef.current.has(candidate)) {
         return candidate;
       }
     }
@@ -55,11 +53,7 @@ export default function HeroMedia() {
   }
 
   function advanceClip(fromIndex: number, restartIfWaiting = false) {
-    if (
-      fromIndex !== activeClipRef.current ||
-      transitioningRef.current ||
-      reduceMotion
-    ) {
+    if (fromIndex !== activeClipRef.current || transitioningRef.current || reduceMotion) {
       return;
     }
 
@@ -130,16 +124,12 @@ export default function HeroMedia() {
   }
 
   function markClipPlaying(index: number) {
-    setPlayingClips((current) =>
-      current.includes(index) ? current : [...current, index],
-    );
+    setPlayingClips((current) => (current.includes(index) ? current : [...current, index]));
   }
 
   function markClipPaused(index: number) {
     setPlayingClips((current) =>
-      current.includes(index)
-        ? current.filter((clipIndex) => clipIndex !== index)
-        : current,
+      current.includes(index) ? current.filter((clipIndex) => clipIndex !== index) : current,
     );
   }
 
@@ -160,9 +150,7 @@ export default function HeroMedia() {
     return !failedClips.includes(candidate);
   });
   const nextClipToPreload =
-    nextClipOffset === -1
-      ? activeClip
-      : (activeClip + nextClipOffset + 1) % clips.length;
+    nextClipOffset === -1 ? activeClip : (activeClip + nextClipOffset + 1) % clips.length;
 
   useEffect(() => {
     if (reduceMotion) {
@@ -177,55 +165,53 @@ export default function HeroMedia() {
 
   return (
     <div className="hero-media" aria-hidden="true">
-      {!reduceMotion && clips.map((clip, index) => {
-        const isReady = readyClips.includes(index) && !failedClips.includes(index);
-        const isPlaying = playingClips.includes(index);
-        const className = [
-          "hero-video",
-          isReady && isPlaying && index === activeClip ? "is-active" : "",
-          isReady && isPlaying && index === outgoingClip ? "is-outgoing" : "",
-        ].filter(Boolean).join(" ");
+      {!reduceMotion &&
+        clips.map((clip, index) => {
+          const isReady = readyClips.includes(index) && !failedClips.includes(index);
+          const isPlaying = playingClips.includes(index);
+          const className = [
+            "hero-video",
+            isReady && isPlaying && index === activeClip ? "is-active" : "",
+            isReady && isPlaying && index === outgoingClip ? "is-outgoing" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
 
-        return (
-          <video
-            key={clip.src}
-            ref={(video) => {
-              videoRefs.current[index] = video;
-              if (video) {
-                video.defaultMuted = true;
-                video.muted = true;
-              }
-            }}
-            className={className}
-            autoPlay={index === activeClip || index === nextClipToPreload}
-            loop
-            muted
-            playsInline
-            preload={index === activeClip || index === nextClipToPreload ? "auto" : "metadata"}
-            onCanPlay={() => markClipReady(index)}
-            onPlaying={() => markClipPlaying(index)}
-            onPause={() => markClipPaused(index)}
-            onTimeUpdate={(event) => {
-              const transitionAt =
-                clip.playUntil ??
-                (Number.isFinite(event.currentTarget.duration)
-                  ? event.currentTarget.duration - crossfadeDuration / 1000
-                  : null);
+          return (
+            <video
+              key={clip.src}
+              ref={(video) => {
+                videoRefs.current[index] = video;
+                if (video) {
+                  video.defaultMuted = true;
+                  video.muted = true;
+                }
+              }}
+              className={className}
+              autoPlay={index === activeClip || index === nextClipToPreload}
+              loop
+              muted
+              playsInline
+              preload={index === activeClip || index === nextClipToPreload ? "auto" : "metadata"}
+              onCanPlay={() => markClipReady(index)}
+              onPlaying={() => markClipPlaying(index)}
+              onPause={() => markClipPaused(index)}
+              onTimeUpdate={(event) => {
+                const transitionAt = Math.max(0, clip.cutAt - crossfadeDuration / 1000);
 
-              if (
-                index === activeClipRef.current &&
-                transitionAt !== null &&
-                event.currentTarget.currentTime >= transitionAt
-              ) {
-                advanceClip(index, true);
-              }
-            }}
-            onError={(event) => markClipFailed(index, event.currentTarget)}
-          >
-            <source src={clip.src} type="video/mp4" />
-          </video>
-        );
-      })}
+                if (
+                  index === activeClipRef.current &&
+                  event.currentTarget.currentTime >= transitionAt
+                ) {
+                  advanceClip(index, true);
+                }
+              }}
+              onError={(event) => markClipFailed(index, event.currentTarget)}
+            >
+              <source src={clip.src} type="video/mp4" />
+            </video>
+          );
+        })}
     </div>
   );
 }

@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "project": {
+    "catalog": "prod",
+    "initializedAt": "2026-09-22T10:17:12.381Z",
+    "merchantDisplayName": null,
+    "merchantId": "acct_1UIQ5MQgRotRf4R4",
+    "projectId": "project_61VRoiVPXJZbfshUh16VRo2iFw8S22NaNcaNWf1Ue9Gq",
+    "projectName": "crumbie"
+  },
+  "providers": {
+    "resend": {
+      "accountRequestId": "facctrq_61VRowyXBO5tRS7Rl16VRo2iFw8S22NaNcaNWf1UeSAK",
+      "configuration": {},
+      "linkedAt": "2026-09-22T10:32:23.384Z",
+      "providerId": "prvdr_61VFXTzsszWb1r1S25KMa",
+      "providerName": "Resend",
+      "redirectUrl": null,
+      "requestedAt": "2026-09-22T10:32:23.384Z",
+      "status": "complete",
+      "providerAccount": {
+        "id": "7c89270e-58d9-4640-926f-2a84f51d9e5b",
+        "display_name": "clubcrumbieadmin",
+        "primary_email": "clubcrumbieadmin@gmail.com",
+        "link_action": "linked_existing"
+      }
+    },
+    "upstash": {
+      "accountRequestId": "facctrq_61VRojdqfYqS2c4JP16VRo2iFw8S22NaNcaNWf1UeMQK",
+      "configuration": {},
+      "linkedAt": "2026-09-22T10:18:22.522Z",
+      "providerId": "prvdr_61UVa3kQyvSOEnWgd5Naa",
+      "providerName": "Upstash",
+      "redirectUrl": null,
+      "requestedAt": "2026-09-22T10:18:22.522Z",
+      "status": "complete"
+    }
+  },
+  "resources": {
+    "resend-email": {
+      "configuration": {},
+      "createdAt": "2026-09-22T10:32:42.166Z",
+      "lastRevealedAt": "2026-09-22T10:32:42.825Z",
+      "lastStatus": "complete",
+      "name": "resend-email",
+      "providerId": "prvdr_61VFXTzsszWb1r1S25KMa",
+      "providerName": "Resend",
+      "resourceId": "fres_61VRoxUVWw4D1f2Kv16VRo2iFw8S22NaNcaNWf1UeH1s",
+      "serviceId": "email"
+    },
+    "resend-plan": {
+      "configuration": {},
+      "createdAt": "2026-09-22T10:32:23.135Z",
+      "lastRevealedAt": null,
+      "lastStatus": "complete",
+      "name": "resend-plan",
+      "providerId": "prvdr_61VFXTzsszWb1r1S25KMa",
+      "providerName": "Resend",
+      "resourceId": "fres_61VRoxDe9nviOsCRo16VRo2iFw8S22NaNcaNWf1UeWq8",
+      "serviceId": "free"
+    },
+    "store": {
+      "configuration": {
+        "name": "crumbie",
+        "price": "free"
+      },
+      "createdAt": "2026-09-22T10:18:25.192Z",
+      "lastRevealedAt": "2026-09-22T10:18:25.692Z",
+      "lastStatus": "complete",
+      "name": "store",
+      "providerId": "prvdr_61UVa3kQyvSOEnWgd5Naa",
+      "providerName": "Upstash",
+      "resourceId": "fres_61VRojfSgQgpwLF4216VRo2iFw8S22NaNcaNWf1Ue3FI",
+      "serviceId": "redis"
+    }
+  },
+  "managedProjectVariableEnvKeys": {
+    ".env": [
+      "CRUMBIE_NOTIFICATION_EMAIL"
+    ]
+  }
+}

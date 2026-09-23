@@ -28,6 +28,7 @@ export default function CustomOrderForm() {
   function validationMessage(field: HTMLInputElement | HTMLTextAreaElement) {
     if (field.validity.valueMissing) return `${fieldLabels[field.name] || "This field"} is required`;
     if (field.validity.typeMismatch) return "Enter a valid email address";
+    if (field.validity.patternMismatch && field.name === "phone") return "Enter a valid phone number";
     if (field.validity.tooShort) return `${fieldLabels[field.name] || "This field"} is too short`;
     return "Enter a valid value";
   }
@@ -75,8 +76,13 @@ export default function CustomOrderForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(Object.fromEntries(formData)),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setErrorMessage(data && typeof data.error === "string" ? data.error : "We couldn’t send your message. Please try again.");
+      }
       setStatus(res.ok ? "done" : "error");
     } catch {
+      setErrorMessage("We couldn’t send your message. Please check your connection and try again.");
       setStatus("error");
     }
   }
@@ -110,7 +116,7 @@ export default function CustomOrderForm() {
         <div className="enquiry-field-group">
           <div className={`field${validationErrors.phone ? " has-error" : ""}`}>
             <label htmlFor="phone">Phone</label>
-            <input id="phone" name="phone" type="tel" autoComplete="tel" required maxLength={40} aria-invalid={Boolean(validationErrors.phone)} aria-describedby={validationErrors.phone ? "phone-error" : undefined} onChange={handleFieldChange} onBlur={handleFieldBlur} />
+            <input id="phone" name="phone" type="tel" autoComplete="tel" required maxLength={40} pattern="[+()0-9\s-]{6,40}" aria-invalid={Boolean(validationErrors.phone)} aria-describedby={validationErrors.phone ? "phone-error" : undefined} onChange={handleFieldChange} onBlur={handleFieldBlur} />
           </div>
           {validationErrors.phone && <p id="phone-error" className="field-error" role="alert">{validationErrors.phone}</p>}
         </div>
@@ -138,13 +144,13 @@ export default function CustomOrderForm() {
         </div>
         {validationErrors.request && <p id="request-error" className="field-error" role="alert">{validationErrors.request}</p>}
       </div>
-      {status === "error" && Object.keys(validationErrors).length === 0 && <p className="field-error" role="alert">{errorMessage || "We couldn’t send your message. Please try again."}</p>}
       <button type="submit" className="btn btn-dark btn-arrow enquiry-submit" disabled={status === "sending"}>
         {status === "sending" ? "Sending…" : "Send message"}
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
           <path d="m7 4.5 5.5 5.5L7 15.5" />
         </svg>
       </button>
+      {status === "error" && Object.keys(validationErrors).length === 0 && <p className="field-error enquiry-submit-error" role="alert">{errorMessage || "We couldn’t send your message. Please try again."}</p>}
     </form>
   );
 }

@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
-import { products } from "@/lib/catalog";
+import { getProducts } from "@/lib/catalog-store";
 
 export const metadata: Metadata = { title: "Crumbs" };
 
-export default function Crumbs() {
+export default async function Crumbs() {
+  const products = await getProducts();
   return (
     <>
       <section className="page-hero">
         <div className="shell">
-          <h1 className="page-title">Crumbs</h1>
+          <h1 className="page-title">Crumb selection</h1>
         </div>
       </section>
-      <section className="section section-warm cookie-catalog">
+      <section className="section section-warm cookie-catalog crumbs-catalog">
         <div className="shell">
           <div className="product-grid">
             {products.map((product) => (
@@ -27,14 +28,16 @@ export default function Crumbs() {
                 <div className="product-card-body">
                   <div className="product-card-heading">
                     <h2>{product.name}</h2>
-                    <span className="price">From ${product.variants[0].price}</span>
                   </div>
-                  <span className="product-card-action">
-                    Order now
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
-                      <path d="m7 4.5 5.5 5.5L7 15.5" />
-                    </svg>
-                  </span>
+                  <div className="product-card-footer">
+                    <span className="price">Boxes from ${product.variants[0].price}</span>
+                    <span className="product-card-action">
+                      Order now
+                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                        <path d="m7 4.5 5.5 5.5L7 15.5" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}
