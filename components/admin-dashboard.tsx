@@ -1380,17 +1380,12 @@ export default function AdminDashboard() {
                     type="button"
                     className="btn btn-light"
                     onClick={generateProductDescription}
-                    disabled={!config?.openai || descriptionStatus.startsWith("Generating")}
+                    disabled={descriptionStatus.startsWith("Generating")}
                   >
                     {descriptionStatus.startsWith("Generating")
                       ? "Generating..."
                       : "Generate description with OpenAI"}
                   </button>
-                  {!config?.openai && (
-                    <p className="admin-generator-warning">
-                      Add <code>OPENAI_API_KEY</code> to enable generation.
-                    </p>
-                  )}
                   {descriptionStatus && !descriptionStatus.startsWith("Generating") && (
                     <p className="admin-generator-status">{descriptionStatus}</p>
                   )}
@@ -1435,11 +1430,6 @@ export default function AdminDashboard() {
                     rotatable product-page view. Generating a new set replaces
                     the current product imagery.
                   </p>
-                  {!config?.openai && (
-                    <p className="admin-generator-warning">
-                      Add <code>OPENAI_API_KEY</code> to enable generation.
-                    </p>
-                  )}
                   <label
                     className={`admin-reference-dropzone${referenceDropActive ? " is-active" : ""}`}
                     htmlFor="product-image-references"
@@ -1521,7 +1511,7 @@ export default function AdminDashboard() {
                   <button
                     className="btn btn-outline"
                     type="button"
-                    disabled={!config?.openai || generationStatus.startsWith("Generating")}
+                    disabled={generationStatus.startsWith("Generating")}
                     onClick={generateProductImage}
                   >
                     {generationStatus.startsWith("Generating")
