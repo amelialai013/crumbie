@@ -86,6 +86,9 @@
 .field.has-error select,
 .field.has-error textarea { border-color: #ff8f8f; }
 .field.has-error label { color: #ff8f8f; }
+/* Keep rows packed at the top so a sibling field's error text doesn't
+   stretch this field's rows and push its input out of alignment. */
+.field { align-content: start; }
 .prose { color: #c1bfbc; }
 .footer { background: #020202; }
 .footer-grid p,
