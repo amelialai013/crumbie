@@ -349,6 +349,23 @@ function formatPickupDate(date: string) {
   });
 }
 
+function getFirstSaturdayOfNextMonth() {
+  const date = new Date();
+  const firstOfNextMonth = new Date(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    1,
+  );
+  const daysUntilSaturday = (6 - firstOfNextMonth.getDay() + 7) % 7;
+  firstOfNextMonth.setDate(firstOfNextMonth.getDate() + daysUntilSaturday);
+
+  return [
+    firstOfNextMonth.getFullYear(),
+    String(firstOfNextMonth.getMonth() + 1).padStart(2, "0"),
+    String(firstOfNextMonth.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<Data | null>(null);
@@ -361,7 +378,9 @@ export default function AdminDashboard() {
   const [dashboardError, setDashboardError] = useState("");
   const [managedPickupDates, setManagedPickupDates] =
     useState<PickupDate[]>(catalogPickupDates);
-  const [newPickupDate, setNewPickupDate] = useState("");
+  const [newPickupDate, setNewPickupDate] = useState(
+    getFirstSaturdayOfNextMonth,
+  );
   const [newPickupWindow, setNewPickupWindow] = useState("10:00am–12:00pm");
   const [pickupDateStatus, setPickupDateStatus] = useState("");
   const [adminNotice, setAdminNotice] = useState("");
@@ -539,7 +558,7 @@ export default function AdminDashboard() {
         (left, right) => left.date.localeCompare(right.date),
       ),
     );
-    setNewPickupDate("");
+    setNewPickupDate(getFirstSaturdayOfNextMonth());
     setPickupDateStatus("");
     setAdminNotice("Pickup date successfully added");
     const pickupModalToggle = document.getElementById("pickup-modal-toggle");
