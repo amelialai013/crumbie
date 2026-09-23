@@ -415,6 +415,25 @@
   min-height: 120px;
   line-height: 1.6;
 }
+.admin-editor .field textarea,
+.admin-product-form .field textarea {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 173, 148, .7) transparent;
+}
+.admin-editor .field textarea::-webkit-scrollbar,
+.admin-product-form .field textarea::-webkit-scrollbar {
+  width: 10px;
+}
+.admin-editor .field textarea::-webkit-scrollbar-track,
+.admin-product-form .field textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-editor .field textarea::-webkit-scrollbar-thumb,
+.admin-product-form .field textarea::-webkit-scrollbar-thumb {
+  border: 3px solid #090909;
+  border-radius: 999px;
+  background: rgba(201, 173, 148, .7);
+}
 .admin-editor-count {
   display: block;
   margin-top: 8px;
@@ -1183,6 +1202,24 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
   .admin-add-date .admin-modal-body {
     grid-template-columns: 1fr;
     gap: 14px;
+  }
+  .admin-policy-sections {
+    width: min(452px, calc(100vw - 48px));
+  }
+  .admin-policy-sections .admin-policy-sections-heading {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+  .admin-policy-sections .admin-policy-section {
+    margin: 0;
+    padding: 20px;
+  }
+  .admin-policy-sections .admin-modal-actions {
+    width: 100%;
+    padding: 16px 20px;
+  }
+  .admin-policy-sections .admin-modal-actions .btn {
+    width: 100%;
   }
   .admin-add-date .btn {
     width: 100%;
