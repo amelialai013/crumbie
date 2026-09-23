@@ -919,6 +919,14 @@ section:has(#pickup-modal-toggle:checked) .admin-pickup-close {
   background: transparent;
   color: #fff;
 }
+.admin-add-date .field input::-webkit-datetime-edit,
+.admin-add-date .field input::-webkit-datetime-edit-text,
+.admin-add-date .field input::-webkit-datetime-edit-month-field,
+.admin-add-date .field input::-webkit-datetime-edit-day-field,
+.admin-add-date .field input::-webkit-datetime-edit-year-field {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
 .admin-add-date .field:focus-within {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
