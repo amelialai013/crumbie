@@ -315,7 +315,7 @@ Club Crumbie`,
   settings: {
     fields: [
       { key: "pickupAddress", label: "Pickup address", maxLength: 240 },
-      { key: "notificationEmail", label: "Notification email", maxLength: 200 },
+      { key: "notificationEmail", label: "Email address", maxLength: 200 },
       { key: "businessName", label: "Business name", maxLength: 100 },
     ],
   },
