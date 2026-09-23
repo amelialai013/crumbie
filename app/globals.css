@@ -1008,6 +1008,7 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+  align-items: start;
 }
 .admin-product-form .field {
   gap: 8px;
