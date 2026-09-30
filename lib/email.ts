@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { withPickupAddress } from "@/lib/email-templates";
 import { getRecord } from "@/lib/store";
 
 type Content = { fields: Record<string, string> };
@@ -28,8 +29,7 @@ Order number: {{orderNumber}}
 Pickup date: {{pickupDate}}
 Pickup window: {{pickupWindow}}
 Order total: {{orderTotal}}
-
-Pickup is in Ivanhoe, Victoria. The exact address and final collection details will be provided separately.
+Pickup address: {{pickupAddress}}
 
 Please keep this email for your records. We look forward to sharing your crumbs with you.
 
@@ -104,10 +104,14 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 
 export async function sendOrderConfirmation(order: Order) {
 	if (!order.customer.email) throw new Error("Order customer email is missing");
-	const templates = await contentFields("email templates");
+	const [templates, settings] = await Promise.all([
+		contentFields("email templates"),
+		contentFields("settings"),
+	]);
 	const currency = order.currency?.toUpperCase() || "AUD";
 	const values = {
 		customerName: order.customer.name || "there",
+		pickupAddress: singleLine(settings.pickupAddress || "") || "Ivanhoe, Victoria (exact address to follow)",
 		orderNumber: order.id.slice(0, 8).toUpperCase(),
 		pickupDate: uniqueLineValues(order.lines, "pickupDate"),
 		pickupWindow: uniqueLineValues(order.lines, "pickupWindow"),
@@ -116,6 +120,6 @@ export async function sendOrderConfirmation(order: Order) {
 	await sendTextEmail({
 		to: order.customer.email,
 		subject: renderTemplate(templates.confirmationSubject || defaultTemplates.confirmationSubject, values),
-		text: renderTemplate(templates.confirmationBody || defaultTemplates.confirmationBody, values),
+		text: renderTemplate(withPickupAddress(templates.confirmationBody || defaultTemplates.confirmationBody), values),
 	});
 }

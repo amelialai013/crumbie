@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { formatPickupDate } from "@/lib/format-date";
+import { pickupAddressToken, withPickupAddress } from "@/lib/email-templates";
+
+const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
 import {
   defaultProductAllergens,
   defaultProductIngredients,
@@ -285,8 +288,7 @@ Order number: {{orderNumber}}
 Pickup date: {{pickupDate}}
 Pickup window: {{pickupWindow}}
 Order total: {{orderTotal}}
-
-Pickup is in Ivanhoe, Victoria. We will include the exact address and any final collection details here.
+Pickup address: {{pickupAddress}}
 
 Please keep this email for your records. We look forward to sharing your crumbs with you.
 
@@ -299,8 +301,7 @@ Just a reminder that your Club Crumbie order is ready for pickup soon.
 Pickup date: {{pickupDate}}
 Pickup window: {{pickupWindow}}
 Order number: {{orderNumber}}
-
-Pickup is in Ivanhoe, Victoria. We will include the exact address and any collection instructions here.
+Pickup address: {{pickupAddress}}
 
 Please arrive during your pickup window so we can hand over your box while it is fresh.
 
@@ -978,6 +979,15 @@ export default function AdminDashboard() {
   }
 
   function editEmailTemplate(template: EmailTemplate) {
+    if (usesPickupAddress(template.bodyField)) {
+      setContent((current) => ({
+        ...current,
+        fields: {
+          ...current.fields,
+          [template.bodyField]: withPickupAddress(current.fields[template.bodyField] || ""),
+        },
+      }));
+    }
     setEmailTemplateKey(template.key);
   }
 
@@ -1991,7 +2001,7 @@ export default function AdminDashboard() {
             <div className="admin-template-editor-heading"><button className="text-button" type="button" onClick={() => setEmailTemplateKey(null)}><svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m10 3-5 5 5 5" /></svg>Back to templates</button><h2>{template.name}</h2><p>{template.description}</p></div>
             <div className="admin-editor-fields">
               <div className="field"><label htmlFor="email-template-subject">Subject <span>(140 characters max)</span></label><input id="email-template-subject" maxLength={140} value={content.fields[template.subjectField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.subjectField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.subjectField] || "").length} / 140</small></div>
-              <div className="field"><label htmlFor="email-template-body">Body copy <span>(3000 characters max)</span></label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small></div>
+              <div className="field"><label htmlFor="email-template-body">Body copy <span>(3000 characters max)</span></label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small>{usesPickupAddress(template.bodyField) && <small className="admin-editor-hint">{pickupAddressToken} is always replaced with the pickup address in Settings.</small>}</div>
             </div>
             <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..."}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save template"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
           </form>;

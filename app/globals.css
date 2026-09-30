@@ -617,6 +617,12 @@
   font-size: .72rem;
   text-align: right;
 }
+.admin-editor-hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: .72rem;
+}
 .admin-policy-editor-section {
   margin-top: 56px;
   padding-top: 24px;
