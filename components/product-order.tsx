@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { isDateClosed, type PickupDate, type Product } from "@/lib/catalog";
+import { formatPickupDate } from "@/lib/format-date";
 import { useCart } from "./cart-context";
 import PremiumSelect from "./premium-select";
 import QuantityControl from "./quantity-control";
@@ -101,7 +102,7 @@ export default function ProductOrder({ product, pickupDates }: { product: Produc
             value={dateId}
             options={available.map((date) => ({
               value: date.id,
-              label: new Intl.DateTimeFormat("en-AU", { weekday: "long", day: "numeric", month: "long", timeZone: "Australia/Melbourne" }).format(new Date(`${date.date}T12:00:00+10:00`)),
+              label: formatPickupDate(date.date),
               detail: date.window,
             }))}
             placeholder={soldOut ? "No dates currently available" : "Select an available date"}

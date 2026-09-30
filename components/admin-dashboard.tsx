@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { TimePicker } from "./time-picker";
+import { formatPickupDate } from "@/lib/format-date";
 import {
   defaultProductAllergens,
   defaultProductIngredients,
@@ -349,15 +351,17 @@ function mergeContent(
   return { fields: { ...emptyContent(moduleName).fields, ...fields } };
 }
 
-function formatPickupDate(date: string) {
-  return new Date(`${date}T12:00:00`).toLocaleDateString("en-AU", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
 
-const DEFAULT_PICKUP_WINDOW = "10:00am–12:00pm";
+const DEFAULT_PICKUP_START = "10:00";
+const DEFAULT_PICKUP_END = "12:00";
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+function formatPickupTime(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  const period = hours >= 12 ? "pm" : "am";
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${String(minutes).padStart(2, "0")}${period}`;
+}
 
 function firstSaturdayOfNextMonth() {
   const now = new Date();
@@ -385,7 +389,8 @@ export default function AdminDashboard() {
   const [newPickupDate, setNewPickupDate] = useState(() =>
     firstSaturdayOfNextMonth(),
   );
-  const [newPickupWindow, setNewPickupWindow] = useState(DEFAULT_PICKUP_WINDOW);
+  const [newPickupStart, setNewPickupStart] = useState(DEFAULT_PICKUP_START);
+  const [newPickupEnd, setNewPickupEnd] = useState(DEFAULT_PICKUP_END);
   const [pickupFormKey, setPickupFormKey] = useState(0);
   const [pickupDateStatus, setPickupDateStatus] = useState("");
   const [pickupFieldErrors, setPickupFieldErrors] = useState<
@@ -578,7 +583,8 @@ export default function AdminDashboard() {
 
   function resetPickupForm() {
     setNewPickupDate(firstSaturdayOfNextMonth());
-    setNewPickupWindow(DEFAULT_PICKUP_WINDOW);
+    setNewPickupStart(DEFAULT_PICKUP_START);
+    setNewPickupEnd(DEFAULT_PICKUP_END);
     setPickupDateStatus("");
     setPickupFieldErrors({});
     setPickupFormKey((key) => key + 1);
@@ -588,8 +594,12 @@ export default function AdminDashboard() {
     event.preventDefault();
     const fieldErrors: Record<string, string> = {};
     if (!newPickupDate.trim()) fieldErrors.date = "Choose a pickup date.";
-    if (!newPickupWindow.trim())
-      fieldErrors.window = "Enter a pickup window.";
+    if (!TIME_PATTERN.test(newPickupStart))
+      fieldErrors.start = "Enter a valid start time.";
+    if (!TIME_PATTERN.test(newPickupEnd))
+      fieldErrors.end = "Enter a valid end time.";
+    else if (!fieldErrors.start && newPickupEnd <= newPickupStart)
+      fieldErrors.end = "End time must be after the start time.";
     setPickupFieldErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return;
     setPickupDateStatus("Saving...");
@@ -597,7 +607,10 @@ export default function AdminDashboard() {
     const response = await fetch("/api/admin/pickup-dates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: newPickupDate, window: newPickupWindow }),
+      body: JSON.stringify({
+        date: newPickupDate,
+        window: `${formatPickupTime(newPickupStart)}–${formatPickupTime(newPickupEnd)}`,
+      }),
     });
     if (!response.ok) {
       finishAdminAction();
@@ -1265,7 +1278,7 @@ export default function AdminDashboard() {
           </div>
         )}
         {tab === "orders" && (
-          <table className="table">
+          <table className="table admin-stack-table">
             <thead>
               <tr>
                 <th>Customer</th>
@@ -1278,12 +1291,12 @@ export default function AdminDashboard() {
               {orders.length ? (
                 orders.map((order) => (
                   <tr key={order.id}>
-                    <td>
+                    <td data-label="Customer">
                       {order.customer?.name}
                       <br />
                       <small>{order.customer?.email}</small>
                     </td>
-                    <td>
+                    <td data-label="Items">
                       {order.lines?.map((line, index) => (
                         <div key={index}>
                           {line.productName} · {line.variantLabel}{" "}
@@ -1291,8 +1304,8 @@ export default function AdminDashboard() {
                         </div>
                       ))}
                     </td>
-                    <td>{order.paymentStatus}</td>
-                    <td>{order.createdAt?.slice(0, 10)}</td>
+                    <td data-label="Payment">{order.paymentStatus}</td>
+                    <td data-label="Created">{order.createdAt?.slice(0, 10)}</td>
                   </tr>
                 ))
               ) : (
@@ -1330,7 +1343,7 @@ export default function AdminDashboard() {
           </div>
         )}
         {tab === "enquiries" && (
-          <table className="table">
+          <table className="table admin-stack-table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -1342,7 +1355,7 @@ export default function AdminDashboard() {
               {enquiries.length ? (
                 enquiries.map((enquiry) => (
                   <tr key={enquiry.id}>
-                    <td>
+                    <td data-label="Name">
                       {enquiry.name}
                       <br />
                       <small>
@@ -1351,8 +1364,8 @@ export default function AdminDashboard() {
                         {enquiry.phone}
                       </small>
                     </td>
-                    <td>{enquiry.request}</td>
-                    <td>
+                    <td data-label="Request">{enquiry.request}</td>
+                    <td data-label="Status">
                       <span className="status">{enquiry.status}</span>
                     </td>
                   </tr>
@@ -1711,37 +1724,69 @@ export default function AdminDashboard() {
                 Loading products...
               </p>
             ) : (
-            <div className="admin-record-grid">
-              {managedProducts.map((product) => (
-                <article className="admin-record" key={product.id}>
-                  <div>
-                    <h2>{product.name}</h2>
-                    <p>{product.description}</p>
-                  </div>
-                  <div className="admin-record-meta">
-                    <span>
-                      {product.variants
-                        .map((variant) => `${variant.label}: $${variant.price}`)
-                        .join(" · ")}
-                    </span>
-                    <button
-                      className="text-button"
-                      type="button"
-                      onClick={() => editProduct(product)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-button"
-                      type="button"
-                      onClick={() => void removeProduct(product.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <table className="table admin-pickup-table admin-product-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th className="admin-product-price">Six</th>
+                  <th className="admin-product-price">Twelve</th>
+                  <th>
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {managedProducts.length ? (
+                  managedProducts.map((product) => (
+                    <tr key={product.id}>
+                      <td>
+                        <div className="admin-product-name">{product.name}</div>
+                        <div className="admin-product-description">
+                          {product.description}
+                        </div>
+                      </td>
+                      {[6, 12].map((quantity) => {
+                        const variant = product.variants.find(
+                          (item) => item.quantity === quantity,
+                        );
+                        return (
+                          <td
+                            className="admin-product-price"
+                            data-label={quantity === 6 ? "Six" : "Twelve"}
+                            key={quantity}
+                          >
+                            {variant ? `$${variant.price}` : "—"}
+                          </td>
+                        );
+                      })}
+                      <td className="admin-table-action">
+                        <button
+                          className="text-button"
+                          type="button"
+                          onClick={() => editProduct(product)}
+                        >
+                          <svg className="admin-edit-icon" aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                            <path d="M11.2 2.3a1.4 1.4 0 0 1 2 2L5.5 12 2.5 13.5 4 10.5l7.2-8.2Z" />
+                          </svg>
+                          Edit
+                        </button>
+                        <button
+                          className="text-button"
+                          type="button"
+                          onClick={() => void removeProduct(product.id)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4}>No products</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
             )}
           </>
         )}
@@ -1764,27 +1809,63 @@ export default function AdminDashboard() {
               <div className="admin-modal-body" key={pickupFormKey}>
               <div className={`field${pickupFieldErrors.date ? " has-error" : ""}`}>
                 <label htmlFor="new-pickup-date">Pickup date</label>
-                <input
-                  id="new-pickup-date"
-                  type="date"
-                  value={newPickupDate}
-                  onChange={(event) => setNewPickupDate(event.target.value)}
-                />
+                <div className="time-picker">
+                  <input
+                    id="new-pickup-date"
+                    type="date"
+                    value={newPickupDate}
+                    onChange={(event) => setNewPickupDate(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="time-picker-trigger"
+                    aria-label="Choose pickup date"
+                    onClick={(event) => {
+                      const input = event.currentTarget
+                        .previousElementSibling as HTMLInputElement | null;
+                      input?.focus();
+                      try {
+                        input?.showPicker?.();
+                      } catch {
+                        // showPicker can throw outside a trusted user gesture; focus is the fallback.
+                      }
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="4" y="5" width="16" height="15" rx="2" />
+                      <path d="M4 10h16M8 3v4M16 3v4" />
+                    </svg>
+                  </button>
+                </div>
                 {pickupFieldErrors.date && (
                   <p className="field-error" role="alert">{pickupFieldErrors.date}</p>
                 )}
               </div>
-              <div className={`field${pickupFieldErrors.window ? " has-error" : ""}`}>
-                <label htmlFor="new-pickup-window">Pickup window</label>
-                <input
-                  id="new-pickup-window"
-                  value={newPickupWindow}
-                  maxLength={80}
-                  onChange={(event) => setNewPickupWindow(event.target.value)}
-                />
-                {pickupFieldErrors.window && (
-                  <p className="field-error" role="alert">{pickupFieldErrors.window}</p>
-                )}
+              <div className="admin-time-range">
+                <div className={`field${pickupFieldErrors.start ? " has-error" : ""}`}>
+                  <label htmlFor="new-pickup-start">Start time</label>
+                  <TimePicker
+                    id="new-pickup-start"
+                    label="Start time"
+                    value={newPickupStart}
+                    onChange={setNewPickupStart}
+                  />
+                  {pickupFieldErrors.start && (
+                    <p className="field-error" role="alert">{pickupFieldErrors.start}</p>
+                  )}
+                </div>
+                <div className={`field${pickupFieldErrors.end ? " has-error" : ""}`}>
+                  <label htmlFor="new-pickup-end">End time</label>
+                  <TimePicker
+                    id="new-pickup-end"
+                    label="End time"
+                    value={newPickupEnd}
+                    onChange={setNewPickupEnd}
+                  />
+                  {pickupFieldErrors.end && (
+                    <p className="field-error" role="alert">{pickupFieldErrors.end}</p>
+                  )}
+                </div>
               </div>
               </div>
               <div className="admin-modal-actions">
@@ -1826,46 +1907,66 @@ export default function AdminDashboard() {
                 </button>
               ))}
             </div>
-            <div className="admin-record-grid">
-              {managedPickupDates
-                .filter(
-                  (pickupDate) =>
-                    pickupFilter === "all" ||
-                    (pickupFilter === "closed"
-                      ? isDateClosed(pickupDate)
-                      : !isDateClosed(pickupDate)),
-                )
-                .map((pickupDate) => {
-                  const closed = isDateClosed(pickupDate);
-                  return (
-                    <article
-                      className="admin-record admin-record-date"
-                      key={pickupDate.id}
-                    >
-                      <div>
-                        <h2>
-                          {formatPickupDate(pickupDate.date)}
-                        </h2>
-                        <p>{pickupDate.window}</p>
-                      </div>
-                      <div className="admin-record-date-actions">
-                        <span
-                          className={closed ? "status" : "status status-live"}
-                        >
-                          {closed ? "Closed" : "Open"}
-                        </span>
-                        <button
-                          className="text-button"
-                          type="button"
-                          onClick={() => requestPickupDateRemoval(pickupDate)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-            </div>
+            {(() => {
+              const visiblePickupDates = managedPickupDates.filter(
+                (pickupDate) =>
+                  pickupFilter === "all" ||
+                  (pickupFilter === "closed"
+                    ? isDateClosed(pickupDate)
+                    : !isDateClosed(pickupDate)),
+              );
+              return (
+                <table className="table admin-pickup-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Pickup window</th>
+                      <th>Status</th>
+                      <th>
+                        <span className="sr-only">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visiblePickupDates.length ? (
+                      visiblePickupDates.map((pickupDate) => {
+                        const closed = isDateClosed(pickupDate);
+                        return (
+                          <tr key={pickupDate.id}>
+                            <td>{formatPickupDate(pickupDate.date)}</td>
+                            <td>{pickupDate.window}</td>
+                            <td>
+                              <span
+                                className={
+                                  closed ? "status" : "status status-live"
+                                }
+                              >
+                                {closed ? "Closed" : "Open"}
+                              </span>
+                            </td>
+                            <td className="admin-table-action">
+                              <button
+                                className="text-button"
+                                type="button"
+                                onClick={() =>
+                                  requestPickupDateRemoval(pickupDate)
+                                }
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={4}>No pickup dates</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              );
+            })()}
           </>
         )}
         {tab === "email templates" && !emailTemplateKey && (
