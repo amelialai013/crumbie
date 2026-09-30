@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { formatPickupDate } from "@/lib/format-date";
-import { pickupAddressToken, withPickupAddress } from "@/lib/email-templates";
+import { pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
 import {
@@ -313,6 +313,7 @@ Club Crumbie`,
 Name: {{customerName}}
 Email: {{customerEmail}}
 Phone: {{customerPhone}}
+Enquiry type: {{enquiryType}}
 
 Message:
 {{customerMessage}}
@@ -985,6 +986,15 @@ export default function AdminDashboard() {
         fields: {
           ...current.fields,
           [template.bodyField]: withPickupAddress(current.fields[template.bodyField] || ""),
+        },
+      }));
+    }
+    if (template.bodyField === "enquiryBody") {
+      setContent((current) => ({
+        ...current,
+        fields: {
+          ...current.fields,
+          [template.bodyField]: withEnquiryType(current.fields[template.bodyField] || ""),
         },
       }));
     }
