@@ -1397,8 +1397,8 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 .admin-product-prices {
   white-space: nowrap;
 }
-.admin-product-prices span {
-  display: block;
+.admin-product-prices div + div {
+  margin-top: 6px;
 }
 .admin-product-table .admin-table-action .text-button + .text-button {
   margin-left: 16px;

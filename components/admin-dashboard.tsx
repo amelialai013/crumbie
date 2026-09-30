@@ -1739,16 +1739,16 @@ export default function AdminDashboard() {
                   managedProducts.map((product) => (
                     <tr key={product.id}>
                       <td>
-                        <span className="admin-product-name">{product.name}</span>
-                        <span className="admin-product-description">
+                        <div className="admin-product-name">{product.name}</div>
+                        <div className="admin-product-description">
                           {product.description}
-                        </span>
+                        </div>
                       </td>
                       <td className="admin-product-prices">
                         {product.variants.map((variant) => (
-                          <span key={variant.label}>
+                          <div key={variant.label}>
                             {variant.label}: ${variant.price}
-                          </span>
+                          </div>
                         ))}
                       </td>
                       <td className="admin-table-action">
