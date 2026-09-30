@@ -1728,7 +1728,8 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th>Product</th>
-                  <th>Prices</th>
+                  <th>Box of 6</th>
+                  <th>Box of 12</th>
                   <th>
                     <span className="sr-only">Actions</span>
                   </th>
@@ -1744,13 +1745,20 @@ export default function AdminDashboard() {
                           {product.description}
                         </div>
                       </td>
-                      <td className="admin-product-prices">
-                        {product.variants.map((variant) => (
-                          <div key={variant.label}>
-                            {variant.label}: ${variant.price}
-                          </div>
-                        ))}
-                      </td>
+                      {[6, 12].map((quantity) => {
+                        const variant = product.variants.find(
+                          (item) => item.quantity === quantity,
+                        );
+                        return (
+                          <td
+                            className="admin-product-price"
+                            data-label={`Box of ${quantity}`}
+                            key={quantity}
+                          >
+                            {variant ? `$${variant.price}` : "—"}
+                          </td>
+                        );
+                      })}
                       <td className="admin-table-action">
                         <button
                           className="text-button"
@@ -1771,7 +1779,7 @@ export default function AdminDashboard() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3}>No products</td>
+                    <td colSpan={4}>No products</td>
                   </tr>
                 )}
               </tbody>
