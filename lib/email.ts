@@ -1,6 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
-import { withPickupAddress } from "@/lib/email-templates";
+import { enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 import { getRecord } from "@/lib/store";
 
 type Content = { fields: Record<string, string> };
@@ -10,6 +10,7 @@ type Enquiry = {
 	email: string;
 	phone: string;
 	request: string;
+	enquiryType?: string;
 };
 type Order = {
 	id: string;
@@ -40,6 +41,7 @@ Club Crumbie`,
 Name: {{customerName}}
 Email: {{customerEmail}}
 Phone: {{customerPhone}}
+Enquiry type: {{enquiryType}}
 
 Message:
 {{customerMessage}}
@@ -93,12 +95,13 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 		customerEmail: enquiry.email,
 		customerPhone: enquiry.phone,
 		customerMessage: enquiry.request,
+		enquiryType: enquiryTypeLabels[enquiry.enquiryType || "general"] || "General enquiry",
 	};
 	await sendTextEmail({
 		to,
 		replyTo: enquiry.email,
 		subject: renderTemplate(templates.enquirySubject || defaultTemplates.enquirySubject, values),
-		text: renderTemplate(templates.enquiryBody || defaultTemplates.enquiryBody, values),
+		text: renderTemplate(withEnquiryType(templates.enquiryBody || defaultTemplates.enquiryBody), values),
 	});
 }
 

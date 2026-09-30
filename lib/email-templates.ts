@@ -17,3 +17,24 @@ export function withPickupAddress(body: string) {
 	}
 	return `${body.trimEnd()}\n\n${pickupAddressLine}`;
 }
+
+export const enquiryTypeToken = "{{enquiryType}}";
+export const enquiryTypeLine = `Enquiry type: ${enquiryTypeToken}`;
+export const enquiryTypeLabels: Record<string, string> = {
+	general: "General enquiry",
+	"custom-order": "Custom order",
+};
+
+const contactLine = /^(?:Name|Email|Phone):[^\r\n]*$/gm;
+
+// Ensures enquiry notifications always state which enquiry type was chosen.
+export function withEnquiryType(body: string) {
+	if (!body || body.includes(enquiryTypeToken)) return body;
+	const contacts = Array.from(body.matchAll(contactLine));
+	const last = contacts[contacts.length - 1];
+	if (last?.index !== undefined) {
+		const end = last.index + last[0].length;
+		return `${body.slice(0, end)}\n${enquiryTypeLine}${body.slice(end)}`;
+	}
+	return `${enquiryTypeLine}\n\n${body.trimStart()}`;
+}
