@@ -1017,6 +1017,9 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   padding: 0;
   line-height: 24px;
 }
+.enquiry-form.admin-editor .field textarea {
+  padding: 0;
+}
 .admin-product-form .admin-number-stepper {
   height: 24px;
   margin-bottom: 0;
