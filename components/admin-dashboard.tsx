@@ -1765,6 +1765,9 @@ export default function AdminDashboard() {
                           type="button"
                           onClick={() => editProduct(product)}
                         >
+                          <svg className="admin-edit-icon" aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                            <path d="M11.2 2.3a1.4 1.4 0 0 1 2 2L5.5 12 2.5 13.5 4 10.5l7.2-8.2Z" />
+                          </svg>
                           Edit
                         </button>
                         <button
