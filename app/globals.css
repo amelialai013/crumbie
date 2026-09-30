@@ -1012,6 +1012,9 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
+.admin-product-form-grid .field > input {
+  min-height: 40px;
+}
 .admin-product-form .field {
   display: flex;
   flex-direction: column;
