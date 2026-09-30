@@ -1728,8 +1728,8 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th>Product</th>
-                  <th className="admin-product-price">Box of 6</th>
-                  <th className="admin-product-price">Box of 12</th>
+                  <th className="admin-product-price">Six</th>
+                  <th className="admin-product-price">Twelve</th>
                   <th>
                     <span className="sr-only">Actions</span>
                   </th>
@@ -1752,7 +1752,7 @@ export default function AdminDashboard() {
                         return (
                           <td
                             className="admin-product-price"
-                            data-label={`Box of ${quantity}`}
+                            data-label={quantity === 6 ? "Six" : "Twelve"}
                             key={quantity}
                           >
                             {variant ? `$${variant.price}` : "—"}

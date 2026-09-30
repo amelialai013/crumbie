@@ -1408,8 +1408,8 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 @media (min-width: 641px) {
   .admin-product-table th.admin-product-price,
   .admin-product-table td.admin-product-price {
-    width: 120px;
-    min-width: 120px;
+    width: 90px;
+    min-width: 90px;
   }
 }
 .admin-product-table .admin-table-action .text-button + .text-button {
