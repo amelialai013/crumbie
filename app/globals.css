@@ -1378,7 +1378,7 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   .admin-product-table td:nth-child(2) { grid-area: prices; color: var(--muted); }
 }
 .admin-product-table td {
-  vertical-align: top;
+  vertical-align: middle;
 }
 .admin-product-table td:first-child {
   font-weight: 400;
