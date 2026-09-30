@@ -10,7 +10,7 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 export const metadata: Metadata = {
-	metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://crumbie.com.au"),
+	metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://clubcrumbie.com"),
 	title: { default: "Club Crumbie", template: "Club Crumbie — %s" },
 	description: "Premium small-batch cookie boxes for pickup in Ivanhoe, Victoria.",
 	openGraph: {

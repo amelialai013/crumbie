@@ -52,6 +52,14 @@ type Config = {
   r2: boolean;
   session: boolean;
 };
+const configLabels: Record<keyof Config, string> = {
+  store: "Store",
+  stripe: "Stripe",
+  resend: "Resend",
+  openai: "OpenAI",
+  r2: "R2",
+  session: "Session",
+};
 type ContentField = {
   key: string;
   label: string;
@@ -96,7 +104,7 @@ const contentModules: Record<string, ContentModule> = {
         label: "Secondary button label",
         maxLength: 40,
       },
-      { key: "howTitle", label: "How it works heading", maxLength: 80 },
+      { key: "howTitle", label: "Secondary heading", maxLength: 80 },
       { key: "stepOneTitle", label: "Step 1 heading", maxLength: 60 },
       {
         key: "stepOneBody",
@@ -349,6 +357,19 @@ function formatPickupDate(date: string) {
   });
 }
 
+const DEFAULT_PICKUP_WINDOW = "10:00am–12:00pm";
+
+function firstSaturdayOfNextMonth() {
+  const now = new Date();
+  const firstOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const dayOffset = (6 - firstOfNextMonth.getDay() + 7) % 7;
+  firstOfNextMonth.setDate(firstOfNextMonth.getDate() + dayOffset);
+  const year = firstOfNextMonth.getFullYear();
+  const month = String(firstOfNextMonth.getMonth() + 1).padStart(2, "0");
+  const day = String(firstOfNextMonth.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<Data | null>(null);
@@ -361,10 +382,17 @@ export default function AdminDashboard() {
   const [dashboardError, setDashboardError] = useState("");
   const [managedPickupDates, setManagedPickupDates] =
     useState<PickupDate[]>(catalogPickupDates);
-  const [newPickupDate, setNewPickupDate] = useState("");
-  const [newPickupWindow, setNewPickupWindow] = useState("10:00am–12:00pm");
+  const [newPickupDate, setNewPickupDate] = useState(() =>
+    firstSaturdayOfNextMonth(),
+  );
+  const [newPickupWindow, setNewPickupWindow] = useState(DEFAULT_PICKUP_WINDOW);
+  const [pickupFormKey, setPickupFormKey] = useState(0);
   const [pickupDateStatus, setPickupDateStatus] = useState("");
+  const [pickupFieldErrors, setPickupFieldErrors] = useState<
+    Record<string, string>
+  >({});
   const [adminNotice, setAdminNotice] = useState("");
+  const [adminNoticeLeaving, setAdminNoticeLeaving] = useState(false);
   const [adminBusyMessage, setAdminBusyMessage] = useState("");
   const [pickupDatePendingRemoval, setPickupDatePendingRemoval] =
     useState<PickupDate | null>(null);
@@ -377,6 +405,9 @@ export default function AdminDashboard() {
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [productStatus, setProductStatus] = useState("");
+  const [productFieldErrors, setProductFieldErrors] = useState<
+    Record<string, string>
+  >({});
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
@@ -467,19 +498,28 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!adminNotice) return;
-    const timeout = window.setTimeout(() => setAdminNotice(""), 3600);
+    const timeout = window.setTimeout(() => dismissAdminNotice(), 3600);
     return () => window.clearTimeout(timeout);
   }, [adminNotice]);
 
+  function dismissAdminNotice() {
+    setAdminNoticeLeaving(true);
+    window.setTimeout(() => {
+      setAdminNotice("");
+      setAdminNoticeLeaving(false);
+    }, 320);
+  }
+
   function beginAdminAction(busyMessage: string) {
     setAdminNotice("");
+    setAdminNoticeLeaving(false);
     setAdminBusyMessage(busyMessage);
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
 
   function finishAdminAction(successMessage?: string) {
     setAdminBusyMessage("");
     if (!successMessage) return;
+    setAdminNoticeLeaving(false);
     setAdminNotice(successMessage);
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
@@ -508,6 +548,10 @@ export default function AdminDashboard() {
 
   async function login(event: React.FormEvent) {
     event.preventDefault();
+    if (!password.trim()) {
+      setError("Enter your password.");
+      return;
+    }
     const response = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -532,8 +576,22 @@ export default function AdminDashboard() {
     setError("");
   }
 
+  function resetPickupForm() {
+    setNewPickupDate(firstSaturdayOfNextMonth());
+    setNewPickupWindow(DEFAULT_PICKUP_WINDOW);
+    setPickupDateStatus("");
+    setPickupFieldErrors({});
+    setPickupFormKey((key) => key + 1);
+  }
+
   async function addPickupDate(event: React.FormEvent) {
     event.preventDefault();
+    const fieldErrors: Record<string, string> = {};
+    if (!newPickupDate.trim()) fieldErrors.date = "Choose a pickup date.";
+    if (!newPickupWindow.trim())
+      fieldErrors.window = "Enter a pickup window.";
+    setPickupFieldErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) return;
     setPickupDateStatus("Saving...");
     beginAdminAction("Adding pickup date…");
     const response = await fetch("/api/admin/pickup-dates", {
@@ -543,10 +601,11 @@ export default function AdminDashboard() {
     });
     if (!response.ok) {
       finishAdminAction();
-      setPickupDateStatus(
+      const message =
         (await response.json().catch(() => null))?.error ||
-          "Unable to save pickup date",
-      );
+        "Unable to save pickup date";
+      setPickupDateStatus("");
+      setPickupFieldErrors({ date: message });
       return;
     }
     const savedDate = await response.json();
@@ -555,8 +614,7 @@ export default function AdminDashboard() {
         (left, right) => left.date.localeCompare(right.date),
       ),
     );
-    setNewPickupDate("");
-    setPickupDateStatus("");
+    resetPickupForm();
     finishAdminAction("Pickup date successfully added");
     const pickupModalToggle = document.getElementById("pickup-modal-toggle");
     if (pickupModalToggle instanceof HTMLInputElement) {
@@ -614,6 +672,20 @@ export default function AdminDashboard() {
 
   async function addProduct(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const fieldErrors: Record<string, string> = {};
+    if (!newProduct.name.trim()) fieldErrors.name = "Enter a product name.";
+    if (!newProduct.description.trim())
+      fieldErrors.description = "Enter a description.";
+    if (!newProduct.ingredients.trim())
+      fieldErrors.ingredients = "Enter order information.";
+    if (!newProduct.allergens.trim())
+      fieldErrors.allergens = "Enter allergen information.";
+    if (!newProduct.price6.trim())
+      fieldErrors.price6 = "Enter a box of 6 price.";
+    if (!newProduct.price12.trim())
+      fieldErrors.price12 = "Enter a box of 12 price.";
+    setProductFieldErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) return;
     const wasEditing = Boolean(editingProductId);
     setProductStatus(wasEditing ? "Saving..." : "Publishing...");
     beginAdminAction(wasEditing ? "Saving product…" : "Publishing product…");
@@ -674,6 +746,7 @@ export default function AdminDashboard() {
     setProductImages([]);
     form.reset();
     setProductStatus("");
+    setProductFieldErrors({});
     finishAdminAction(wasEditing ? "Product successfully saved" : "Product successfully published");
     const productModalToggle = document.getElementById("product-modal-toggle");
     if (productModalToggle instanceof HTMLInputElement) {
@@ -683,6 +756,7 @@ export default function AdminDashboard() {
 
   function editProduct(product: Product) {
     setEditingProductId(product.id);
+    setProductFieldErrors({});
     setNewProduct({
       name: product.name,
       description: product.description,
@@ -700,6 +774,7 @@ export default function AdminDashboard() {
 
   function startNewProduct() {
     setEditingProductId(null);
+    setProductFieldErrors({});
     setNewProduct({ name: "", description: "", ingredients: defaultProductIngredients, allergens: defaultProductAllergens, price6: "", price12: "" });
     setProductImages([]);
     setReferenceImageFiles([]);
@@ -934,22 +1009,21 @@ export default function AdminDashboard() {
 
   if (!data)
     return (
-      <form className="admin-auth" onSubmit={login}>
+      <form className="admin-auth" onSubmit={login} noValidate>
         <h1>Admin portal</h1>
         <div className="admin-auth-row">
-          <div className="field">
+          <div className={`field${error ? " has-error" : ""}`}>
             <label htmlFor="password">Password</label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              required
             />
           </div>
           <button className="btn btn-dark">Sign in</button>
         </div>
-        {error && <p className="field-error">{error}</p>}
+        {error && <p className="field-error" role="alert">{error}</p>}
       </form>
     );
 
@@ -1017,23 +1091,17 @@ export default function AdminDashboard() {
         </button>
       </aside>
       <section>
-        {adminBusyMessage && (
+        {!adminBusyMessage && adminNotice && (
           <div
-            className="admin-toast admin-toast-loading"
+            className={`admin-toast${adminNoticeLeaving ? " admin-toast-leaving" : ""}`}
             role="status"
             aria-live="polite"
           >
-            <span className="admin-toast-spinner" aria-hidden="true" />
-            <span>{adminBusyMessage}</span>
-          </div>
-        )}
-        {!adminBusyMessage && adminNotice && (
-          <div className="admin-toast" role="status" aria-live="polite">
             <span>{adminNotice}</span>
             <button
               aria-label="Dismiss notification"
               type="button"
-              onClick={() => setAdminNotice("")}
+              onClick={() => dismissAdminNotice()}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                 <path d="m5 5 10 10M15 5 5 15" />
@@ -1150,7 +1218,14 @@ export default function AdminDashboard() {
             )}
             {tab === "pickup dates" && (
               <>
-                <input id="pickup-modal-toggle" type="checkbox" hidden />
+                <input
+                  id="pickup-modal-toggle"
+                  type="checkbox"
+                  hidden
+                  onChange={(event) => {
+                    if (event.target.checked) resetPickupForm();
+                  }}
+                />
                 <label
                   className="btn btn-dark admin-pickup-open"
                   htmlFor="pickup-modal-toggle"
@@ -1292,7 +1367,7 @@ export default function AdminDashboard() {
         )}
         {tab === "products" && (
           <>
-            <form className="admin-modal admin-product-form" onSubmit={addProduct}>
+            <form className="admin-modal admin-product-form" onSubmit={addProduct} noValidate>
               <div className="admin-modal-header">
                 <h2>{editingProductId ? "Edit product" : "Add product"}</h2>
                 <label
@@ -1308,7 +1383,7 @@ export default function AdminDashboard() {
               </div>
               <div className="admin-modal-body">
                 <div className="admin-product-form-grid">
-                <div className="field">
+                <div className={`field${productFieldErrors.name ? " has-error" : ""}`}>
                   <label htmlFor="product-name">Product name</label>
                   <input
                     id="product-name"
@@ -1316,10 +1391,12 @@ export default function AdminDashboard() {
                     onChange={(event) =>
                       setNewProduct({ ...newProduct, name: event.target.value })
                     }
-                    required
                   />
+                  {productFieldErrors.name && (
+                    <p className="field-error" role="alert">{productFieldErrors.name}</p>
+                  )}
                 </div>
-                <div className="field">
+                <div className={`field${productFieldErrors.price6 ? " has-error" : ""}`}>
                   <label htmlFor="product-price-6">Box of 6 price</label>
                   <div className="quantity-stepper admin-number-stepper">
                     <input
@@ -1334,7 +1411,6 @@ export default function AdminDashboard() {
                           price6: event.target.value,
                         })
                       }
-                      required
                     />
                     <div className="quantity-stepper-controls">
                       <button
@@ -1358,8 +1434,11 @@ export default function AdminDashboard() {
                       </button>
                     </div>
                   </div>
+                  {productFieldErrors.price6 && (
+                    <p className="field-error" role="alert">{productFieldErrors.price6}</p>
+                  )}
                 </div>
-                <div className="field">
+                <div className={`field${productFieldErrors.price12 ? " has-error" : ""}`}>
                   <label htmlFor="product-price-12">Box of 12 price</label>
                   <div className="quantity-stepper admin-number-stepper">
                     <input
@@ -1374,7 +1453,6 @@ export default function AdminDashboard() {
                           price12: event.target.value,
                         })
                       }
-                      required
                     />
                     <div className="quantity-stepper-controls">
                       <button
@@ -1398,8 +1476,11 @@ export default function AdminDashboard() {
                       </button>
                     </div>
                   </div>
+                  {productFieldErrors.price12 && (
+                    <p className="field-error" role="alert">{productFieldErrors.price12}</p>
+                  )}
                 </div>
-                <div className="field">
+                <div className={`field${productFieldErrors.description ? " has-error" : ""}`}>
                   <label htmlFor="product-description">Description</label>
                   <textarea
                     id="product-description"
@@ -1411,7 +1492,6 @@ export default function AdminDashboard() {
                         description: event.target.value,
                       })
                     }
-                    required
                   />
                   <button
                     type="button"
@@ -1426,8 +1506,11 @@ export default function AdminDashboard() {
                   {descriptionStatus && !descriptionStatus.startsWith("Generating") && (
                     <p className="admin-generator-status">{descriptionStatus}</p>
                   )}
+                  {productFieldErrors.description && (
+                    <p className="field-error" role="alert">{productFieldErrors.description}</p>
+                  )}
                 </div>
-                <div className="field">
+                <div className={`field${productFieldErrors.ingredients ? " has-error" : ""}`}>
                   <label htmlFor="product-ingredients">Order information</label>
                   <textarea
                     id="product-ingredients"
@@ -1439,10 +1522,12 @@ export default function AdminDashboard() {
                         ingredients: event.target.value,
                       })
                     }
-                    required
                   />
+                  {productFieldErrors.ingredients && (
+                    <p className="field-error" role="alert">{productFieldErrors.ingredients}</p>
+                  )}
                 </div>
-                <div className="field">
+                <div className={`field${productFieldErrors.allergens ? " has-error" : ""}`}>
                   <label htmlFor="product-allergens">Allergens</label>
                   <textarea
                     id="product-allergens"
@@ -1454,8 +1539,10 @@ export default function AdminDashboard() {
                         allergens: event.target.value,
                       })
                     }
-                    required
                   />
+                  {productFieldErrors.allergens && (
+                    <p className="field-error" role="alert">{productFieldErrors.allergens}</p>
+                  )}
                 </div>
                 <fieldset className="admin-image-generator">
                   <legend>Product imagery</legend>
@@ -1592,8 +1679,31 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="admin-product-form-actions">
-                <button className="btn btn-dark">{editingProductId ? "Save product" : "Publish product"}</button>
-                {productStatus && <span>{productStatus}</span>}
+                <button
+                  className={`btn btn-dark${
+                    productStatus === "Saving..." || productStatus === "Publishing..."
+                      ? " btn-loading"
+                      : ""
+                  }`}
+                  disabled={
+                    productStatus === "Saving..." || productStatus === "Publishing..."
+                  }
+                >
+                  {(productStatus === "Saving..." ||
+                    productStatus === "Publishing...") && (
+                    <span className="btn-spinner" aria-hidden="true" />
+                  )}
+                  {productStatus === "Saving..."
+                    ? "Saving…"
+                    : productStatus === "Publishing..."
+                      ? "Publishing…"
+                      : editingProductId
+                        ? "Save product"
+                        : "Publish product"}
+                </button>
+                {productStatus &&
+                  productStatus !== "Saving..." &&
+                  productStatus !== "Publishing..." && <span>{productStatus}</span>}
               </div>
             </form>
             {!productsLoaded ? (
@@ -1637,7 +1747,7 @@ export default function AdminDashboard() {
         )}
         {tab === "pickup dates" && (
           <>
-            <form className="admin-modal admin-add-date" onSubmit={addPickupDate}>
+            <form className="admin-modal admin-add-date" onSubmit={addPickupDate} noValidate>
               <div className="admin-modal-header">
                 <h2>Add pickup date</h2>
                 <label
@@ -1651,31 +1761,47 @@ export default function AdminDashboard() {
                   </svg>
                 </label>
               </div>
-              <div className="admin-modal-body">
-              <div className="field">
+              <div className="admin-modal-body" key={pickupFormKey}>
+              <div className={`field${pickupFieldErrors.date ? " has-error" : ""}`}>
                 <label htmlFor="new-pickup-date">Pickup date</label>
                 <input
                   id="new-pickup-date"
                   type="date"
                   value={newPickupDate}
                   onChange={(event) => setNewPickupDate(event.target.value)}
-                  required
                 />
+                {pickupFieldErrors.date && (
+                  <p className="field-error" role="alert">{pickupFieldErrors.date}</p>
+                )}
               </div>
-              <div className="field">
+              <div className={`field${pickupFieldErrors.window ? " has-error" : ""}`}>
                 <label htmlFor="new-pickup-window">Pickup window</label>
                 <input
                   id="new-pickup-window"
                   value={newPickupWindow}
                   maxLength={80}
                   onChange={(event) => setNewPickupWindow(event.target.value)}
-                  required
                 />
+                {pickupFieldErrors.window && (
+                  <p className="field-error" role="alert">{pickupFieldErrors.window}</p>
+                )}
               </div>
               </div>
               <div className="admin-modal-actions">
-                <button className="btn btn-dark">Add pickup date</button>
-                {pickupDateStatus && <span>{pickupDateStatus}</span>}
+                <button
+                  className={`btn btn-dark${
+                    pickupDateStatus === "Saving..." ? " btn-loading" : ""
+                  }`}
+                  disabled={pickupDateStatus === "Saving..."}
+                >
+                  {pickupDateStatus === "Saving..." && (
+                    <span className="btn-spinner" aria-hidden="true" />
+                  )}
+                  {pickupDateStatus === "Saving..." ? "Adding…" : "Add pickup date"}
+                </button>
+                {pickupDateStatus && pickupDateStatus !== "Saving..." && (
+                  <span>{pickupDateStatus}</span>
+                )}
               </div>
             </form>
             <div
@@ -1766,7 +1892,7 @@ export default function AdminDashboard() {
               <div className="field"><label htmlFor="email-template-subject">Subject <span>(140 characters max)</span></label><input id="email-template-subject" maxLength={140} value={content.fields[template.subjectField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.subjectField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.subjectField] || "").length} / 140</small></div>
               <div className="field"><label htmlFor="email-template-body">Body copy <span>(3000 characters max)</span></label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small></div>
             </div>
-            <div className="admin-editor-actions"><button className="btn btn-light">Save template</button>{contentStatus && <span>{contentStatus}</span>}</div>
+            <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..."}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save template"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
           </form>;
         })()}
         {contentModules[tab] && tab !== "email templates" && (
@@ -1933,8 +2059,20 @@ export default function AdminDashboard() {
               )}
             </div>
             <div className="admin-editor-actions">
-              <button className="btn btn-light">Save changes</button>
-              {contentStatus && <span>{contentStatus}</span>}
+              <button
+                className={`btn btn-light${
+                  contentStatus === "Saving..." ? " btn-loading" : ""
+                }`}
+                disabled={contentStatus === "Saving..."}
+              >
+                {contentStatus === "Saving..." && (
+                  <span className="btn-spinner" aria-hidden="true" />
+                )}
+                {contentStatus === "Saving..." ? "Saving…" : "Save changes"}
+              </button>
+              {contentStatus && contentStatus !== "Saving..." && (
+                <span>{contentStatus}</span>
+              )}
             </div>
           </form>
         )}
@@ -1942,7 +2080,7 @@ export default function AdminDashboard() {
           <div className="admin-config-grid">
             {Object.entries(config).map(([name, ready]) => (
               <div className="admin-config-item" key={name}>
-                <span>{name}</span>
+                <span>{configLabels[name as keyof Config] || name}</span>
                 <strong className={ready ? "status status-live" : "status"}>
                   {ready ? "Configured" : "Missing"}
                 </strong>

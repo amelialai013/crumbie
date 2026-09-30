@@ -59,6 +59,10 @@ export async function POST(request: Request) {
 	if (!payload || !validDate(payload.date) || typeof payload.window !== "string" || !payload.window.trim() || payload.window.length > 80) {
 		return NextResponse.json({ error: "Enter a valid date and pickup window" }, { status: 400 });
 	}
+	const existing = await getPickupDates();
+	if (existing.some((date) => date.date === payload.date)) {
+		return NextResponse.json({ error: "That pickup date already exists." }, { status: 409 });
+	}
 	const record: PickupDate = { id: `pickup-${payload.date}`, date: payload.date, window: payload.window.trim() };
 	try {
 		await saveRecord("pickup-date", record);

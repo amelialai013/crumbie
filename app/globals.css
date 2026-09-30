@@ -81,6 +81,14 @@
 .field input:focus,
 .field select:focus,
 .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field.has-error { border-color: #ff8f8f; }
+.field.has-error input,
+.field.has-error select,
+.field.has-error textarea { border-color: #ff8f8f; }
+.field.has-error label { color: #ff8f8f; }
+/* Keep rows packed at the top so a sibling field's error text doesn't
+   stretch this field's rows and push its input out of alignment. */
+.field { align-content: start; }
 .prose { color: #c1bfbc; }
 .footer { background: #020202; }
 .footer-grid p,
@@ -293,6 +301,28 @@
     transform: rotate(360deg);
   }
 }
+.btn-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.btn-spinner {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .32);
+  border-top-color: currentColor;
+  animation: admin-toast-spin .7s linear infinite;
+}
+.btn-dark .btn-spinner {
+  border-color: rgba(7, 7, 7, .28);
+  border-top-color: currentColor;
+}
+.admin-toast-leaving {
+  animation: admin-toast-out .32s cubic-bezier(.4, 0, 1, 1) forwards;
+}
 @keyframes admin-toast-in {
   from {
     opacity: 0;
@@ -303,8 +333,21 @@
     transform: translate(-50%, 0);
   }
 }
+@keyframes admin-toast-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .admin-toast {
+    animation: none;
+  }
+  .admin-toast-leaving {
     animation: none;
   }
   .admin-toast-spinner {
@@ -970,12 +1013,18 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   gap: 18px;
 }
 .admin-product-form .field {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   margin: 0;
   padding: 14px 16px 12px;
   border: 0;
   background: #090909;
   box-shadow: inset 0 0 0 1px #414141;
+}
+.admin-product-form .field-error {
+  margin-top: auto;
+  padding-top: 8px;
 }
 .admin-product-form .field:nth-child(4),
 .admin-product-form .field:nth-child(5),
@@ -1188,7 +1237,8 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   color: #f7f7f5;
 }
 .admin-generator-status {
-  color: #c9ad94 !important;
+  color: #ff8f8f !important;
+  font-size: .8rem;
 }
 .admin-reference-selection {
   display: grid;
