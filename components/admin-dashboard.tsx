@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { formatPickupDate } from "@/lib/format-date";
-import { pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
+import { defaultEnquiryTypes, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
 import {
@@ -70,6 +70,7 @@ type ContentField = {
   label: string;
   maxLength: number;
   multiline?: boolean;
+  rows?: number;
 };
 type ContentModule = { fields: ContentField[]; defaults?: Content };
 type PickupDate = {
@@ -114,22 +115,25 @@ const contentModules: Record<string, ContentModule> = {
       {
         key: "stepOneBody",
         label: "Step 1 body copy",
-        maxLength: 180,
+        maxLength: 80,
         multiline: true,
+        rows: 1,
       },
       { key: "stepTwoTitle", label: "Step 2 heading", maxLength: 60 },
       {
         key: "stepTwoBody",
         label: "Step 2 body copy",
-        maxLength: 180,
+        maxLength: 80,
         multiline: true,
+        rows: 1,
       },
       { key: "stepThreeTitle", label: "Step 3 heading", maxLength: 60 },
       {
         key: "stepThreeBody",
         label: "Step 3 body copy",
-        maxLength: 180,
+        maxLength: 80,
         multiline: true,
+        rows: 1,
       },
       {
         key: "catalogHeading",
@@ -265,6 +269,7 @@ const contentModules: Record<string, ContentModule> = {
         pageTitle: "Get in touch",
         messagePrompt:
           "Tell us how we can help. For custom orders, include the occasion, quantity and timing you have in mind.",
+        enquiryTypes: defaultEnquiryTypes.join("\n"),
       },
     },
   },
@@ -383,6 +388,8 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState("orders");
   const [content, setContent] = useState<Content>({ fields: {} });
+  const [savedContent, setSavedContent] = useState(() => JSON.stringify({ fields: {} }));
+  const [draggedEnquiryType, setDraggedEnquiryType] = useState<number | null>(null);
   const [contentStatus, setContentStatus] = useState("");
   const [config, setConfig] = useState<Config | null>(null);
   const [dashboardError, setDashboardError] = useState("");
@@ -432,6 +439,15 @@ export default function AdminDashboard() {
   const [descriptionStatus, setDescriptionStatus] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [emailTemplateKey, setEmailTemplateKey] = useState<string | null>(null);
+  const [savedProduct, setSavedProduct] = useState<string | null>(null);
+  const contentChanged = JSON.stringify(content) !== savedContent;
+  const productChanged =
+    !editingProductId || JSON.stringify({ newProduct, productImages }) !== savedProduct;
+
+  function loadContent(next: Content) {
+    setContent(next);
+    setSavedContent(JSON.stringify(next));
+  }
 
   async function load() {
     const response = await fetch("/api/admin/dashboard");
@@ -770,17 +786,19 @@ export default function AdminDashboard() {
   }
 
   function editProduct(product: Product) {
-    setEditingProductId(product.id);
-    setProductFieldErrors({});
-    setNewProduct({
+    const productForm = {
       name: product.name,
       description: product.description,
       ingredients: product.ingredients,
       allergens: product.allergens,
       price6: String(product.variants.find((variant) => variant.quantity === 6)?.price || ""),
       price12: String(product.variants.find((variant) => variant.quantity === 12)?.price || ""),
-    });
+    };
+    setEditingProductId(product.id);
+    setProductFieldErrors({});
+    setNewProduct(productForm);
     setProductImages(product.images);
+    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images }));
     setReferenceImageFiles([]);
     setImageDirection("");
     setGenerationStatus("");
@@ -917,12 +935,13 @@ export default function AdminDashboard() {
     return (
       <div className="field" key={field.key}>
         <label htmlFor={id}>
-          {field.label} <span>({field.maxLength} characters max)</span>
+          {field.label}
         </label>
         {field.multiline ? (
           <textarea
             id={id}
-            rows={5}
+            rows={field.rows ?? 5}
+            className={field.rows ? "admin-textarea-compact" : undefined}
             maxLength={field.maxLength}
             value={value}
             onChange={(event) =>
@@ -963,7 +982,7 @@ export default function AdminDashboard() {
       );
       if (response.ok) {
         const savedContent = await response.json();
-        setContent(
+        loadContent(
           savedContent.fields
             ? {
                 ...mergeContent(nextTab, savedContent.fields),
@@ -975,28 +994,18 @@ export default function AdminDashboard() {
               }
             : emptyContent(nextTab),
         );
-      } else setContent(emptyContent(nextTab));
+      } else loadContent(emptyContent(nextTab));
     }
   }
 
   function editEmailTemplate(template: EmailTemplate) {
-    if (usesPickupAddress(template.bodyField)) {
-      setContent((current) => ({
-        ...current,
-        fields: {
-          ...current.fields,
-          [template.bodyField]: withPickupAddress(current.fields[template.bodyField] || ""),
-        },
-      }));
-    }
-    if (template.bodyField === "enquiryBody") {
-      setContent((current) => ({
-        ...current,
-        fields: {
-          ...current.fields,
-          [template.bodyField]: withEnquiryType(current.fields[template.bodyField] || ""),
-        },
-      }));
+    let body = content.fields[template.bodyField] || "";
+    if (usesPickupAddress(template.bodyField)) body = withPickupAddress(body);
+    if (template.bodyField === "enquiryBody") body = withEnquiryType(body);
+    if (body !== (content.fields[template.bodyField] || "")) {
+      const next = { ...content, fields: { ...content.fields, [template.bodyField]: body } };
+      setContent(next);
+      if (!contentChanged) setSavedContent(JSON.stringify(next));
     }
     setEmailTemplateKey(template.key);
   }
@@ -1028,6 +1037,7 @@ export default function AdminDashboard() {
       }),
     });
     if (response.ok) {
+      setSavedContent(JSON.stringify(content));
       setContentStatus("");
       finishAdminAction(
         tab === "email templates" ? "Template successfully saved" : "Changes successfully saved",
@@ -1719,7 +1729,9 @@ export default function AdminDashboard() {
                       : ""
                   }`}
                   disabled={
-                    productStatus === "Saving..." || productStatus === "Publishing..."
+                    productStatus === "Saving..." ||
+                    productStatus === "Publishing..." ||
+                    !productChanged
                   }
                 >
                   {(productStatus === "Saving..." ||
@@ -2010,10 +2022,10 @@ export default function AdminDashboard() {
           return <form className="enquiry-form admin-editor" onSubmit={saveContent}>
             <div className="admin-template-editor-heading"><button className="text-button" type="button" onClick={() => setEmailTemplateKey(null)}><svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m10 3-5 5 5 5" /></svg>Back to templates</button><h2>{template.name}</h2><p>{template.description}</p></div>
             <div className="admin-editor-fields">
-              <div className="field"><label htmlFor="email-template-subject">Subject <span>(140 characters max)</span></label><input id="email-template-subject" maxLength={140} value={content.fields[template.subjectField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.subjectField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.subjectField] || "").length} / 140</small></div>
-              <div className="field"><label htmlFor="email-template-body">Body copy <span>(3000 characters max)</span></label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small>{usesPickupAddress(template.bodyField) && <small className="admin-editor-hint">{pickupAddressToken} is always replaced with the pickup address in Settings.</small>}</div>
+              <div className="field"><label htmlFor="email-template-subject">Subject</label><input id="email-template-subject" maxLength={140} value={content.fields[template.subjectField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.subjectField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.subjectField] || "").length} / 140</small></div>
+              <div className="field"><label htmlFor="email-template-body">Body copy</label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><div className="admin-editor-meta">{usesPickupAddress(template.bodyField) && <small className="admin-editor-hint">{pickupAddressToken} is always replaced with the pickup address in Settings.</small>}<small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small></div></div>
             </div>
-            <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..."}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save template"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
+            <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !contentChanged}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save template"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
           </form>;
         })()}
         {contentModules[tab] && tab !== "email templates" && (
@@ -2032,6 +2044,133 @@ export default function AdminDashboard() {
                     )),
                 )
                 .map(renderContentField)}
+              {tab === "contact us" && (() => {
+                const types = (content.fields.enquiryTypes ?? defaultEnquiryTypes.join("\n")).split("\n");
+                const setTypes = (next: string[]) =>
+                  setContent({ ...content, fields: { ...content.fields, enquiryTypes: next.join("\n") } });
+                const moveType = (from: number, to: number) => {
+                  if (from === to || to < 0 || to >= types.length) return;
+                  const next = [...types];
+                  const [moved] = next.splice(from, 1);
+                  next.splice(to, 0, moved);
+                  setTypes(next);
+                };
+                return (
+                  <div className="admin-enquiry-types">
+                    <div className="admin-enquiry-types-heading">
+                      <h3>Enquiry types</h3>
+                      <button
+                        className="text-button admin-add-text-button"
+                        type="button"
+                        onClick={(event) => {
+                          const container = event.currentTarget.closest(".admin-enquiry-types");
+                          setTypes([...types, ""]);
+                          requestAnimationFrame(() => {
+                            const inputs = container?.querySelectorAll<HTMLInputElement>("tbody input");
+                            const input = inputs?.[inputs.length - 1];
+                            if (!input) return;
+                            input.scrollIntoView({ behavior: "smooth", block: "center" });
+                            input.focus({ preventScroll: true });
+                          });
+                        }}
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" /></svg>
+                        Add enquiry type
+                      </button>
+                    </div>
+                    <table className="table admin-enquiry-table">
+                      <tbody>
+                        {types.map((type, index) => (
+                          <tr
+                            key={`enquiry-type-${index}`}
+                            className={draggedEnquiryType === index ? "is-dragging" : undefined}
+                            onDragOver={(event) => {
+                              if (draggedEnquiryType === null) return;
+                              event.preventDefault();
+                              if (draggedEnquiryType !== index) {
+                                moveType(draggedEnquiryType, index);
+                                setDraggedEnquiryType(index);
+                              }
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              setDraggedEnquiryType(null);
+                            }}
+                          >
+                            <td className="admin-enquiry-handle-cell">
+                              <button
+                                className="admin-drag-handle"
+                                type="button"
+                                draggable
+                                aria-label={`Reorder ${type || "enquiry type"}. Use arrow keys to move.`}
+                                disabled={types.length <= 1}
+                                onDragStart={(event) => {
+                                  const row = event.currentTarget.closest("tr");
+                                  if (row) event.dataTransfer.setDragImage(row, 24, row.offsetHeight / 2);
+                                  event.dataTransfer.effectAllowed = "move";
+                                  event.dataTransfer.setData("text/plain", String(index));
+                                  setDraggedEnquiryType(index);
+                                }}
+                                onDragEnd={() => setDraggedEnquiryType(null)}
+                                onKeyDown={(event) => {
+                                  const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+                                  if (!offset) return;
+                                  event.preventDefault();
+                                  const target = index + offset;
+                                  if (target < 0 || target >= types.length) return;
+                                  const tbody = event.currentTarget.closest("tbody");
+                                  moveType(index, target);
+                                  requestAnimationFrame(() =>
+                                    tbody?.querySelectorAll<HTMLButtonElement>(".admin-drag-handle")[target]?.focus(),
+                                  );
+                                }}
+                              >
+                                <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor">
+                                  <circle cx="6" cy="4" r="1.1" />
+                                  <circle cx="10" cy="4" r="1.1" />
+                                  <circle cx="6" cy="8" r="1.1" />
+                                  <circle cx="10" cy="8" r="1.1" />
+                                  <circle cx="6" cy="12" r="1.1" />
+                                  <circle cx="10" cy="12" r="1.1" />
+                                </svg>
+                              </button>
+                            </td>
+                            <td>
+                              <input
+                                aria-label={`Enquiry type ${index + 1}`}
+                                maxLength={enquiryTypeMaxLength}
+                                placeholder="Enquiry type name"
+                                value={type}
+                                onBlur={(event) => {
+                                  if (!event.target.value.trim() && types.length > 1) {
+                                    setTypes(types.filter((_, itemIndex) => itemIndex !== index));
+                                  }
+                                }}
+                                onChange={(event) =>
+                                  setTypes(types.map((item, itemIndex) => (itemIndex === index ? event.target.value.replace(/\n/g, " ") : item)))
+                                }
+                              />
+                            </td>
+                            <td className="admin-enquiry-tag-cell">
+                              {index === 0 ? <span className="admin-default-tag">Default</span> : null}
+                            </td>
+                            <td className="admin-table-action">
+                              <button
+                                className="text-button"
+                                type="button"
+                                disabled={types.length <= 1}
+                                onClick={() => setTypes(types.filter((_, itemIndex) => itemIndex !== index))}
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
               {tab === "policy" &&
                 optionalPolicySections
                   .filter(
@@ -2104,7 +2243,7 @@ export default function AdminDashboard() {
                       <h3>Section {index + 7}</h3>
                       <div className="field">
                         <label htmlFor={`policy-section-heading-${index}`}>
-                          Heading <span>(80 characters max)</span>
+                          Heading
                         </label>
                         <input
                           id={`policy-section-heading-${index}`}
@@ -2131,7 +2270,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="field">
                         <label htmlFor={`policy-section-body-${index}`}>
-                          Body copy <span>(1000 characters max)</span>
+                          Body copy
                         </label>
                         <textarea
                           id={`policy-section-body-${index}`}
@@ -2184,7 +2323,7 @@ export default function AdminDashboard() {
                 className={`btn btn-light${
                   contentStatus === "Saving..." ? " btn-loading" : ""
                 }`}
-                disabled={contentStatus === "Saving..."}
+                disabled={contentStatus === "Saving..." || !contentChanged}
               >
                 {contentStatus === "Saving..." && (
                   <span className="btn-spinner" aria-hidden="true" />

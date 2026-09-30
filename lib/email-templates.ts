@@ -24,6 +24,16 @@ export const enquiryTypeLabels: Record<string, string> = {
 	general: "General enquiry",
 	"custom-order": "Custom order",
 };
+export const defaultEnquiryTypes = ["General enquiry", "Custom order"];
+export const enquiryTypeMaxLength = 60;
+
+// Enquiry types are stored in contact content as newline-separated labels.
+export function parseEnquiryTypes(value: string | undefined) {
+	const types = Array.from(
+		new Set((value || "").split("\n").map((type) => type.trim()).filter(Boolean)),
+	);
+	return types.length ? types : defaultEnquiryTypes;
+}
 
 const contactLine = /^(?:Name|Email|Phone):[^\r\n]*$/gm;
 
