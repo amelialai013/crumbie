@@ -1724,37 +1724,58 @@ export default function AdminDashboard() {
                 Loading products...
               </p>
             ) : (
-            <div className="admin-record-grid">
-              {managedProducts.map((product) => (
-                <article className="admin-record" key={product.id}>
-                  <div>
-                    <h2>{product.name}</h2>
-                    <p>{product.description}</p>
-                  </div>
-                  <div className="admin-record-meta">
-                    <span>
-                      {product.variants
-                        .map((variant) => `${variant.label}: $${variant.price}`)
-                        .join(" · ")}
-                    </span>
-                    <button
-                      className="text-button"
-                      type="button"
-                      onClick={() => editProduct(product)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-button"
-                      type="button"
-                      onClick={() => void removeProduct(product.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <table className="table admin-pickup-table admin-product-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Prices</th>
+                  <th>
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {managedProducts.length ? (
+                  managedProducts.map((product) => (
+                    <tr key={product.id}>
+                      <td>
+                        <span className="admin-product-name">{product.name}</span>
+                        <span className="admin-product-description">
+                          {product.description}
+                        </span>
+                      </td>
+                      <td className="admin-product-prices">
+                        {product.variants.map((variant) => (
+                          <span key={variant.label}>
+                            {variant.label}: ${variant.price}
+                          </span>
+                        ))}
+                      </td>
+                      <td className="admin-table-action">
+                        <button
+                          className="text-button"
+                          type="button"
+                          onClick={() => editProduct(product)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-button"
+                          type="button"
+                          onClick={() => void removeProduct(product.id)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3}>No products</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
             )}
           </>
         )}

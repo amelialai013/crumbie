@@ -1369,6 +1369,39 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   .admin-pickup-table td:nth-child(3) { grid-area: status; justify-self: end; }
   .admin-pickup-table td.admin-table-action { grid-area: action; width: auto; }
   .admin-pickup-table td[colspan] { grid-column: 1 / -1; }
+  .admin-product-table tr {
+    grid-template-areas:
+      "product product"
+      "prices action";
+  }
+  .admin-product-table td:nth-child(1) { grid-area: product; }
+  .admin-product-table td:nth-child(2) { grid-area: prices; color: var(--muted); }
+}
+.admin-product-table td {
+  vertical-align: top;
+}
+.admin-product-table td:first-child {
+  font-weight: 400;
+}
+.admin-product-name {
+  display: block;
+  font-weight: 600;
+}
+.admin-product-description {
+  display: block;
+  max-width: 560px;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.admin-product-prices {
+  white-space: nowrap;
+}
+.admin-product-prices span {
+  display: block;
+}
+.admin-product-table .admin-table-action .text-button + .text-button {
+  margin-left: 16px;
 }
 .sr-only {
   position: absolute;
