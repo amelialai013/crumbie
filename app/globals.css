@@ -1405,6 +1405,13 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 .admin-product-price {
   white-space: nowrap;
 }
+@media (min-width: 641px) {
+  .admin-product-table th.admin-product-price,
+  .admin-product-table td.admin-product-price {
+    width: 120px;
+    min-width: 120px;
+  }
+}
 .admin-product-table .admin-table-action .text-button + .text-button {
   margin-left: 16px;
 }
