@@ -617,6 +617,12 @@
   font-size: .72rem;
   text-align: right;
 }
+.admin-editor-hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: .72rem;
+}
 .admin-policy-editor-section {
   margin-top: 56px;
   padding-top: 24px;
@@ -1011,6 +1017,31 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+}
+.admin-editor .field > input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.admin-product-form .field > input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+  padding: 0;
+  line-height: 24px;
+}
+.enquiry-form.admin-editor .field textarea {
+  padding: 0;
+}
+.admin-product-form .admin-number-stepper {
+  height: 24px;
+  margin-bottom: 0;
+}
+.admin-product-form .admin-number-stepper input {
+  padding: 0;
+}
+.admin-product-form .admin-number-stepper .quantity-stepper-controls button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin-block: -2px;
+}
+.admin-product-form .admin-number-stepper .quantity-stepper-controls {
+  justify-content: flex-end;
 }
 .admin-product-form .field {
   display: flex;
