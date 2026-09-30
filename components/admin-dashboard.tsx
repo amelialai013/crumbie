@@ -1728,8 +1728,8 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th>Product</th>
-                  <th>Box of 6</th>
-                  <th>Box of 12</th>
+                  <th className="admin-product-price">Box of 6</th>
+                  <th className="admin-product-price">Box of 12</th>
                   <th>
                     <span className="sr-only">Actions</span>
                   </th>
