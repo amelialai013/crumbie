@@ -23,6 +23,7 @@ export default function HeroMedia() {
   const failedClipsRef = useRef(new Set<number>());
   const transitioningRef = useRef(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextClipToPreloadRef = useRef<number | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -111,7 +112,19 @@ export default function HeroMedia() {
     }
   }
 
+  function ensurePlaying(video: HTMLVideoElement | null | undefined) {
+    if (!video || !video.paused) {
+      return;
+    }
+    video.muted = true;
+    video.play().catch(() => {});
+  }
+
   function markClipReady(index: number) {
+    if (index === activeClipRef.current || index === nextClipToPreloadRef.current) {
+      ensurePlaying(videoRefs.current[index]);
+    }
+
     if (!readyClipsRef.current.has(index)) {
       readyClipsRef.current.add(index);
       setReadyClips(Array.from(readyClipsRef.current));
@@ -152,6 +165,10 @@ export default function HeroMedia() {
     nextClipOffset === -1 ? activeClip : (activeClip + nextClipOffset + 1) % clips.length;
 
   useEffect(() => {
+    nextClipToPreloadRef.current = nextClipToPreload;
+  }, [nextClipToPreload]);
+
+  useEffect(() => {
     if (reduceMotion) {
       return;
     }
@@ -161,6 +178,34 @@ export default function HeroMedia() {
       video.load();
     }
   }, [nextClipToPreload, reduceMotion]);
+
+  // Some browsers ignore the autoplay attribute or block it until the user interacts,
+  // so start playback explicitly and retry on the first interaction.
+  useEffect(() => {
+    if (reduceMotion) {
+      return;
+    }
+
+    const resume = () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+      ensurePlaying(videoRefs.current[activeClipRef.current]);
+      if (nextClipToPreloadRef.current !== null) {
+        ensurePlaying(videoRefs.current[nextClipToPreloadRef.current]);
+      }
+    };
+
+    const interactionEvents = ["pointerdown", "keydown", "touchstart"] as const;
+
+    resume();
+    document.addEventListener("visibilitychange", resume);
+    interactionEvents.forEach((type) => document.addEventListener(type, resume, { passive: true }));
+    return () => {
+      document.removeEventListener("visibilitychange", resume);
+      interactionEvents.forEach((type) => document.removeEventListener(type, resume));
+    };
+  }, [reduceMotion, activeClip]);
 
   return (
     <div className="hero-media" aria-hidden="true">
