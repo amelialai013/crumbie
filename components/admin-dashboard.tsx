@@ -1798,7 +1798,11 @@ export default function AdminDashboard() {
                       const input = event.currentTarget
                         .previousElementSibling as HTMLInputElement | null;
                       input?.focus();
-                      input?.showPicker?.();
+                      try {
+                        input?.showPicker?.();
+                      } catch {
+                        // showPicker can throw outside a trusted user gesture; focus is the fallback.
+                      }
                     }}
                   >
                     <svg viewBox="0 0 24 24" aria-hidden="true">
