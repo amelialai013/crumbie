@@ -1012,8 +1012,27 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
-.admin-product-form-grid .field > input {
-  min-height: 40px;
+.admin-editor .field > input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.admin-product-form .field > input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+  padding: 0;
+  line-height: 24px;
+}
+.admin-product-form .admin-number-stepper {
+  height: 24px;
+  margin-bottom: 0;
+}
+.admin-product-form .admin-number-stepper input {
+  padding: 0;
+}
+.admin-product-form .admin-number-stepper .quantity-stepper-controls button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin-block: -2px;
+}
+.admin-product-form .admin-number-stepper .quantity-stepper-controls {
+  justify-content: flex-end;
 }
 .admin-product-form .field {
   display: flex;
