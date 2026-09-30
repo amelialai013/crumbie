@@ -1338,6 +1338,8 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   color: var(--ink);
 }
 .admin-edit-icon {
+  display: inline-block;
+  flex: none;
   width: 13px;
   height: 13px;
   margin-right: 6px;
