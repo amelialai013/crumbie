@@ -1426,15 +1426,6 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 .admin-product-table .admin-table-action .text-button + .text-button {
   margin-left: 16px;
 }
-@media (min-width: 641px) {
-  .admin-product-table .admin-table-action .text-button {
-    display: block;
-    margin-left: auto;
-  }
-  .admin-product-table .admin-table-action .text-button + .text-button {
-    margin-top: 8px;
-  }
-}
 .sr-only {
   position: absolute;
   width: 1px;
