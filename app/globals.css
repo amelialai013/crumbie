@@ -524,13 +524,19 @@
   gap: 8px;
   margin-bottom: 12px;
 }
-.admin-template-editor-heading > .text-button svg {
+.admin-template-editor-heading > .text-button svg,
+.admin-add-text-button svg {
   width: 16px;
   height: 16px;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.6;
+}
+.admin-add-text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 .admin-template-editor-heading h2 {
   margin: 18px 0 8px;
@@ -591,6 +597,14 @@
   min-height: 120px;
   line-height: 1.6;
 }
+.admin-editor .field textarea.admin-textarea-compact {
+  min-height: 0;
+  height: 24px;
+  line-height: 24px;
+  resize: none;
+  overflow: hidden;
+  white-space: nowrap;
+}
 .admin-editor .field textarea,
 .admin-product-form .field textarea {
   scrollbar-width: thin;
@@ -622,6 +636,22 @@
   margin-top: 6px;
   color: var(--muted);
   font-size: .72rem;
+}
+.admin-editor-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 8px;
+}
+.admin-editor-meta .admin-editor-count,
+.admin-editor-meta .admin-editor-hint {
+  margin-top: 0;
+  font-size: .72rem;
+  line-height: 1.4;
+}
+.admin-editor-meta .admin-editor-count {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .admin-policy-editor-section {
   margin-top: 56px;
@@ -1368,6 +1398,96 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 .admin-table-action .text-button:hover {
   color: var(--ink);
 }
+.admin-table-action .text-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.admin-enquiry-types {
+  margin-top: 40px;
+}
+.admin-enquiry-types-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.admin-enquiry-types-heading h3 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 400;
+}
+.admin-enquiry-table td,
+.admin-enquiry-table th {
+  vertical-align: middle;
+}
+.admin-enquiry-table tbody tr:first-child td {
+  border-top: 1px solid var(--line);
+}
+.admin-enquiry-table td input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  line-height: 24px;
+  outline: none;
+}
+.admin-enquiry-table .admin-enquiry-tag-cell {
+  width: 1%;
+  white-space: nowrap;
+  padding-right: 0;
+}
+.admin-default-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+}
+.admin-enquiry-table .admin-enquiry-handle-cell {
+  width: 1%;
+  padding-right: 0;
+}
+.admin-drag-handle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  cursor: grab;
+}
+.admin-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+.admin-drag-handle:hover,
+.admin-drag-handle:focus-visible {
+  color: var(--ink);
+}
+.admin-drag-handle:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+.admin-drag-handle:active {
+  cursor: grabbing;
+}
+.admin-drag-handle:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.admin-enquiry-table tr.is-dragging {
+  opacity: 0.45;
+}
 .admin-edit-icon {
   display: inline-block;
   flex: none;
@@ -1450,8 +1570,9 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 @media (min-width: 641px) {
   .admin-product-table th.admin-product-price,
   .admin-product-table td.admin-product-price {
-    width: 90px;
-    min-width: 90px;
+    width: 64px;
+    min-width: 64px;
+    padding-right: 0;
   }
 }
 .admin-product-table .admin-table-action .text-button + .text-button {

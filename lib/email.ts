@@ -95,7 +95,7 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 		customerEmail: enquiry.email,
 		customerPhone: enquiry.phone,
 		customerMessage: enquiry.request,
-		enquiryType: enquiryTypeLabels[enquiry.enquiryType || "general"] || "General enquiry",
+		enquiryType: enquiryTypeLabels[enquiry.enquiryType || "general"] || enquiry.enquiryType || "General enquiry",
 	};
 	await sendTextEmail({
 		to,

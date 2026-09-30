@@ -10,9 +10,9 @@ const fieldLabels: Record<string, string> = {
   request: "Your message",
 };
 
-export default function CustomOrderForm() {
+export default function CustomOrderForm({ enquiryTypes }: { enquiryTypes: string[] }) {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
-  const [enquiryType, setEnquiryType] = useState("general");
+  const [enquiryType, setEnquiryType] = useState(enquiryTypes[0] ?? "");
   const [errorMessage, setErrorMessage] = useState("");
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
@@ -127,11 +127,8 @@ export default function CustomOrderForm() {
             <PremiumSelect
               labelId="enquiry-type-label"
               value={enquiryType}
-              options={[
-                { value: "general", label: "General enquiry" },
-                { value: "custom-order", label: "Custom order" },
-              ]}
-              placeholder="General enquiry"
+              options={enquiryTypes.map((type) => ({ value: type, label: type }))}
+              placeholder={enquiryTypes[0] ?? "Select an enquiry type"}
               onChange={setEnquiryType}
             />
           </div>

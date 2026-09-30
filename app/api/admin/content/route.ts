@@ -11,9 +11,9 @@ const editableModules = new Set([
 	"settings",
 ]);
 const limits: Record<string, Record<string, number>> = {
-	homepage: { heroPrimaryLabel: 40, heroSecondaryLabel: 40, howTitle: 80, stepOneTitle: 60, stepOneBody: 180, stepTwoTitle: 60, stepTwoBody: 180, stepThreeTitle: 60, stepThreeBody: 180, catalogHeading: 100 },
+	homepage: { heroPrimaryLabel: 40, heroSecondaryLabel: 40, howTitle: 80, stepOneTitle: 60, stepOneBody: 80, stepTwoTitle: 60, stepTwoBody: 80, stepThreeTitle: 60, stepThreeBody: 80, catalogHeading: 100 },
 	about: { pageTitle: 80, storyHeading: 80, storyCopy: 1200, batchHeading: 80, batchCopy: 800 },
-	"contact us": { pageTitle: 80, messagePrompt: 180 },
+	"contact us": { pageTitle: 80, messagePrompt: 180, enquiryTypes: 1000 },
 	policy: { pageTitle: 80, pickupHeading: 80, pickupCopy: 1000, deadlineHeading: 80, deadlineCopy: 700, paymentHeading: 80, paymentCopy: 700, cancellationHeading: 80, cancellationCopy: 1000, allergenHeading: 80, allergenCopy: 700, enquiryHeading: 80, enquiryCopy: 700 },
 	"email templates": { confirmationSubject: 140, confirmationBody: 3000, pickupReminderSubject: 140, pickupReminderBody: 3000, enquirySubject: 140, enquiryBody: 3000 },
 	settings: { pickupAddress: 240, notificationEmail: 200, businessName: 100 },

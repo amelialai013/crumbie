@@ -1,19 +1,25 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendEnquiryNotification } from "@/lib/email";
-import { saveRecord } from "@/lib/store";
+import { enquiryTypeLabels, enquiryTypeMaxLength, parseEnquiryTypes } from "@/lib/email-templates";
+import { getRecord, saveRecord } from "@/lib/store";
 
 const schema = z.object({
 	name: z.string().trim().min(1).max(100),
 	email: z.string().email().max(200),
 	phone: z.string().trim().min(6).max(40).regex(/^[+()0-9\s-]+$/, "Invalid phone number"),
-	enquiryType: z.enum(["general", "custom-order"]),
+	enquiryType: z.string().trim().min(1).max(enquiryTypeMaxLength),
 	request: z.string().trim().min(10).max(3000),
 });
 
 export async function POST(req: Request) {
 	const parsed = schema.safeParse(await req.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: "Please check the form." }, { status: 400 });
+	const content = await getRecord<{ fields?: Record<string, string> }>("content", "contact us").catch(() => null);
+	const allowedTypes = parseEnquiryTypes(content?.fields?.enquiryTypes);
+	if (!allowedTypes.includes(parsed.data.enquiryType) && !(parsed.data.enquiryType in enquiryTypeLabels)) {
+		return NextResponse.json({ error: "Please choose an enquiry type." }, { status: 400 });
+	}
 
 	const record = {
 		id: crypto.randomUUID(),
