@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
+import { formatPickupDate } from "@/lib/format-date";
 import {
   defaultProductAllergens,
   defaultProductIngredients,
@@ -350,13 +351,6 @@ function mergeContent(
   return { fields: { ...emptyContent(moduleName).fields, ...fields } };
 }
 
-function formatPickupDate(date: string) {
-  return new Date(`${date}T12:00:00`).toLocaleDateString("en-AU", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
 
 const DEFAULT_PICKUP_START = "10:00";
 const DEFAULT_PICKUP_END = "12:00";
