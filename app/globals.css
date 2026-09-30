@@ -1381,11 +1381,11 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   .admin-pickup-table td.admin-table-action { grid-area: action; width: auto; }
   .admin-pickup-table td[colspan] { grid-column: 1 / -1; }
   .admin-product-table tr {
-    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-columns: auto auto 1fr;
     grid-template-areas:
       "product product product"
       "six twelve action";
-    column-gap: 24px;
+    column-gap: 12px;
   }
   .admin-product-table td:nth-child(1) { grid-area: product; }
   .admin-product-table td:nth-child(2) { grid-area: six; color: var(--ink); }
