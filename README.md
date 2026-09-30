@@ -43,6 +43,6 @@ Products have variants for six- and twelve-cookie boxes. Pickup dates have one f
 
 ## Deployment
 
-Create a brand-new Vercel project from this repository. Attach a new Redis integration, configure a new R2 bucket, add Stripe and Resend values, and register the Stripe webhook against the deployed `/api/stripe/webhook` URL. Keep `crumbie.com.au` unconnected until ownership and final launch approval are confirmed.
+Create a brand-new Vercel project from this repository. Attach a new Redis integration, configure a new R2 bucket, add Stripe and Resend values, and register the Stripe webhook against the deployed `/api/stripe/webhook` URL. Connect `clubcrumbie.com` as the production domain and set `NEXT_PUBLIC_SITE_URL=https://clubcrumbie.com`.
 
 Before launch, replace every item labelled placeholder: product names, recipes, prices, stock photography, founder content, contact email, social links, pickup address, policies, domain and invoice behaviour.

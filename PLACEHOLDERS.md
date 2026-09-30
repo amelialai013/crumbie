@@ -9,9 +9,9 @@
 - Homepage hero video: Pexels video 20315770 by Ammad Rasool (`https://www.pexels.com/video/a-mixer-is-mixing-dough-in-a-bowl-20315770/`)
 - Product images
 - About/founder image and biography
-- `hello@clubcrumbie.example`
+- `hello@clubcrumbie.com` (verify sender domain in Resend)
 - Instagram and TikTok links
 - Default pickup address
-- `crumbie.com.au` domain status
+- `clubcrumbie.com` domain connection
 - Tax-invoice behaviour
 - All external-service credentials and sender identities
