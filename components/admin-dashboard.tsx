@@ -357,6 +357,8 @@ function formatPickupDate(date: string) {
   });
 }
 
+const DEFAULT_PICKUP_WINDOW = "10:00am–12:00pm";
+
 function firstSaturdayOfNextMonth() {
   const now = new Date();
   const firstOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -383,7 +385,8 @@ export default function AdminDashboard() {
   const [newPickupDate, setNewPickupDate] = useState(() =>
     firstSaturdayOfNextMonth(),
   );
-  const [newPickupWindow, setNewPickupWindow] = useState("10:00am–12:00pm");
+  const [newPickupWindow, setNewPickupWindow] = useState(DEFAULT_PICKUP_WINDOW);
+  const [pickupFormKey, setPickupFormKey] = useState(0);
   const [pickupDateStatus, setPickupDateStatus] = useState("");
   const [pickupFieldErrors, setPickupFieldErrors] = useState<
     Record<string, string>
@@ -573,6 +576,14 @@ export default function AdminDashboard() {
     setError("");
   }
 
+  function resetPickupForm() {
+    setNewPickupDate(firstSaturdayOfNextMonth());
+    setNewPickupWindow(DEFAULT_PICKUP_WINDOW);
+    setPickupDateStatus("");
+    setPickupFieldErrors({});
+    setPickupFormKey((key) => key + 1);
+  }
+
   async function addPickupDate(event: React.FormEvent) {
     event.preventDefault();
     const fieldErrors: Record<string, string> = {};
@@ -603,9 +614,7 @@ export default function AdminDashboard() {
         (left, right) => left.date.localeCompare(right.date),
       ),
     );
-    setNewPickupDate(firstSaturdayOfNextMonth());
-    setPickupDateStatus("");
-    setPickupFieldErrors({});
+    resetPickupForm();
     finishAdminAction("Pickup date successfully added");
     const pickupModalToggle = document.getElementById("pickup-modal-toggle");
     if (pickupModalToggle instanceof HTMLInputElement) {
@@ -1214,10 +1223,7 @@ export default function AdminDashboard() {
                   type="checkbox"
                   hidden
                   onChange={(event) => {
-                    if (event.target.checked) {
-                      setPickupFieldErrors({});
-                      setNewPickupDate(firstSaturdayOfNextMonth());
-                    }
+                    if (event.target.checked) resetPickupForm();
                   }}
                 />
                 <label
@@ -1755,7 +1761,7 @@ export default function AdminDashboard() {
                   </svg>
                 </label>
               </div>
-              <div className="admin-modal-body">
+              <div className="admin-modal-body" key={pickupFormKey}>
               <div className={`field${pickupFieldErrors.date ? " has-error" : ""}`}>
                 <label htmlFor="new-pickup-date">Pickup date</label>
                 <input
