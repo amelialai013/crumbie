@@ -1377,7 +1377,7 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
     column-gap: 24px;
   }
   .admin-product-table td:nth-child(1) { grid-area: product; }
-  .admin-product-table td:nth-child(2) { grid-area: six; }
+  .admin-product-table td:nth-child(2) { grid-area: six; color: var(--ink); }
   .admin-product-table td:nth-child(3) { grid-area: twelve; justify-self: start; }
   .admin-product-table td.admin-table-action { justify-self: end; }
   .admin-product-price::before {
