@@ -20,3 +20,14 @@ export function isDateClosed(date: PickupDate) {
   const cutoff = new Date(`${date.date}T10:00:00+10:00`).getTime() - 72 * 60 * 60 * 1000;
   return date.soldOut === true || Date.now() >= cutoff;
 }
+
+// Product image contract: cover is always side-on; rotation opens bird's-eye.
+export const PRODUCT_SIDE_PROFILE_INDEX = 0;
+export const PRODUCT_BIRDS_EYE_INDEX = 1;
+export const PRODUCT_IMAGE_COUNT = 9; // one cover plus eight rotation angles
+export function productSideProfile(product: Product) {
+  return product.imageMode === "gallery" ? product.images[PRODUCT_SIDE_PROFILE_INDEX] : undefined;
+}
+export function productRotationImages(product: Product) {
+  return product.images.length > 1 ? product.images.slice(PRODUCT_BIRDS_EYE_INDEX) : product.images;
+}

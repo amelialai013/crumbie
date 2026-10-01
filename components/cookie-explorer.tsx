@@ -39,7 +39,7 @@ export default function CookieExplorer({
     : variant === "biscoff"
       ? biscoffFrames
       : signatureFrames;
-  const initialRotation = initialFrame ?? (variant === "biscoff" ? 2 : 0);
+  const initialRotation = initialFrame ?? 0;
   const wrap = (value: number) => (value % frames.length + frames.length) % frames.length;
   const [rotation, setRotation] = useState(wrap(initialRotation));
   const [dragging, setDragging] = useState(false);

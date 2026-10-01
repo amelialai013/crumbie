@@ -2817,14 +2817,15 @@ body {
   padding: 0;
 }
 .cookie-catalog .product-card-render .product-cookie-image-generated {
-  object-fit: cover;
+  object-fit: contain;
 }
 .cookie-catalog .product-card-render .product-cookie-image-transparent {
   object-fit: contain;
-  transform: scale(1.35);
+  transform: none;
+  padding: 6%;
 }
 .cookie-catalog .product-card:hover .product-cookie-image-transparent {
-  transform: scale(1.4);
+  transform: none;
 }
 .product-cookie-image-legacy-jpeg,
 .cookie-explorer-legacy-jpeg {
@@ -3029,7 +3030,7 @@ body {
 }
 .cookie-explorer-object {
   position: absolute;
-  inset: 0;
+  inset: 6%;
   will-change: transform;
   transition: transform .18s cubic-bezier(.22,.72,.25,1);
   transform-style: preserve-3d;
@@ -3037,7 +3038,7 @@ body {
 .cookie-explorer.is-dragging .cookie-explorer-object { transition: none; }
 .cookie-explorer-object img {
   object-fit: contain;
-  object-position: center top;
+  object-position: center;
   filter: drop-shadow(0 24px 22px rgba(27, 21, 15, .3));
   user-select: none;
   pointer-events: none;

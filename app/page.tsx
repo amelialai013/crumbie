@@ -1,3 +1,4 @@
+import { productSideProfile } from "@/lib/catalog";
 import Link from "next/link";
 import Image from "next/image";
 import { getProducts } from "@/lib/catalog-store";
@@ -70,7 +71,7 @@ export default async function Home() {
               <Link className="product-card" href={`/crumbs/${product.slug}`} key={product.id}>
                 <div className="relative product-card-render">
                   <ProductCookieImage
-                    image={product.imageMode === "gallery" ? product.images[0] : undefined}
+                    image={productSideProfile(product)}
                     name={product.name}
                     variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
                   />

@@ -1,3 +1,4 @@
+import { productRotationImages } from "@/lib/catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -57,8 +58,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <CookieExplorer
             key={product.slug}
             name={product.name}
-            images={product.images}
-            initialFrame={Math.min(1, Math.max(0, product.images.length - 1))}
+            images={productRotationImages(product)}
+            initialFrame={0}
           />
         )}
         <div className="product-detail-copy">

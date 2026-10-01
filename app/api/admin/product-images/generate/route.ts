@@ -1,13 +1,14 @@
+import sharp from "sharp";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/session";
 import { uploadMedia } from "@/lib/r2";
-import { productSlugFromName } from "@/lib/catalog";
+import { PRODUCT_IMAGE_COUNT, productSlugFromName } from "@/lib/catalog";
 
 export const maxDuration = 300;
 
 const MAX_REFERENCE_IMAGES = 5;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-const MAX_GENERATED_IMAGES = 5;
+const MAX_GENERATED_IMAGES = PRODUCT_IMAGE_COUNT;
 
 function imageFile(value: FormDataEntryValue): value is File {
 	return value instanceof File && value.size > 0;
@@ -29,7 +30,8 @@ export async function POST(request: Request) {
 	const form = await request.formData();
 	const name = String(form.get("name") || "").trim();
 	const direction = String(form.get("direction") || "").trim();
-	const count = Number(form.get("count") || 3);
+	const count = Number(form.get("count") || 1);
+	const frameIndex = Number(form.get("frameIndex") || 0);
 	const references = form.getAll("references").filter(imageFile);
 	if (!name) {
 		return NextResponse.json({ error: "Product name is required." }, { status: 400 });
@@ -40,9 +42,9 @@ export async function POST(request: Request) {
 			{ status: 400 },
 		);
 	}
-	if (!Number.isInteger(count) || count < 1 || count > MAX_GENERATED_IMAGES) {
+	if (!Number.isInteger(count) || count !== 1 || !Number.isInteger(frameIndex) || frameIndex < 0 || frameIndex >= MAX_GENERATED_IMAGES) {
 		return NextResponse.json(
-			{ error: "Choose between one and five generated images." },
+			{ error: "Request one frame at a time, with frameIndex between zero and eight." },
 			{ status: 400 },
 		);
 	}
@@ -70,41 +72,43 @@ export async function POST(request: Request) {
 
 	try {
 		const timestamp = Date.now();
-		const images = await Promise.all(Array.from({ length: count }, async (_, index) => {
-			const shotDirections = [
-				"This is the primary storefront cover: show the referenced cookie in a clean side-on profile. Match only the Signature Crumbie page's cut-out presentation, never its cookie appearance. Keep the entire cookie in frame and clearly show its own thickness, edge texture, and toppings.",
-				"This is the opening product-page view: show the same whole cookie front-on, centred, and facing the camera. It must read as the primary image in a rotatable cookie view, not an overhead flat-lay or side profile.",
-				"This is the next rotation frame: show the same whole cookie from a low right three-quarter angle. Preserve the front-on composition's scale, background, lighting, and exact cookie identity.",
-				"This is the final rotation frame: show the same whole cookie from a low left three-quarter angle. It must complete a coherent rotation sequence with the front-on and right three-quarter frames; do not break, crop, or add props to the cookie.",
-				"This is an additional rotation frame filling the gap between the two three-quarter angles: show the same whole cookie from directly behind, a straight-on back view with the far edge nearest the camera. It must read as a distinct angle from every other frame in the sequence, completing a fuller 360-degree turntable, while preserving the exact same cookie identity, scale, lighting, and background.",
-			];
-			const shotDirection =
-				shotDirections[index] ??
-				"Create a distinct product-gallery angle that does not repeat any other generated composition.";
+		const images = await Promise.all(Array.from({ length: count }, async () => {
+			const index = frameIndex;
+			const shotDirection = index === 0
+				? "Storefront cover: show the cookie horizontally from a clean side profile, camera at edge height, showing its thickness."
+				: index === 1
+					? "Opening product-page rotation frame: true bird's-eye view looking straight down at the entire top of the cookie, centred."
+					: `Rotation frame ${index} of eight: view the same cookie from ${(index - 1) * 45} degrees clockwise around its vertical axis from the front. Keep camera elevation at 35 degrees above the horizontal to show its top and thickness. Keep identity, lighting, scale and centre consistent.`;
+			const framing = "Show one whole intact cookie. Leave at least 12% transparent margin on ALL four sides; no part of the cookie may touch or cross the image boundary.";
 			const upstream = new FormData();
 			upstream.set("model", "gpt-image-2.5-sunburst");
-			upstream.set("prompt", `${prompt} ${shotDirection}`);
+			upstream.set("prompt", `${prompt} ${shotDirection} ${framing}`);
 			upstream.set("quality", "medium");
 			upstream.set("size", "1024x1024");
 			upstream.set("background", "transparent");
 			upstream.set("output_format", "png");
 			references.forEach((file) => upstream.append("image[]", file, file.name));
-			const response = await fetch("https://api.openai.com/v1/images/edits", {
-				method: "POST",
-				headers: { Authorization: `Bearer ${apiKey}` },
-				body: upstream,
-				signal: AbortSignal.timeout(240_000),
-			});
-			const result = (await response.json().catch(() => null)) as {
-				data?: Array<{ b64_json?: string }>;
-				error?: { message?: string };
-			} | null;
+			let response!: Response;
+			let result: { data?: Array<{ b64_json?: string }>; error?: { message?: string } } | null = null;
+			for (let attempt = 0; attempt < 4; attempt++) {
+				response = await fetch("https://api.openai.com/v1/images/edits", {
+					method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: upstream, signal: AbortSignal.timeout(180_000),
+				});
+				result = await response.json().catch(() => null);
+				if (response.status !== 429 || attempt === 3) break;
+				const seconds = Number(response.headers.get("retry-after")) || Number(result?.error?.message?.match(/try again in ([\d.]+)s/i)?.[1]) || 20;
+				await new Promise((resolve) => setTimeout(resolve, Math.min(60, Math.max(1, seconds)) * 1000));
+			}
 			if (!response.ok || !result?.data?.[0]?.b64_json) {
 				throw new Error(result?.error?.message || "OpenAI did not return an image.");
 			}
 			return uploadMedia(
 				`products/${productSlugFromName(name)}/generated-${timestamp}-${index + 1}.png`,
-				Buffer.from(result.data[0].b64_json, "base64"),
+				await sharp(Buffer.from(result.data[0].b64_json, "base64"))
+					.trim({ threshold: 10 })
+					.resize(800, 800, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+					.extend({ top: 112, bottom: 112, left: 112, right: 112, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+					.png().toBuffer(),
 				"image/png",
 			);
 		}));
