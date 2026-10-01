@@ -15,7 +15,7 @@ The datastore accepts either `KV_REST_API_URL` and `KV_REST_API_TOKEN`, or Strip
 
 Resend sends an internal notification after a Contact Us enquiry is saved and sends the customer a confirmation after a paid order is recorded by the Stripe webhook. Configure `RESEND_API_KEY` and `CRUMBIE_NOTIFICATION_EMAIL` through Stripe Projects. Mail sends from `Club Crumbie <hello@clubcrumbie.com>` by default; `RESEND_FROM_EMAIL` can override that identity. The notification inbox can also be changed in Admin > Settings, and subjects and body copy can be changed in Admin > Email templates. Email delivery failures are logged without discarding saved enquiries, paid orders or webhook idempotency records.
 
-To generate polished product imagery from Admin > Products, configure `OPENAI_API_KEY`. In the single Product imagery area, upload up to five reference photos, set optional creative direction, choose one to four generated images, and generate the gallery with OpenAI. The generator saves the returned JPEGs to the configured R2 bucket (or local development uploads); their order controls the storefront cover and product-page gallery after the product is saved. OpenAI API billing is separate from ChatGPT and Codex subscriptions.
+To generate polished product imagery from Admin > Products, configure `OPENAI_API_KEY`. In the single Product imagery area, upload up to five reference photos, set optional creative direction, choose one to five generated images, and generate the gallery with OpenAI. The generator saves the returned transparent PNGs to the configured R2 bucket (or local development uploads); their order controls the storefront cover and product-page gallery after the product is saved. OpenAI API billing is separate from ChatGPT and Codex subscriptions.
 
 Stripe Tax is off by default. Before setting `STRIPE_AUTOMATIC_TAX_ENABLED=true`, configure the sandbox head-office address, confirm an active registration shows as **Collecting**, select the correct baked-goods product tax code with a tax advisor, and choose whether catalogue prices are `inclusive` or `exclusive`. Set those choices in `STRIPE_PRODUCT_TAX_CODE` and `STRIPE_TAX_BEHAVIOR`, then repeat and verify the setup in live mode before launch.
 
@@ -46,3 +46,11 @@ Products have variants for six- and twelve-cookie boxes. Pickup dates have one f
 Create a brand-new Vercel project from this repository. Attach a new Redis integration, configure a new R2 bucket, add Stripe and Resend values, and register the Stripe webhook against the deployed `/api/stripe/webhook` URL. Connect `clubcrumbie.com` as the production domain and set `NEXT_PUBLIC_SITE_URL=https://clubcrumbie.com`.
 
 Before launch, replace every item labelled placeholder: product names, recipes, prices, stock photography, founder content, contact email, social links, pickup address, policies, domain and invoice behaviour.
+
+## Persistent local connections
+
+Use `npm run dev` from this checkout. It loads `.env` and `.env.local`, checks Stripe test access, starts the webhook listener, and saves its current signing secret before starting Next.js. It reconnects the listener after a disconnect. The Stripe CLI must be installed. Local credentials remain in ignored environment files; `.env.local` is not replaced by Stripe Projects environment pulls.
+
+Run `npm run check:config` to verify datastore connectivity, Stripe access, the verified Resend sending domain, OpenAI image-model access, R2 bucket access, and session credentials without printing secrets. A missing service produces a nonzero exit status. OpenAI uses a restricted non-expiring image key.
+
+R2 must have all five `R2_*` credentials configured. Until then, Admin Settings explicitly shows “Local storage only”. Local files survive app restarts but are not durable hosted storage. Production requires R2, a public production media domain, and a deployed Stripe webhook destination; the development listener does not serve production.

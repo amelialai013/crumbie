@@ -2411,7 +2411,7 @@ export default function AdminDashboard() {
               <div className="admin-config-item" key={name}>
                 <span>{configLabels[name as keyof Config] || name}</span>
                 <strong className={ready ? "status status-live" : "status"}>
-                  {ready ? "Configured" : "Missing"}
+                  {ready ? "Configured" : name === "r2" ? "Local storage only" : "Missing"}
                 </strong>
               </div>
             ))}

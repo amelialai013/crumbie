@@ -3,6 +3,8 @@ import { isAdmin } from "@/lib/session";
 import { uploadMedia } from "@/lib/r2";
 import { productSlugFromName } from "@/lib/catalog";
 
+export const maxDuration = 300;
+
 const MAX_REFERENCE_IMAGES = 5;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_GENERATED_IMAGES = 5;
@@ -91,6 +93,7 @@ export async function POST(request: Request) {
 				method: "POST",
 				headers: { Authorization: `Bearer ${apiKey}` },
 				body: upstream,
+				signal: AbortSignal.timeout(240_000),
 			});
 			const result = (await response.json().catch(() => null)) as {
 				data?: Array<{ b64_json?: string }>;

@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/session";
 import { getProducts } from "@/lib/catalog-store";
 import { defaultProductAllergens, defaultProductIngredients, productSlugFromName } from "@/lib/catalog";
 import { getRecord, saveRecord } from "@/lib/store";
 import { uploadMedia } from "@/lib/r2";
 import type { Product } from "@/lib/catalog";
+
+function refreshCatalogue() {
+	revalidatePath("/");
+	revalidatePath("/crumbs");
+	revalidatePath("/crumbs/[slug]", "page");
+}
 
 function validProduct(value: unknown): value is Omit<Product, "images"> & { images?: string[] } {
 	if (!value || typeof value !== "object") return false;
@@ -43,6 +50,7 @@ export async function POST(request: Request) {
 			imageMode: uploadedImages || payload.imageMode === "gallery" ? "gallery" : existing?.imageMode,
 		};
 		await saveRecord("product", product);
+		refreshCatalogue();
 		return NextResponse.json(product, { status: 201 });
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to save product";
@@ -56,6 +64,7 @@ export async function DELETE(request: Request) {
 	if (!id) return NextResponse.json({ error: "Product id is required" }, { status: 400 });
 	try {
 		await saveRecord("product", { id, slug: "", name: "", description: "", ingredients: "", allergens: "", images: [], variants: [], removed: true } as Product & { removed: boolean });
+		refreshCatalogue();
 		return NextResponse.json({ ok: true });
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to remove product";

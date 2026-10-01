@@ -10,7 +10,7 @@ export async function GET() {
 		stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
 		resend: Boolean(process.env.RESEND_API_KEY),
 		openai: Boolean(process.env.OPENAI_API_KEY),
-		r2: r2Configured() || process.env.NODE_ENV !== "production",
+		r2: r2Configured(),
 		session: Boolean(process.env.ADMIN_SESSION_SECRET),
 	});
 }
