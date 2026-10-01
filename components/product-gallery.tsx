@@ -19,7 +19,7 @@ export default function ProductGallery({ images, name }: { images: string[]; nam
           src={images[activeIndex]}
           alt={`${name} — image ${activeIndex + 1}`}
           fill
-          priority={activeIndex === 0}
+          preload={activeIndex === 0}
           unoptimized={!images[activeIndex].includes("images.unsplash.com")}
           sizes="(max-width: 900px) 100vw, 56vw"
         />

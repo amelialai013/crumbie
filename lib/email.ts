@@ -105,6 +105,12 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 	});
 }
 
+export async function sendEnquiryReply(reply: { to: string; subject: string; message: string }) {
+	const settings = await contentFields("settings");
+	const replyTo = settings.notificationEmail?.trim() || process.env.CRUMBIE_NOTIFICATION_EMAIL?.trim() || undefined;
+	await sendTextEmail({ to: reply.to, subject: reply.subject, text: reply.message, replyTo });
+}
+
 export async function sendOrderConfirmation(order: Order) {
 	if (!order.customer.email) throw new Error("Order customer email is missing");
 	const [templates, settings] = await Promise.all([

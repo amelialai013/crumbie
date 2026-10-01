@@ -134,16 +134,16 @@
 .admin-auth-loading p {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   margin: 0;
   color: #b5b3b0;
-  font-size: 1.35rem;
+  font-size: .95rem;
 }
 .admin-auth-spinner {
   flex: none;
-  width: 24px;
-  height: 24px;
-  border: 1.5px solid rgba(201, 173, 148, .25);
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(201, 173, 148, .25);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: admin-auth-spin .9s linear infinite;
@@ -490,14 +490,111 @@ input::-webkit-caps-lock-indicator {
 .admin-confirm-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12px;
   margin-top: 28px;
 }
 .admin-confirm-actions .btn {
-  flex: 1 1 180px;
+  flex: 0 0 auto;
 }
 .admin-confirm-danger {
   border-color: #f7f7f5;
+}
+.admin-reply-modal {
+  width: min(640px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+.admin-reply-modal .field {
+  margin-top: 18px;
+}
+.admin-reply-modal textarea {
+  min-height: 180px;
+  resize: none;
+}
+.admin-confirm-modal .admin-reply-error {
+  color: #f2b8a8;
+}
+.admin-enquiry-preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+.admin-enquiry-reply-count {
+  display: block;
+  margin-top: 6px;
+  opacity: .6;
+}
+.admin-enquiry-detail {
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+  max-width: 760px;
+}
+.admin-enquiry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 40px;
+  margin: 0;
+}
+.admin-enquiry-meta dt {
+  margin-bottom: 4px;
+  font-size: 12px;
+  opacity: .6;
+}
+.admin-enquiry-meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.admin-enquiry-meta a {
+  color: inherit;
+}
+.admin-enquiry-thread {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.admin-enquiry-message {
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 243, 230, .12);
+  border-radius: 12px;
+  background: rgba(255, 243, 230, .04);
+}
+.admin-enquiry-message.is-reply {
+  margin-left: 32px;
+  border-color: rgba(255, 243, 230, .2);
+  background: rgba(255, 243, 230, .09);
+}
+.admin-enquiry-message-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 10px;
+}
+.admin-enquiry-message-head small {
+  opacity: .6;
+}
+.admin-enquiry-message-subject {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.admin-enquiry-message p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .admin-enquiry-message.is-reply {
+    margin-left: 16px;
+  }
 }
 .admin-product-close {
   display: none;
@@ -911,6 +1008,7 @@ section:has(#policy-modal-toggle:checked) .admin-modal-header .admin-policy-clos
   z-index: 2;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 18px;
   margin: 28px -28px 0;
   padding: 18px 28px;
@@ -956,7 +1054,9 @@ html:has(#pickup-modal-toggle:checked),
 html:has(#policy-modal-toggle:checked),
 body:has(#product-modal-toggle:checked),
 body:has(#pickup-modal-toggle:checked),
-body:has(#policy-modal-toggle:checked) {
+body:has(#policy-modal-toggle:checked),
+html:has(.admin-confirm-overlay),
+body:has(.admin-confirm-overlay) {
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -1436,6 +1536,8 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   font-size: .8rem;
 }
 .admin-reference-selection li > span {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1457,6 +1559,7 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 .admin-product-form-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 18px;
   margin-top: 24px;
   color: var(--muted);
@@ -1784,6 +1887,29 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 .admin-modal-actions {
   flex: 0 0 auto;
   margin: 0;
+}
+.admin-product-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: static;
+  width: 100%;
+  min-width: 0;
+}
+.admin-product-form-actions > .btn {
+  flex: 0 0 auto;
+  width: auto;
+}
+.admin-product-form-actions > span {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.admin-reference-selection li > button {
+  flex: 0 0 auto;
+}
+.admin-modal-body {
+  min-width: 0;
 }
 section:has(#product-modal-toggle:checked) .admin-product-form,
 section:has(#pickup-modal-toggle:checked) .admin-add-date,
