@@ -91,7 +91,7 @@ export default function CustomOrderForm({ enquiryTypes }: { enquiryTypes: string
     return (
       <div className="enquiry-form enquiry-success">
         <h2>Thank you.</h2>
-        <p>We’ve received your message and will be in touch soon.</p>
+        <p>We’ve received your message and will be in touch soon. Keep an eye on your inbox, and check your junk or spam folder in case our reply ends up there.</p>
       </div>
     );
   }
