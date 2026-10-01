@@ -2854,14 +2854,14 @@ body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 28px 0 0;
+  padding: 20px 0 0;
 }
 .cookie-catalog .product-card-heading {
   display: flex;
+  flex: 1;
   gap: 24px;
   align-items: flex-end;
   justify-content: space-between;
-  min-height: clamp(5.75rem, 12vw, 7rem);
   padding-bottom: 18px;
   border-bottom: 1px solid var(--line);
 }
