@@ -3425,7 +3425,7 @@ body {
   height: 44px;
   place-items: center;
   border-radius: 50%;
-  background: #1b150f;
+  background: #413c34;
   color: #fff;
   animation: cart-confirmation-check-in .55s var(--motion-ease) .08s both;
 }
@@ -3461,8 +3461,8 @@ body {
   padding-inline: 22px;
 }
 .cart-confirmation-actions .btn-dark {
-  border-color: #1b150f;
-  background: #1b150f;
+  border-color: #413c34;
+  background: #413c34;
   color: #fff;
 }
 .cart-confirmation-actions .btn-dark:hover {
