@@ -41,6 +41,14 @@
       ],
       "variables": [
         {
+          "variableName": "admin-password",
+          "envKey": "ADMIN_PASSWORD"
+        },
+        {
+          "variableName": "admin-session-secret",
+          "envKey": "ADMIN_SESSION_SECRET"
+        },
+        {
           "variableName": "notification-email",
           "envKey": "CRUMBIE_NOTIFICATION_EMAIL"
         }
@@ -48,6 +56,14 @@
     }
   },
   "variables": {
+    "admin-password": {
+      "name": "admin-password",
+      "backendId": "fprjvar_61VUyGgjaDtkik6PD16VRo2iFw8S22NaNcaNWf1Ue7Im"
+    },
+    "admin-session-secret": {
+      "name": "admin-session-secret",
+      "backendId": "fprjvar_61VUyGl8y2erRcWbW16VRo2iFw8S22NaNcaNWf1UeJLs"
+    },
     "notification-email": {
       "name": "notification-email",
       "backendId": "fprjvar_61VRp6k1PhYpyVYhU16VRo2iFw8S22NaNcaNWf1Ue648"

@@ -33,7 +33,7 @@
       "providerName": "Upstash",
       "redirectUrl": null,
       "requestedAt": "2026-09-23T07:15:56.234Z",
-      "status": "complete"
+      "status": "expired"
     }
   },
   "resources": {
@@ -76,6 +76,8 @@
   },
   "managedProjectVariableEnvKeys": {
     ".env": [
+      "ADMIN_PASSWORD",
+      "ADMIN_SESSION_SECRET",
       "CRUMBIE_NOTIFICATION_EMAIL"
     ]
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRecord, setRecord } from "@/lib/store";
 import { isAdmin } from "@/lib/session";
+import { policyBodyMaxChars } from "@/lib/text-limits";
 
 const editableModules = new Set([
 	"homepage",
@@ -11,10 +12,10 @@ const editableModules = new Set([
 	"settings",
 ]);
 const limits: Record<string, Record<string, number>> = {
-	homepage: { heroPrimaryLabel: 40, heroSecondaryLabel: 40, howTitle: 80, stepOneTitle: 60, stepOneBody: 80, stepTwoTitle: 60, stepTwoBody: 80, stepThreeTitle: 60, stepThreeBody: 80, catalogHeading: 100 },
+	homepage: { heroPrimaryLabel: 40, heroSecondaryLabel: 40, howTitle: 80, stepOneTitle: 60, stepOneBody: 80, stepTwoTitle: 60, stepTwoBody: 80, stepThreeTitle: 60, stepThreeBody: 80, catalogHeading: 80 },
 	about: { pageTitle: 80, storyHeading: 80, storyCopy: 1200, batchHeading: 80, batchCopy: 800 },
 	"contact us": { pageTitle: 80, messagePrompt: 180, enquiryTypes: 1000 },
-	policy: { pageTitle: 80, pickupHeading: 80, pickupCopy: 1000, deadlineHeading: 80, deadlineCopy: 700, paymentHeading: 80, paymentCopy: 700, cancellationHeading: 80, cancellationCopy: 1000, allergenHeading: 80, allergenCopy: 700, enquiryHeading: 80, enquiryCopy: 700 },
+	policy: { pageTitle: 80, pickupHeading: 80, pickupCopy: policyBodyMaxChars, deadlineHeading: 80, deadlineCopy: policyBodyMaxChars, paymentHeading: 80, paymentCopy: policyBodyMaxChars, cancellationHeading: 80, cancellationCopy: policyBodyMaxChars, allergenHeading: 80, allergenCopy: policyBodyMaxChars, enquiryHeading: 80, enquiryCopy: policyBodyMaxChars },
 	"email templates": { confirmationSubject: 140, confirmationBody: 3000, pickupReminderSubject: 140, pickupReminderBody: 3000, enquirySubject: 140, enquiryBody: 3000 },
 	settings: { pickupAddress: 240, notificationEmail: 200, businessName: 100 },
 };
@@ -40,6 +41,9 @@ export async function PUT(request: Request) {
 	if (Object.entries(payload.fields).some(([field, value]) => typeof value !== "string" || !(field in moduleLimits) || value.length > moduleLimits[field])) {
 		return NextResponse.json({ error: "Content exceeds the character limit" }, { status: 413 });
 	}
+	if (payload.module === "policy" && Object.entries(payload.fields).some(([field, value]) => field.endsWith("Copy") && (value as string).length > policyBodyMaxChars)) {
+		return NextResponse.json({ error: `Policy body copy is limited to ${policyBodyMaxChars} characters` }, { status: 413 });
+	}
 	if (payload.module !== "policy" && payload.sections !== undefined) return NextResponse.json({ error: "Sections are only supported for policy content" }, { status: 400 });
 	if (payload.removedFields !== undefined && (payload.module !== "policy" || !Array.isArray(payload.removedFields) || payload.removedFields.some((field: unknown) => !["allergenHeading", "allergenCopy", "enquiryHeading", "enquiryCopy"].includes(String(field))))) {
 		return NextResponse.json({ error: "Invalid removable policy sections" }, { status: 400 });
@@ -47,7 +51,7 @@ export async function PUT(request: Request) {
 	if (payload.module === "policy" && payload.sections !== undefined && (!Array.isArray(payload.sections) || payload.sections.some((section: unknown) => {
 		if (!section || typeof section !== "object") return true;
 		const item = section as { heading?: unknown; body?: unknown };
-		return typeof item.heading !== "string" || typeof item.body !== "string" || item.heading.length > 80 || item.body.length > 1000;
+		return typeof item.heading !== "string" || typeof item.body !== "string" || item.heading.length > 80 || item.body.length > policyBodyMaxChars;
 	}))) return NextResponse.json({ error: "Policy sections exceed the character limits" }, { status: 413 });
 	try {
 		await setRecord("content", payload.module, { fields: Object.fromEntries(Object.entries(payload.fields).map(([field, value]) => [field, (value as string).trim()])), ...(payload.module === "policy" ? { sections: (payload.sections || []).map((section: { heading: string; body: string }) => ({ heading: section.heading.trim(), body: section.body.trim() })), removedFields: payload.removedFields || [] } : {}) });

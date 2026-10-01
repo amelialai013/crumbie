@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
+import { DatePicker } from "./date-picker";
 import { formatPickupDate } from "@/lib/format-date";
+import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultEnquiryTypes, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
@@ -69,6 +71,7 @@ type ContentField = {
   key: string;
   label: string;
   maxLength: number;
+  body?: boolean;
   multiline?: boolean;
   rows?: number;
 };
@@ -138,7 +141,7 @@ const contentModules: Record<string, ContentModule> = {
       {
         key: "catalogHeading",
         label: "Product section heading",
-        maxLength: 100,
+        maxLength: 80,
       },
     ],
     defaults: {
@@ -160,15 +163,15 @@ const contentModules: Record<string, ContentModule> = {
   about: {
     fields: [
       { key: "pageTitle", label: "Page heading", maxLength: 80 },
-      { key: "storyHeading", label: "Heading", maxLength: 80 },
+      { key: "storyHeading", label: "Heading 1", maxLength: 80 },
       {
         key: "storyCopy",
-        label: "Body copy",
+        label: "Body copy 1",
         maxLength: 1200,
         multiline: true,
       },
-      { key: "batchHeading", label: "Heading", maxLength: 80 },
-      { key: "batchCopy", label: "Body copy", maxLength: 800, multiline: true },
+      { key: "batchHeading", label: "Heading 2", maxLength: 80 },
+      { key: "batchCopy", label: "Body copy 2", maxLength: 800, multiline: true },
     ],
     defaults: {
       fields: {
@@ -189,42 +192,48 @@ const contentModules: Record<string, ContentModule> = {
       {
         key: "pickupCopy",
         label: "Section 1 body copy",
-        maxLength: 1000,
+        maxLength: policyBodyMaxChars,
+        body: true,
         multiline: true,
       },
       { key: "deadlineHeading", label: "Section 2 heading", maxLength: 80 },
       {
         key: "deadlineCopy",
         label: "Section 2 body copy",
-        maxLength: 700,
+        maxLength: policyBodyMaxChars,
+        body: true,
         multiline: true,
       },
       { key: "paymentHeading", label: "Section 3 heading", maxLength: 80 },
       {
         key: "paymentCopy",
         label: "Section 3 body copy",
-        maxLength: 700,
+        maxLength: policyBodyMaxChars,
+        body: true,
         multiline: true,
       },
       { key: "cancellationHeading", label: "Section 4 heading", maxLength: 80 },
       {
         key: "cancellationCopy",
         label: "Section 4 body copy",
-        maxLength: 1000,
+        maxLength: policyBodyMaxChars,
+        body: true,
         multiline: true,
       },
       { key: "allergenHeading", label: "Section 5 heading", maxLength: 80 },
       {
         key: "allergenCopy",
         label: "Section 5 body copy",
-        maxLength: 700,
+        maxLength: policyBodyMaxChars,
+        body: true,
         multiline: true,
       },
       { key: "enquiryHeading", label: "Section 6 heading", maxLength: 80 },
       {
         key: "enquiryCopy",
         label: "Section 6 body copy",
-        maxLength: 700,
+        maxLength: policyBodyMaxChars,
+        body: true,
         multiline: true,
       },
     ],
@@ -383,6 +392,7 @@ function firstSaturdayOfNextMonth() {
 
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [data, setData] = useState<Data | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState("");
@@ -941,13 +951,16 @@ export default function AdminDashboard() {
           <textarea
             id={id}
             rows={field.rows ?? 5}
-            className={field.rows ? "admin-textarea-compact" : undefined}
+            className={field.rows ? "admin-textarea-compact" : field.body ? "admin-textarea-body" : undefined}
             maxLength={field.maxLength}
             value={value}
             onChange={(event) =>
               setContent({
                 ...content,
-                fields: { ...content.fields, [field.key]: event.target.value },
+                fields: {
+                  ...content.fields,
+                  [field.key]: event.target.value,
+                },
               })
             }
           />
@@ -965,7 +978,7 @@ export default function AdminDashboard() {
           />
         )}
         <small className="admin-editor-count">
-          {value.length} / {field.maxLength}
+          {`${value.length} / ${field.maxLength}`}
         </small>
       </div>
     );
@@ -1016,8 +1029,13 @@ export default function AdminDashboard() {
     if (!contentModule) return;
     if (
       contentModule.fields.some(
-        (field) => (content.fields[field.key] || "").length > field.maxLength,
-      )
+        (field) =>
+          (content.fields[field.key] || "").length > field.maxLength,
+      ) ||
+      (tab === "policy" &&
+        (content.sections || []).some(
+          (section) => section.body.length > policyBodyMaxChars,
+        ))
     ) {
       setContentStatus("Shorten the highlighted field before saving");
       return;
@@ -1057,12 +1075,35 @@ export default function AdminDashboard() {
         <div className="admin-auth-row">
           <div className={`field${error ? " has-error" : ""}`}>
             <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <div className="admin-password-wrap">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <button
+                type="button"
+                className="admin-password-toggle"
+                onClick={() => setShowPassword((shown) => !shown)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 3l18 18" />
+                    <path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.1 3.9M6.6 6.6C3.9 8.4 2.5 12 2.5 12S6 19 12 19a9.6 9.6 0 0 0 5.4-1.6" />
+                    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
           <button className="btn btn-dark">Sign in</button>
         </div>
@@ -1841,34 +1882,11 @@ export default function AdminDashboard() {
               <div className="admin-modal-body" key={pickupFormKey}>
               <div className={`field${pickupFieldErrors.date ? " has-error" : ""}`}>
                 <label htmlFor="new-pickup-date">Pickup date</label>
-                <div className="time-picker">
-                  <input
-                    id="new-pickup-date"
-                    type="date"
-                    value={newPickupDate}
-                    onChange={(event) => setNewPickupDate(event.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="time-picker-trigger"
-                    aria-label="Choose pickup date"
-                    onClick={(event) => {
-                      const input = event.currentTarget
-                        .previousElementSibling as HTMLInputElement | null;
-                      input?.focus();
-                      try {
-                        input?.showPicker?.();
-                      } catch {
-                        // showPicker can throw outside a trusted user gesture; focus is the fallback.
-                      }
-                    }}
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <rect x="4" y="5" width="16" height="15" rx="2" />
-                      <path d="M4 10h16M8 3v4M16 3v4" />
-                    </svg>
-                  </button>
-                </div>
+                <DatePicker
+                  id="new-pickup-date"
+                  value={newPickupDate}
+                  onChange={setNewPickupDate}
+                />
                 {pickupFieldErrors.date && (
                   <p className="field-error" role="alert">{pickupFieldErrors.date}</p>
                 )}
@@ -2002,19 +2020,28 @@ export default function AdminDashboard() {
           </>
         )}
         {tab === "email templates" && !emailTemplateKey && (
-          <div className="admin-template-grid">
-            {emailTemplates.map((template) => (
-              <article className="admin-template-card" key={template.key}>
-                <div>
-                  <h2>{template.name}</h2>
-                  <p>{template.description}</p>
-                </div>
-                <button className="btn btn-light" type="button" onClick={() => editEmailTemplate(template)}>
-                  Edit template
-                </button>
-              </article>
-            ))}
-          </div>
+          <table className="table admin-pickup-table admin-template-table">
+            <thead>
+              <tr>
+                <th>Template</th>
+                <th>
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {emailTemplates.map((template) => (
+                <tr key={template.key}>
+                  <td>{template.name}</td>
+                  <td className="admin-table-action">
+                    <button className="text-button" type="button" onClick={() => editEmailTemplate(template)}>
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
         {tab === "email templates" && emailTemplateKey && (() => {
           const template = emailTemplates.find((item) => item.key === emailTemplateKey);
@@ -2275,7 +2302,8 @@ export default function AdminDashboard() {
                         <textarea
                           id={`policy-section-body-${index}`}
                           rows={5}
-                          maxLength={1000}
+                          className="admin-textarea-body"
+                          maxLength={policyBodyMaxChars}
                           value={section.body}
                           onChange={(event) =>
                             setContent({
@@ -2293,7 +2321,7 @@ export default function AdminDashboard() {
                           }
                         />
                         <small className="admin-editor-count">
-                          {section.body.length} / 1000
+                          {section.body.length} / {policyBodyMaxChars}
                         </small>
                       </div>
                     </div>

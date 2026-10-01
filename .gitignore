@@ -43,6 +43,10 @@ next-env.d.ts
 .local/
 public/uploads/
 
+
+.impeccable/
+.playwright-mcp/
+
 .projects/cache
 .projects/vault
 .projects/state.test.json
@@ -50,6 +54,3 @@ public/uploads/
 .env
 .env.*
 !.env.example
-
-.impeccable/
-.playwright-mcp/
