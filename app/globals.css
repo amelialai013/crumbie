@@ -855,6 +855,9 @@ input::-webkit-caps-lock-indicator {
   margin-top: 36px;
   color: var(--muted);
 }
+.admin-editor-actions .admin-editor-actions-end {
+  margin-left: auto;
+}
 .admin-policy-sections {
   display: none;
   position: fixed;
@@ -1362,6 +1365,12 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   border: 1px solid rgba(201, 173, 148, .35);
   background: #1b150f;
 }
+.admin-generate-button {
+  display: flex;
+  justify-self: end;
+  width: fit-content;
+  margin-left: auto;
+}
 .admin-image-generator legend {
   padding: 0 6px;
   color: #f7f7f5;
@@ -1810,7 +1819,17 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
     padding-right: 0;
   }
 }
-.admin-product-table .admin-table-action .text-button + .text-button {
+.admin-enquiries-table .admin-table-action { white-space: nowrap; }
+.admin-table-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+.admin-enquiries-table .admin-table-action .admin-table-action-group .text-button + .text-button {
+  margin-left: 0;
+}
+.admin-product-table .admin-table-action .text-button + .text-button,
+.admin-enquiries-table .admin-table-action .text-button + .text-button {
   margin-left: 16px;
 }
 .sr-only {
@@ -4353,8 +4372,18 @@ textarea { resize: none; }
 }
 .admin-toast .admin-toast-view {
   width: auto;
-  padding: 0 14px;
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 0;
+  background: none;
   font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.admin-toast .admin-toast-view:hover {
+  background: none;
+  opacity: .75;
 }
 .admin-nav button {
   position: relative;
@@ -4386,4 +4415,25 @@ textarea { resize: none; }
   height: 9px;
   border-radius: 50%;
   background: #c9ad94;
+}
+
+.admin-enquiry-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.admin-status-dot.is-new {
+  background: #e5484d;
+}
+.admin-status-dot.is-pending {
+  background: #f5c542;
+}
+.admin-status-dot.is-replied {
+  background: #46a758;
 }

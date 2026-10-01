@@ -51,9 +51,44 @@ type Enquiry = {
   enquiryType?: string;
   createdAt?: string;
   repliedAt?: string;
+  readAt?: string;
   replies?: Array<{ subject: string; message: string; sentAt: string }>;
 };
-const SEEN_ENQUIRIES_KEY = "crumbie-admin-seen-enquiries";
+const DISMISSED_ENQUIRY_ALERTS_KEY = "crumbie-dismissed-enquiry-alerts";
+
+function readDismissedEnquiryIds(): Set<string> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = JSON.parse(localStorage.getItem(DISMISSED_ENQUIRY_ALERTS_KEY) || "[]");
+    return new Set(Array.isArray(stored) ? stored : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function isUnreplied(enquiry: Enquiry) {
+  return Boolean(enquiry.id) && enquiry.status !== "replied";
+}
+
+function isUnread(enquiry: Enquiry) {
+  return isUnreplied(enquiry) && !enquiry.readAt;
+}
+
+function enquiryDisplayStatus(enquiry: Enquiry) {
+  if (enquiry.status === "replied") return { key: "replied", label: "Replied" };
+  if (!enquiry.readAt) return { key: "new", label: "New" };
+  return { key: "pending", label: "Pending" };
+}
+
+function EnquiryStatus({ enquiry }: { enquiry: Enquiry }) {
+  const { key, label } = enquiryDisplayStatus(enquiry);
+  return (
+    <span className="status admin-enquiry-status">
+      <span className={`admin-status-dot is-${key}`} aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
 const DEFAULT_REPLY_SUBJECT = "Re: your Club Crumbie enquiry";
 type PolicySection = { heading: string; body: string };
 type Content = {
@@ -428,9 +463,8 @@ export default function AdminDashboard() {
     Record<string, string>
   >({});
   const [adminNotice, setAdminNotice] = useState("");
-  const [unreadEnquiryIds, setUnreadEnquiryIds] = useState<string[]>([]);
-  const [newEnquiryAlert, setNewEnquiryAlert] = useState<{ enquiry: Enquiry; count: number } | null>(null);
-  const notifiedEnquiryIds = useRef(new Set<string>());
+  const [dismissedEnquiryIds, setDismissedEnquiryIds] = useState<Set<string> | null>(readDismissedEnquiryIds);
+  const knownEnquiryIds = useRef<Set<string> | null>(null);
   const tabRef = useRef(tab);
   const [adminNoticeLeaving, setAdminNoticeLeaving] = useState(false);
   const [adminBusyMessage, setAdminBusyMessage] = useState("");
@@ -446,6 +480,7 @@ export default function AdminDashboard() {
   const [replyMessage, setReplyMessage] = useState("");
   const [replyError, setReplyError] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [updatingEnquiryId, setUpdatingEnquiryId] = useState<string | null>(null);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
   const [productsLoaded, setProductsLoaded] = useState(false);
@@ -481,43 +516,15 @@ export default function AdminDashboard() {
     setSavedContent(JSON.stringify(next));
   }
 
-  function readSeenEnquiries(): string[] | null {
-    const stored = window.localStorage.getItem(SEEN_ENQUIRIES_KEY);
-    if (stored === null) return null;
-    try {
-      return JSON.parse(stored) as string[];
-    } catch {
-      return [];
-    }
-  }
-
-  function markEnquiriesSeen(ids: string[]) {
-    const seen = readSeenEnquiries() ?? [];
-    window.localStorage.setItem(SEEN_ENQUIRIES_KEY, JSON.stringify(Array.from(new Set([...seen, ...ids]))));
-    setUnreadEnquiryIds([]);
-  }
-
   function receiveDashboard(next: Data) {
     setData(next);
     const enquiries = ((next as { enquiries?: Enquiry[] }).enquiries ?? []).filter((enquiry) => enquiry.id);
-    const ids = enquiries.map((enquiry) => enquiry.id as string);
-    const seen = readSeenEnquiries();
-    if (seen === null) {
-      window.localStorage.setItem(SEEN_ENQUIRIES_KEY, JSON.stringify(ids));
-      return;
-    }
-    const unread = ids.filter((id) => !seen.includes(id));
-    if (tabRef.current === "enquiries" && !document.hidden) {
-      markEnquiriesSeen(ids);
-      unread.forEach((id) => notifiedEnquiryIds.current.add(id));
-      return;
-    }
-    setUnreadEnquiryIds(unread);
-    const fresh = unread.filter((id) => !notifiedEnquiryIds.current.has(id));
+    const known = knownEnquiryIds.current;
+    knownEnquiryIds.current = new Set([...(known ?? []), ...enquiries.map((enquiry) => enquiry.id as string)]);
+    if (!known) return;
+    const fresh = enquiries.filter((enquiry) => !known.has(enquiry.id as string));
     if (!fresh.length) return;
-    fresh.forEach((id) => notifiedEnquiryIds.current.add(id));
-    const latest = enquiries.find((enquiry) => enquiry.id === fresh[0])!;
-    setNewEnquiryAlert({ enquiry: latest, count: unread.length });
+    const latest = fresh[0];
     if (document.hidden && "Notification" in window && Notification.permission === "granted") {
       try {
         new Notification("New Club Crumbie enquiry", {
@@ -575,7 +582,7 @@ export default function AdminDashboard() {
     }
 
     void loadAdminResources();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const hasDashboard = data !== null;
@@ -600,13 +607,28 @@ export default function AdminDashboard() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", pollOnFocus);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [hasDashboard]);
+
+  const unreadEnquiries = ((data?.enquiries ?? []) as Enquiry[]).filter(isUnread);
+  const unreadCount = unreadEnquiries.length;
+  const alertEnquiries = dismissedEnquiryIds
+    ? unreadEnquiries.filter((enquiry) => enquiry.id && !dismissedEnquiryIds.has(enquiry.id))
+    : [];
+
+  function dismissEnquiryAlert() {
+    const next = new Set(dismissedEnquiryIds ?? []);
+    alertEnquiries.forEach((enquiry) => next.add(enquiry.id as string));
+    setDismissedEnquiryIds(next);
+    try {
+      localStorage.setItem(DISMISSED_ENQUIRY_ALERTS_KEY, JSON.stringify([...next]));
+    } catch {}
+  }
 
   useEffect(() => {
     const base = document.title.replace(/^\(\d+\) /, "");
-    document.title = unreadEnquiryIds.length ? `(${unreadEnquiryIds.length}) ${base}` : base;
-  }, [unreadEnquiryIds.length]);
+    document.title = unreadCount ? `(${unreadCount}) ${base}` : base;
+  }, [unreadCount]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -715,6 +737,61 @@ export default function AdminDashboard() {
     );
     setReplyingEnquiry(null);
     finishAdminAction(`Reply sent to ${updated.email}`);
+  }
+
+  function replaceEnquiry(updated: Enquiry) {
+    setData((current) =>
+      current
+        ? {
+            ...current,
+            enquiries: (current.enquiries as Enquiry[]).map((item) =>
+              item.id === updated.id ? updated : item,
+            ),
+          }
+        : current,
+    );
+  }
+
+  function openEnquiry(enquiry: Enquiry) {
+    if (!enquiry.id) return;
+    setViewingEnquiryId(enquiry.id);
+    if (enquiry.readAt) return;
+    replaceEnquiry({ ...enquiry, readAt: new Date().toISOString() });
+    void fetch("/api/admin/enquiries/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: enquiry.id }),
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((updated: Enquiry | null) => updated && replaceEnquiry(updated))
+      .catch(() => {});
+  }
+
+  async function setEnquiryStatus(enquiry: Enquiry, status: "replied" | "pending") {
+    if (!enquiry.id || updatingEnquiryId) return;
+    setUpdatingEnquiryId(enquiry.id);
+    const response = await fetch("/api/admin/enquiries/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: enquiry.id, status }),
+    }).catch(() => null);
+    setUpdatingEnquiryId(null);
+    if (!response?.ok) {
+      finishAdminAction("Unable to update enquiry. Please try again.");
+      return;
+    }
+    const updated = (await response.json()) as Enquiry;
+    setData((current) =>
+      current
+        ? {
+            ...current,
+            enquiries: (current.enquiries as Enquiry[]).map((item) =>
+              item.id === updated.id ? updated : item,
+            ),
+          }
+        : current,
+    );
+    finishAdminAction(status === "replied" ? "Marked as replied" : "Marked as pending");
   }
 
   useEffect(() => {
@@ -1173,10 +1250,6 @@ export default function AdminDashboard() {
   async function selectTab(nextTab: string) {
     setTab(nextTab);
     tabRef.current = nextTab;
-    if (nextTab === "enquiries") {
-      setNewEnquiryAlert(null);
-      markEnquiriesSeen(unreadEnquiryIds);
-    }
     setMenuOpen(false);
     setEmailTemplateKey(null);
     setViewingEnquiryId(null);
@@ -1321,6 +1394,7 @@ export default function AdminDashboard() {
 
   const orders = data.orders as Order[];
   const enquiries = data.enquiries as Enquiry[];
+  const showEnquiryAlert = alertEnquiries.length > 0;
   const pickupDates = Array.from(
     new Set(
       orders.flatMap(
@@ -1341,7 +1415,7 @@ export default function AdminDashboard() {
         <span className="admin-menu-toggle-copy">
           <span>Section</span>
         </span>
-        {unreadEnquiryIds.length > 0 && <span className="admin-menu-toggle-dot" aria-label="New enquiries" />}
+        {unreadCount > 0 && <span className="admin-menu-toggle-dot" aria-label="Unread enquiries" />}
         <span className="admin-menu-toggle-icon" aria-hidden="true">
           +
         </span>
@@ -1373,9 +1447,9 @@ export default function AdminDashboard() {
             onClick={() => void selectTab(item)}
           >
             {item}
-            {item === "enquiries" && unreadEnquiryIds.length > 0 && (
-              <span className="admin-nav-badge" aria-label={`${unreadEnquiryIds.length} new`}>
-                {unreadEnquiryIds.length}
+            {item === "enquiries" && unreadCount > 0 && (
+              <span className="admin-nav-badge" aria-label={`${unreadCount} unread`}>
+                {unreadCount}
               </span>
             )}
           </button>
@@ -1389,27 +1463,25 @@ export default function AdminDashboard() {
         </button>
       </aside>
       <section>
-        {newEnquiryAlert && (
+        {showEnquiryAlert && (
           <div className="admin-toast admin-toast-enquiry" role="status" aria-live="polite">
             <span>
-              {newEnquiryAlert.count > 1
-                ? `${newEnquiryAlert.count} new enquiries`
-                : `New enquiry from ${newEnquiryAlert.enquiry.name || "a customer"}`}
+              {alertEnquiries.length} unread {alertEnquiries.length === 1 ? "enquiry" : "enquiries"}
             </span>
             <span className="admin-toast-actions">
               <button
                 className="admin-toast-view"
                 type="button"
                 onClick={() => {
-                  const id = newEnquiryAlert.count === 1 ? newEnquiryAlert.enquiry.id : undefined;
+                  const target = alertEnquiries.length === 1 ? alertEnquiries[0] : undefined;
                   void selectTab("enquiries").then(() => {
-                    if (id) setViewingEnquiryId(id);
+                    if (target) openEnquiry(target);
                   });
                 }}
               >
                 View
               </button>
-              <button aria-label="Dismiss notification" type="button" onClick={() => setNewEnquiryAlert(null)}>
+              <button aria-label="Dismiss notification" type="button" onClick={dismissEnquiryAlert}>
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                   <path d="m5 5 10 10M15 5 5 15" />
                 </svg>
@@ -1417,7 +1489,7 @@ export default function AdminDashboard() {
             </span>
           </div>
         )}
-        {!adminBusyMessage && adminNotice && !newEnquiryAlert && (
+        {!adminBusyMessage && adminNotice && !showEnquiryAlert && (
           <div
             className={`admin-toast${adminNoticeLeaving ? " admin-toast-leaving" : ""}`}
             role="status"
@@ -1762,21 +1834,29 @@ export default function AdminDashboard() {
                       ) : null}
                     </td>
                     <td data-label="Status">
-                      <span className="status">
-                        {enquiry.status
-                          ? enquiry.status.charAt(0).toUpperCase() + enquiry.status.slice(1)
-                          : "Pending"}
-                      </span>
+                      <EnquiryStatus enquiry={enquiry} />
                     </td>
                     <td className="admin-table-action">
+                      <div className="admin-table-action-group">
                       <button
                         className="text-button"
                         type="button"
-                        onClick={() => enquiry.id && setViewingEnquiryId(enquiry.id)}
+                        onClick={() =>
+                          setEnquiryStatus(enquiry, isUnreplied(enquiry) ? "replied" : "pending")
+                        }
+                        disabled={!enquiry.id || updatingEnquiryId === enquiry.id}
+                      >
+                        {isUnreplied(enquiry) ? "Mark as replied" : "Mark as pending"}
+                      </button>
+                      <button
+                        className="text-button"
+                        type="button"
+                        onClick={() => openEnquiry(enquiry)}
                         disabled={!enquiry.id}
                       >
                         View
                       </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -1806,9 +1886,6 @@ export default function AdminDashboard() {
               </div>
             );
           }
-          const status = enquiry.status
-            ? enquiry.status.charAt(0).toUpperCase() + enquiry.status.slice(1)
-            : "Pending";
           return (
             <div className="admin-enquiry-detail">
               <div className="admin-template-editor-heading">
@@ -1830,7 +1907,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <dt>Status</dt>
-                  <dd><span className="status">{status}</span></dd>
+                  <dd><EnquiryStatus enquiry={enquiry} /></dd>
                 </div>
               </dl>
               <ol className="admin-enquiry-thread">
@@ -1860,6 +1937,16 @@ export default function AdminDashboard() {
                   disabled={!enquiry.email}
                 >
                   Reply
+                </button>
+                <button
+                  className="text-button admin-editor-actions-end"
+                  type="button"
+                  onClick={() =>
+                    setEnquiryStatus(enquiry, isUnreplied(enquiry) ? "replied" : "pending")
+                  }
+                  disabled={updatingEnquiryId === enquiry.id}
+                >
+                  {isUnreplied(enquiry) ? "Mark as replied" : "Mark as pending"}
                 </button>
               </div>
             </div>
@@ -1995,7 +2082,7 @@ export default function AdminDashboard() {
                   />
                   <button
                     type="button"
-                    className="btn btn-light"
+                    className="btn btn-light admin-generate-button"
                     onClick={generateProductDescription}
                     disabled={descriptionStatus.startsWith("Generating")}
                   >
@@ -2132,7 +2219,7 @@ export default function AdminDashboard() {
                     placeholder="For example: show a broken edge and generous chocolate chunks."
                   />
                   <button
-                    className="btn btn-outline"
+                    className="btn btn-light admin-generate-button"
                     type="button"
                     disabled={generationStatus.startsWith("Generating")}
                     onClick={generateProductImage}
