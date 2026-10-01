@@ -17,7 +17,7 @@ export default async function Crumbs() {
       </section>
       <section className="section section-warm cookie-catalog crumbs-catalog">
         <div className="shell">
-          <div className="product-grid">
+          <div className={`product-grid product-grid-${Math.min(4, products.length)}`}>
             {products.map((product) => (
               <Link className="product-card" href={`/crumbs/${product.slug}`} key={product.id}>
                 <div className="relative product-card-render">

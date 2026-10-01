@@ -66,7 +66,7 @@ export default async function Home() {
           <div className="split-heading">
             <div><h2>Crumbs for<br />every craving</h2></div>
           </div>
-          <div className="product-grid">
+          <div className={`product-grid product-grid-${Math.min(4, products.length)}`}>
             {products.map((product) => (
               <Link className="product-card" href={`/crumbs/${product.slug}`} key={product.id}>
                 <div className="relative product-card-render">
