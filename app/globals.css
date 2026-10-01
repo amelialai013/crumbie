@@ -705,6 +705,12 @@ input::-webkit-caps-lock-indicator {
   margin: 0;
   color: var(--muted);
 }
+.admin-enquiry-detail .admin-template-editor-heading {
+  margin-bottom: -8px;
+}
+.admin-enquiry-detail .admin-template-editor-heading h2 {
+  margin-bottom: 0;
+}
 .admin-editor {
   width: 100%;
   padding: 0;
@@ -1835,6 +1841,15 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   }
 }
 .admin-enquiries-table .admin-table-action { white-space: nowrap; }
+.admin-row-clickable {
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease);
+}
+.admin-row-clickable:hover,
+.admin-row-clickable:focus-visible {
+  background: rgba(201, 173, 148, .06);
+  outline: none;
+}
 .admin-kebab {
   position: relative;
   display: inline-flex;
@@ -4521,4 +4536,44 @@ textarea { resize: none; }
 }
 .admin-status-dot.is-replied {
   background: #46a758;
+}
+.admin-enquiry-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.admin-enquiry-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.admin-enquiry-filter > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.admin-enquiry-filter .premium-select {
+  min-width: 160px;
+}
+.admin-enquiry-filter .premium-select-trigger {
+  min-height: 44px;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  font-size: .95rem;
+}
+.admin-enquiry-filter .premium-select-menu li {
+  min-height: 44px;
+  padding: 10px 12px;
+}
+.admin-enquiry-filter .premium-select-menu {
+  right: auto;
+  width: max-content;
+  min-width: 100%;
 }
