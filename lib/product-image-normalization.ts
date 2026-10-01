@@ -4,7 +4,7 @@ import sharp from "sharp";
  * Covers share a 3:2 canvas with 5% safe margins; rotation frames stay square.
  */
 export async function normalizeProductImage(bytes: Uint8Array, view: "cover" | "rotation") {
-  const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(bytes).toColourspace("srgb").ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   let left = info.width, top = info.height, right = -1, bottom = -1;
   for (let y = 0; y < info.height; y++) {
     for (let x = 0; x < info.width; x++) {

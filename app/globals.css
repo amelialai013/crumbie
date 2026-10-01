@@ -134,15 +134,16 @@
 .admin-auth-loading p {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
   margin: 0;
   color: #b5b3b0;
-  font-size: .95rem;
+  font-size: 1.35rem;
 }
 .admin-auth-spinner {
-  width: 16px;
-  height: 16px;
-  border: 1px solid rgba(201, 173, 148, .25);
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid rgba(201, 173, 148, .25);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: admin-auth-spin .9s linear infinite;

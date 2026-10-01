@@ -13,7 +13,10 @@ const usesPickupAddress = (field: string) => field === "confirmationBody" || fie
 import {
   defaultProductAllergens,
   defaultProductIngredients,
+  GENERATED_IMAGE_COUNTS,
   isDateClosed,
+  RECOMMENDED_IMAGE_COUNT,
+  ROTATION_FRAME_PLANS,
   pickupDates as catalogPickupDates,
   productSlugFromName,
   products,
@@ -447,7 +450,7 @@ export default function AdminDashboard() {
   const [referenceImageFiles, setReferenceImageFiles] = useState<File[]>([]);
   const [referenceDropActive, setReferenceDropActive] = useState(false);
   const [imageDirection, setImageDirection] = useState("");
-  const [generatedImageCount, setGeneratedImageCount] = useState(9);
+  const [generatedImageCount, setGeneratedImageCount] = useState<number>(RECOMMENDED_IMAGE_COUNT);
   const [generationStatus, setGenerationStatus] = useState("");
   const [descriptionStatus, setDescriptionStatus] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -914,13 +917,15 @@ export default function AdminDashboard() {
     try {
       // Request frames individually so a complete rotation can exceed one
       // hosting request's duration without losing the generation job.
-      for (let frameIndex = 0; frameIndex < generatedImageCount; frameIndex++) {
-        setGenerationStatus(`Generating image ${frameIndex + 1} of ${generatedImageCount} with OpenAI...`);
+      const framePlan = ROTATION_FRAME_PLANS[generatedImageCount] ?? ROTATION_FRAME_PLANS[RECOMMENDED_IMAGE_COUNT];
+      for (const [step, frameIndex] of framePlan.entries()) {
+        setGenerationStatus(`Generating image ${step + 1} of ${framePlan.length} with OpenAI...`);
         const formData = new FormData();
         formData.set("name", newProduct.name.trim());
         formData.set("direction", imageDirection.trim());
         formData.set("count", "1");
         formData.set("frameIndex", String(frameIndex));
+        formData.set("previousImages", JSON.stringify(images));
         referenceImageFiles.forEach((file) => formData.append("references", file));
         const response = await fetch("/api/admin/product-images/generate", { method: "POST", body: formData });
         const result = await response.json().catch(() => null);
@@ -928,7 +933,8 @@ export default function AdminDashboard() {
         images.push(...result.images);
       }
       setProductImages(images);
-      setGenerationStatus(`${images.length} transparent PNGs generated. Side profile cover and eight rotation angles, opening bird’s-eye. Save the product to publish.`);
+      const angles = images.length - 1;
+      setGenerationStatus(`${images.length} transparent PNG${images.length === 1 ? "" : "s"} generated. Side-profile cover${angles ? ` and ${angles} rotation angle${angles === 1 ? "" : "s"}, opening bird’s-eye` : ""}. Save the product to publish.`);
     } catch (error) {
       setGenerationStatus(error instanceof Error ? error.message : "Unable to generate images.");
     }
@@ -1680,7 +1686,7 @@ export default function AdminDashboard() {
                     Add up to five reference photos and generate the complete
                     storefront image set. OpenAI automatically creates a
                     side-profile image, like the Signature Crumbie, as the
-                    storefront cover; a bird’s-eye opening view and seven more angles become the
+                    storefront cover; any additional images, opening bird’s-eye, become the
                     rotatable product-page view. Generating a new set replaces
                     the current product imagery.
                   </p>
@@ -1743,11 +1749,11 @@ export default function AdminDashboard() {
                   <PremiumSelect
                     labelId="product-image-count-label"
                     value={String(generatedImageCount)}
-                    options={[9].map((count) => ({
+                    options={GENERATED_IMAGE_COUNTS.map((count) => ({
                       value: String(count),
-                      label: `${count} image${count === 1 ? "" : "s"}${count === 9 ? " (recommended)" : ""}`,
+                      label: `${count} image${count === 1 ? "" : "s"}${count === RECOMMENDED_IMAGE_COUNT ? " (full 360° rotation)" : ""}`,
                     }))}
-                    placeholder="9 images (cover + full rotation)"
+                    placeholder={`${RECOMMENDED_IMAGE_COUNT} images (recommended)`}
                     onChange={(value) => setGeneratedImageCount(Number(value))}
                   />
                   <label htmlFor="product-image-direction">

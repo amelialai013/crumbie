@@ -25,6 +25,18 @@ export function isDateClosed(date: PickupDate) {
 export const PRODUCT_SIDE_PROFILE_INDEX = 0;
 export const PRODUCT_BIRDS_EYE_INDEX = 1;
 export const PRODUCT_IMAGE_COUNT = 9; // one cover plus eight rotation angles
+export const GENERATED_IMAGE_COUNTS = [1, 2, 3, 4, 5, 9] as const;
+export const RECOMMENDED_IMAGE_COUNT = 9;
+// rotationViews indexes per image count: cover first, then evenly spaced
+// orbit angles so the product-page rotation stays coherent.
+export const ROTATION_FRAME_PLANS: Record<number, readonly number[]> = {
+  1: [0],
+  2: [0, 1],
+  3: [0, 1, 5],
+  4: [0, 1, 3, 5],
+  5: [0, 1, 3, 5, 7],
+  9: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+};
 export function productSideProfile(product: Product) {
   return product.imageMode === "gallery" ? product.images[PRODUCT_SIDE_PROFILE_INDEX] : undefined;
 }
