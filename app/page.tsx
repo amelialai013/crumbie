@@ -16,8 +16,8 @@ export default async function Home() {
         <HeroMedia />
         <div className="hero-content">
           <h1 className="hero-logo-heading">
-            <Image className="hero-logo hero-logo-desktop" src={whiteLogo} alt="Club Crumbie" priority quality={100} sizes="640px" />
-            <Image className="hero-logo hero-logo-mobile" src={whiteVerticalLogo} alt="Club Crumbie" priority unoptimized />
+            <Image className="hero-logo hero-logo-desktop" src={whiteLogo} alt="Club Crumbie" preload quality={100} sizes="640px" />
+            <Image className="hero-logo hero-logo-mobile" src={whiteVerticalLogo} alt="Club Crumbie" preload unoptimized />
           </h1>
           <div className="actions">
             <Link className="btn btn-dark btn-arrow" href="/crumbs">
@@ -71,6 +71,7 @@ export default async function Home() {
               <Link className="product-card" href={`/crumbs/${product.slug}`} key={product.id}>
                 <div className="relative product-card-render">
                   <ProductCookieImage
+                    eager
                     image={productSideProfile(product)}
                     name={product.name}
                     variant={product.id === "product-seasonal" ? "biscoff" : "signature"}

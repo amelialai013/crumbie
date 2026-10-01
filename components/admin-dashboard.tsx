@@ -7,7 +7,7 @@ import { DatePicker } from "./date-picker";
 import PremiumSelect from "./premium-select";
 import { formatPickupDate } from "@/lib/format-date";
 import { policyBodyMaxChars } from "@/lib/text-limits";
-import { defaultEnquiryTypes, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
+import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
 import {
@@ -48,7 +48,12 @@ type Enquiry = {
   phone?: string;
   request?: string;
   status?: string;
+  enquiryType?: string;
+  createdAt?: string;
+  repliedAt?: string;
+  replies?: Array<{ subject: string; message: string; sentAt: string }>;
 };
+const DEFAULT_REPLY_SUBJECT = "Re: your Club Crumbie enquiry";
 type PolicySection = { heading: string; body: string };
 type Content = {
   fields: Record<string, string>;
@@ -431,6 +436,11 @@ export default function AdminDashboard() {
     orderCount: number;
   } | null>(null);
   const [removingPickupDateId, setRemovingPickupDateId] = useState("");
+  const [replyingEnquiry, setReplyingEnquiry] = useState<Enquiry | null>(null);
+  const [replySubject, setReplySubject] = useState(DEFAULT_REPLY_SUBJECT);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replyError, setReplyError] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
   const [productsLoaded, setProductsLoaded] = useState(false);
@@ -455,6 +465,7 @@ export default function AdminDashboard() {
   const [descriptionStatus, setDescriptionStatus] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [emailTemplateKey, setEmailTemplateKey] = useState<string | null>(null);
+  const [viewingEnquiryId, setViewingEnquiryId] = useState<string | null>(null);
   const [savedProduct, setSavedProduct] = useState<string | null>(null);
   const contentChanged = JSON.stringify(content) !== savedContent;
   const productChanged =
@@ -568,6 +579,69 @@ export default function AdminDashboard() {
     setAdminNotice(successMessage);
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
+
+  function openEnquiryReply(enquiry: Enquiry) {
+    setReplyingEnquiry(enquiry);
+    setReplySubject(DEFAULT_REPLY_SUBJECT);
+    setReplyMessage(`Hi ${enquiry.name?.split(" ")[0] || "there"},\n\n\n\nThanks,\nClub Crumbie`);
+    setReplyError("");
+  }
+
+  function closeEnquiryReply() {
+    if (sendingReply) return;
+    setReplyingEnquiry(null);
+    setReplyError("");
+  }
+
+  async function sendEnquiryReply(event: React.FormEvent) {
+    event.preventDefault();
+    if (!replyingEnquiry?.id) return;
+    if (!replySubject.trim() || !replyMessage.trim()) {
+      setReplyError("Add a subject and message.");
+      return;
+    }
+    setSendingReply(true);
+    setReplyError("");
+    const response = await fetch("/api/admin/enquiries/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: replyingEnquiry.id,
+        subject: replySubject,
+        message: replyMessage,
+      }),
+    }).catch(() => null);
+    setSendingReply(false);
+    if (!response?.ok) {
+      setReplyError(
+        (await response?.json().catch(() => null))?.error ||
+          "Unable to send reply. Please try again.",
+      );
+      return;
+    }
+    const updated = (await response.json()) as Enquiry;
+    setData((current) =>
+      current
+        ? {
+            ...current,
+            enquiries: (current.enquiries as Enquiry[]).map((enquiry) =>
+              enquiry.id === updated.id ? updated : enquiry,
+            ),
+          }
+        : current,
+    );
+    setReplyingEnquiry(null);
+    finishAdminAction(`Reply sent to ${updated.email}`);
+  }
+
+  useEffect(() => {
+    if (!replyingEnquiry) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !sendingReply) setReplyingEnquiry(null);
+    }
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [replyingEnquiry, sendingReply]);
 
   useEffect(() => {
     if (!pickupDatePendingRemoval && !blockedPickupDateRemoval) return;
@@ -958,7 +1032,7 @@ export default function AdminDashboard() {
       return;
     }
     setNewProduct({ ...newProduct, description: result.description });
-    setDescriptionStatus("Description generated. Feel free to edit it before saving.");
+    setDescriptionStatus("");
   }
 
   const optionalPolicySections = [
@@ -1016,6 +1090,7 @@ export default function AdminDashboard() {
     setTab(nextTab);
     setMenuOpen(false);
     setEmailTemplateKey(null);
+    setViewingEnquiryId(null);
     setContentStatus("");
     if (contentModules[nextTab]) {
       const response = await fetch(
@@ -1238,6 +1313,76 @@ export default function AdminDashboard() {
                 <path d="m5 5 10 10M15 5 5 15" />
               </svg>
             </button>
+          </div>
+        )}
+        {replyingEnquiry && (
+          <div
+            className="admin-confirm-overlay"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) closeEnquiryReply();
+            }}
+          >
+            <form
+              aria-labelledby="enquiry-reply-title"
+              aria-modal="true"
+              className="admin-confirm-modal admin-reply-modal"
+              role="dialog"
+              onSubmit={sendEnquiryReply}
+              noValidate
+            >
+              <h2 id="enquiry-reply-title">Reply to {replyingEnquiry.name || "customer"}</h2>
+              <p>
+                Sending to <strong>{replyingEnquiry.email}</strong>
+              </p>
+              {config && !config.resend && (
+                <p className="admin-reply-error" role="alert">
+                  Email sending is not configured. Add Resend to send replies.
+                </p>
+              )}
+              <label className="field">
+                <span>Subject</span>
+                <input
+                  value={replySubject}
+                  maxLength={200}
+                  onChange={(event) => setReplySubject(event.target.value)}
+                  disabled={sendingReply}
+                />
+              </label>
+              <label className="field">
+                <span>Message</span>
+                <textarea
+                  value={replyMessage}
+                  rows={8}
+                  maxLength={10000}
+                  onChange={(event) => setReplyMessage(event.target.value)}
+                  disabled={sendingReply}
+                  autoFocus
+                />
+              </label>
+              {replyError && (
+                <p className="admin-reply-error" role="alert">
+                  {replyError}
+                </p>
+              )}
+              <div className="admin-confirm-actions">
+                <button
+                  className="btn btn-light"
+                  type="button"
+                  onClick={closeEnquiryReply}
+                  disabled={sendingReply}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-dark admin-confirm-danger"
+                  type="submit"
+                  disabled={sendingReply || (config ? !config.resend : false)}
+                >
+                  {sendingReply ? "Sending..." : "Send reply"}
+                </button>
+              </div>
+            </form>
           </div>
         )}
         {pickupDatePendingRemoval && (
@@ -1465,13 +1610,14 @@ export default function AdminDashboard() {
             ))}
           </div>
         )}
-        {tab === "enquiries" && (
-          <table className="table admin-stack-table">
+        {tab === "enquiries" && !viewingEnquiryId && (
+          <table className="table admin-stack-table admin-enquiries-table">
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Request</th>
                 <th>Status</th>
+                <th aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -1487,20 +1633,118 @@ export default function AdminDashboard() {
                         {enquiry.phone}
                       </small>
                     </td>
-                    <td data-label="Request">{enquiry.request}</td>
+                    <td data-label="Request">
+                      <span className="admin-enquiry-preview">{enquiry.request}</span>
+                      {enquiry.replies?.length ? (
+                        <small className="admin-enquiry-reply-count">
+                          {enquiry.replies.length} {enquiry.replies.length === 1 ? "reply" : "replies"}
+                        </small>
+                      ) : null}
+                    </td>
                     <td data-label="Status">
-                      <span className="status">{enquiry.status}</span>
+                      <span className="status">
+                        {enquiry.status
+                          ? enquiry.status.charAt(0).toUpperCase() + enquiry.status.slice(1)
+                          : "Pending"}
+                      </span>
+                    </td>
+                    <td className="admin-table-action">
+                      <button
+                        className="text-button"
+                        type="button"
+                        onClick={() => enquiry.id && setViewingEnquiryId(enquiry.id)}
+                        disabled={!enquiry.id}
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3}>No enquiries yet</td>
+                  <td colSpan={4}>No enquiries yet</td>
                 </tr>
               )}
             </tbody>
           </table>
         )}
+        {tab === "enquiries" && viewingEnquiryId && (() => {
+          const enquiry = enquiries.find((item) => item.id === viewingEnquiryId);
+          const formatDate = (value: string) =>
+            new Date(value).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
+          const back = (
+            <button className="text-button" type="button" onClick={() => setViewingEnquiryId(null)}>
+              <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m10 3-5 5 5 5" /></svg>
+              Back to enquiries
+            </button>
+          );
+          if (!enquiry) {
+            return (
+              <div className="admin-template-editor-heading">
+                {back}
+                <p>This enquiry could not be found.</p>
+              </div>
+            );
+          }
+          const status = enquiry.status
+            ? enquiry.status.charAt(0).toUpperCase() + enquiry.status.slice(1)
+            : "Pending";
+          return (
+            <div className="admin-enquiry-detail">
+              <div className="admin-template-editor-heading">
+                {back}
+                <h2>{enquiry.name || "Customer enquiry"}</h2>
+                <p>
+                  {enquiryTypeLabels[enquiry.enquiryType || ""] || enquiry.enquiryType || "General enquiry"}
+                  {enquiry.createdAt ? ` · Received ${formatDate(enquiry.createdAt)}` : ""}
+                </p>
+              </div>
+              <dl className="admin-enquiry-meta">
+                <div>
+                  <dt>Email</dt>
+                  <dd>{enquiry.email ? <a href={`mailto:${enquiry.email}`}>{enquiry.email}</a> : "—"}</dd>
+                </div>
+                <div>
+                  <dt>Phone</dt>
+                  <dd>{enquiry.phone ? <a href={`tel:${enquiry.phone}`}>{enquiry.phone}</a> : "—"}</dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd><span className="status">{status}</span></dd>
+                </div>
+              </dl>
+              <ol className="admin-enquiry-thread">
+                <li className="admin-enquiry-message is-customer">
+                  <div className="admin-enquiry-message-head">
+                    <strong>{enquiry.name || "Customer"}</strong>
+                    {enquiry.createdAt && <small>{formatDate(enquiry.createdAt)}</small>}
+                  </div>
+                  <p>{enquiry.request || "No message provided."}</p>
+                </li>
+                {enquiry.replies?.map((reply) => (
+                  <li className="admin-enquiry-message is-reply" key={reply.sentAt}>
+                    <div className="admin-enquiry-message-head">
+                      <strong>Club Crumbie</strong>
+                      <small>{formatDate(reply.sentAt)}</small>
+                    </div>
+                    {reply.subject && <span className="admin-enquiry-message-subject">{reply.subject}</span>}
+                    <p>{reply.message}</p>
+                  </li>
+                ))}
+              </ol>
+              <div className="admin-editor-actions">
+                <button
+                  className="btn btn-light"
+                  type="button"
+                  onClick={() => openEnquiryReply(enquiry)}
+                  disabled={!enquiry.email}
+                >
+                  Reply
+                </button>
+              </div>
+            </div>
+          );
+        })()}
         {tab === "products" && (
           <>
             <form className="admin-modal admin-product-form" onSubmit={addProduct} noValidate>
