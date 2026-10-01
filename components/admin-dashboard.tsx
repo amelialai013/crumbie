@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { DatePicker } from "./date-picker";
@@ -53,6 +53,7 @@ type Enquiry = {
   repliedAt?: string;
   replies?: Array<{ subject: string; message: string; sentAt: string }>;
 };
+const SEEN_ENQUIRIES_KEY = "crumbie-admin-seen-enquiries";
 const DEFAULT_REPLY_SUBJECT = "Re: your Club Crumbie enquiry";
 type PolicySection = { heading: string; body: string };
 type Content = {
@@ -427,6 +428,10 @@ export default function AdminDashboard() {
     Record<string, string>
   >({});
   const [adminNotice, setAdminNotice] = useState("");
+  const [unreadEnquiryIds, setUnreadEnquiryIds] = useState<string[]>([]);
+  const [newEnquiryAlert, setNewEnquiryAlert] = useState<{ enquiry: Enquiry; count: number } | null>(null);
+  const notifiedEnquiryIds = useRef(new Set<string>());
+  const tabRef = useRef(tab);
   const [adminNoticeLeaving, setAdminNoticeLeaving] = useState(false);
   const [adminBusyMessage, setAdminBusyMessage] = useState("");
   const [pickupDatePendingRemoval, setPickupDatePendingRemoval] =
@@ -476,10 +481,57 @@ export default function AdminDashboard() {
     setSavedContent(JSON.stringify(next));
   }
 
+  function readSeenEnquiries(): string[] | null {
+    const stored = window.localStorage.getItem(SEEN_ENQUIRIES_KEY);
+    if (stored === null) return null;
+    try {
+      return JSON.parse(stored) as string[];
+    } catch {
+      return [];
+    }
+  }
+
+  function markEnquiriesSeen(ids: string[]) {
+    const seen = readSeenEnquiries() ?? [];
+    window.localStorage.setItem(SEEN_ENQUIRIES_KEY, JSON.stringify(Array.from(new Set([...seen, ...ids]))));
+    setUnreadEnquiryIds([]);
+  }
+
+  function receiveDashboard(next: Data) {
+    setData(next);
+    const enquiries = ((next as { enquiries?: Enquiry[] }).enquiries ?? []).filter((enquiry) => enquiry.id);
+    const ids = enquiries.map((enquiry) => enquiry.id as string);
+    const seen = readSeenEnquiries();
+    if (seen === null) {
+      window.localStorage.setItem(SEEN_ENQUIRIES_KEY, JSON.stringify(ids));
+      return;
+    }
+    const unread = ids.filter((id) => !seen.includes(id));
+    if (tabRef.current === "enquiries" && !document.hidden) {
+      markEnquiriesSeen(ids);
+      unread.forEach((id) => notifiedEnquiryIds.current.add(id));
+      return;
+    }
+    setUnreadEnquiryIds(unread);
+    const fresh = unread.filter((id) => !notifiedEnquiryIds.current.has(id));
+    if (!fresh.length) return;
+    fresh.forEach((id) => notifiedEnquiryIds.current.add(id));
+    const latest = enquiries.find((enquiry) => enquiry.id === fresh[0])!;
+    setNewEnquiryAlert({ enquiry: latest, count: unread.length });
+    if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+      try {
+        new Notification("New Club Crumbie enquiry", {
+          body: `${latest.name || "A customer"}: ${(latest.request || "").slice(0, 120)}`,
+          icon: "/favicon.ico",
+        });
+      } catch {}
+    }
+  }
+
   async function load() {
     const response = await fetch("/api/admin/dashboard");
     if (response.ok) {
-      setData(await response.json());
+      receiveDashboard(await response.json());
       setDashboardError("");
     } else {
       setDashboardError("Your admin session has expired. Sign in again.");
@@ -504,7 +556,7 @@ export default function AdminDashboard() {
         dashboardResult.status === "fulfilled" &&
         dashboardResult.value.ok
       ) {
-        setData(await dashboardResult.value.json());
+        receiveDashboard(await dashboardResult.value.json());
       }
       if (configResult.status === "fulfilled" && configResult.value.ok) {
         setConfig(await configResult.value.json());
@@ -523,7 +575,38 @@ export default function AdminDashboard() {
     }
 
     void loadAdminResources();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const hasDashboard = data !== null;
+
+  useEffect(() => {
+    if (!hasDashboard) return;
+    if ("Notification" in window && Notification.permission === "default") {
+      try {
+        void Promise.resolve(Notification.requestPermission()).catch(() => {});
+      } catch {}
+    }
+    async function poll() {
+      const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
+      if (response.ok) receiveDashboard(await response.json());
+    }
+    const interval = window.setInterval(() => void poll(), 20000);
+    function pollOnFocus() {
+      if (!document.hidden) void poll();
+    }
+    document.addEventListener("visibilitychange", pollOnFocus);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", pollOnFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasDashboard]);
+
+  useEffect(() => {
+    const base = document.title.replace(/^\(\d+\) /, "");
+    document.title = unreadEnquiryIds.length ? `(${unreadEnquiryIds.length}) ${base}` : base;
+  }, [unreadEnquiryIds.length]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -699,6 +782,7 @@ export default function AdminDashboard() {
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     setTab("orders");
+    tabRef.current = "orders";
     setData(null);
     setConfig(null);
     setError("");
@@ -1088,6 +1172,11 @@ export default function AdminDashboard() {
 
   async function selectTab(nextTab: string) {
     setTab(nextTab);
+    tabRef.current = nextTab;
+    if (nextTab === "enquiries") {
+      setNewEnquiryAlert(null);
+      markEnquiriesSeen(unreadEnquiryIds);
+    }
     setMenuOpen(false);
     setEmailTemplateKey(null);
     setViewingEnquiryId(null);
@@ -1171,14 +1260,11 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!data && checkingSession)
+  if (!data && (checkingSession || signingIn))
     return (
       <div className="admin-auth admin-auth-loading" role="status" aria-live="polite">
-        <h1>Admin portal</h1>
-        <p>
-          <span className="admin-auth-spinner" aria-hidden="true" />
-          Signing you in
-        </p>
+        <span className="admin-auth-spinner" aria-hidden="true" />
+        <p>Signing in…</p>
       </div>
     );
 
@@ -1255,6 +1341,7 @@ export default function AdminDashboard() {
         <span className="admin-menu-toggle-copy">
           <span>Section</span>
         </span>
+        {unreadEnquiryIds.length > 0 && <span className="admin-menu-toggle-dot" aria-label="New enquiries" />}
         <span className="admin-menu-toggle-icon" aria-hidden="true">
           +
         </span>
@@ -1286,6 +1373,11 @@ export default function AdminDashboard() {
             onClick={() => void selectTab(item)}
           >
             {item}
+            {item === "enquiries" && unreadEnquiryIds.length > 0 && (
+              <span className="admin-nav-badge" aria-label={`${unreadEnquiryIds.length} new`}>
+                {unreadEnquiryIds.length}
+              </span>
+            )}
           </button>
         ))}
         <button
@@ -1297,7 +1389,35 @@ export default function AdminDashboard() {
         </button>
       </aside>
       <section>
-        {!adminBusyMessage && adminNotice && (
+        {newEnquiryAlert && (
+          <div className="admin-toast admin-toast-enquiry" role="status" aria-live="polite">
+            <span>
+              {newEnquiryAlert.count > 1
+                ? `${newEnquiryAlert.count} new enquiries`
+                : `New enquiry from ${newEnquiryAlert.enquiry.name || "a customer"}`}
+            </span>
+            <span className="admin-toast-actions">
+              <button
+                className="admin-toast-view"
+                type="button"
+                onClick={() => {
+                  const id = newEnquiryAlert.count === 1 ? newEnquiryAlert.enquiry.id : undefined;
+                  void selectTab("enquiries").then(() => {
+                    if (id) setViewingEnquiryId(id);
+                  });
+                }}
+              >
+                View
+              </button>
+              <button aria-label="Dismiss notification" type="button" onClick={() => setNewEnquiryAlert(null)}>
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                  <path d="m5 5 10 10M15 5 5 15" />
+                </svg>
+              </button>
+            </span>
+          </div>
+        )}
+        {!adminBusyMessage && adminNotice && !newEnquiryAlert && (
           <div
             className={`admin-toast${adminNoticeLeaving ? " admin-toast-leaving" : ""}`}
             role="status"
