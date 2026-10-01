@@ -769,6 +769,21 @@ input::-webkit-caps-lock-indicator {
   overflow: hidden;
   white-space: nowrap;
 }
+textarea {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 173, 148, .7) transparent;
+}
+textarea::-webkit-scrollbar {
+  width: 8px;
+}
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+textarea::-webkit-scrollbar-thumb {
+  border: 2px solid #1f1a15;
+  border-radius: 999px;
+  background: rgba(201, 173, 148, .7);
+}
 .admin-editor .field textarea,
 .admin-product-form .field textarea {
   scrollbar-width: thin;
@@ -1820,6 +1835,76 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   }
 }
 .admin-enquiries-table .admin-table-action { white-space: nowrap; }
+.admin-kebab {
+  position: relative;
+  display: inline-flex;
+}
+.admin-kebab-trigger {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+.admin-kebab-trigger:hover,
+.admin-kebab-trigger[aria-expanded="true"] {
+  background: rgba(201, 173, 148, .14);
+  color: var(--ink);
+}
+.admin-kebab-trigger:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.admin-kebab-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  min-width: 190px;
+  padding: 6px;
+  border: 0;
+  border-radius: 0;
+  background: #1f1a15;
+  box-shadow: inset 0 0 0 1px var(--accent), 0 18px 40px rgba(27, 21, 15, .55);
+  text-align: left;
+  animation: premium-select-menu-in .18s var(--motion-ease) both;
+}
+.admin-kebab-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #d9d7d3;
+  font-size: .9rem;
+  text-align: left;
+  white-space: nowrap;
+}
+.admin-kebab-menu button:hover,
+.admin-kebab-menu button:focus-visible {
+  background: rgba(201, 173, 148, .14);
+  color: #fff;
+  outline: none;
+}
+.admin-kebab-menu button.is-danger {
+  margin-top: 4px;
+  border-top: 1px solid rgba(201, 173, 148, .22);
+  color: #f19a8f;
+}
+.admin-kebab-menu button.is-danger:hover,
+.admin-kebab-menu button.is-danger:focus-visible {
+  background: rgba(214, 84, 68, .16);
+  color: #ffb4aa;
+}
 .admin-table-action-group {
   display: inline-flex;
   align-items: center;

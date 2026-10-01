@@ -86,3 +86,17 @@ export async function setRecord<T>(kind: string, id: string, value: T) {
 	}
 	return kv.set(key(kind, id), value);
 }
+
+export async function deleteRecord(kind: string, id: string) {
+	if (!kv) {
+		if (!localStoreEnabled()) throw new Error("Datastore is not configured");
+		const store = await readLocalStore();
+		delete store[key(kind, id)];
+		const ids = Array.isArray(store[key(kind, "all")]) ? (store[key(kind, "all")] as string[]) : [];
+		store[key(kind, "all")] = ids.filter((item) => item !== id);
+		await writeLocalStore(store);
+		return;
+	}
+	await kv.del(key(kind, id));
+	await kv.lrem(key(kind, "all"), 0, id);
+}
