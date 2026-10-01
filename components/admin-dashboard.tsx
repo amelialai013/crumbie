@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { DatePicker } from "./date-picker";
+import PremiumSelect from "./premium-select";
 import { formatPickupDate } from "@/lib/format-date";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultEnquiryTypes, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
@@ -396,6 +397,8 @@ export default function AdminDashboard() {
   const [data, setData] = useState<Data | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [tab, setTab] = useState("orders");
   const [content, setContent] = useState<Content>({ fields: {} });
   const [savedContent, setSavedContent] = useState(() => JSON.stringify({ fields: {} }));
@@ -502,6 +505,7 @@ export default function AdminDashboard() {
         setManagedProducts(await productsResult.value.json());
       }
       setProductsLoaded(true);
+      setCheckingSession(false);
     }
 
     void loadAdminResources();
@@ -510,6 +514,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [tab]);
+
+  const signedIn = data !== null;
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [signedIn]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -585,25 +594,34 @@ export default function AdminDashboard() {
       setError("Enter your password.");
       return;
     }
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-    if (!response.ok) {
-      setError(
-        response.status === 401
-          ? "Incorrect password."
-          : "Admin session is not configured.",
-      );
-      return;
+    setError("");
+    setSigningIn(true);
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!response.ok) {
+        setError(
+          response.status === 401
+            ? "Incorrect password."
+            : "Admin session is not configured.",
+        );
+        return;
+      }
+      setPassword("");
+      await load();
+    } catch {
+      setError("Couldn't sign in. Check your connection and try again.");
+    } finally {
+      setSigningIn(false);
     }
-    setPassword("");
-    await load();
   }
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
+    setTab("orders");
     setData(null);
     setConfig(null);
     setError("");
@@ -1068,6 +1086,17 @@ export default function AdminDashboard() {
     );
   }
 
+  if (!data && checkingSession)
+    return (
+      <div className="admin-auth admin-auth-loading" role="status" aria-live="polite">
+        <h1>Admin portal</h1>
+        <p>
+          <span className="admin-auth-spinner" aria-hidden="true" />
+          Signing you in
+        </p>
+      </div>
+    );
+
   if (!data)
     return (
       <form className="admin-auth" onSubmit={login} noValidate>
@@ -1081,6 +1110,7 @@ export default function AdminDashboard() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 value={password}
+                disabled={signingIn}
                 onChange={(event) => setPassword(event.target.value)}
               />
               <button
@@ -1105,7 +1135,14 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
-          <button className="btn btn-dark">Sign in</button>
+          <button
+            className={`btn btn-dark${signingIn ? " btn-loading" : ""}`}
+            disabled={signingIn}
+            aria-busy={signingIn}
+          >
+            {signingIn && <span className="btn-spinner" aria-hidden="true" />}
+            {signingIn ? "Signing in…" : "Sign in"}
+          </button>
         </div>
         {error && <p className="field-error" role="alert">{error}</p>}
       </form>
@@ -1375,7 +1412,12 @@ export default function AdminDashboard() {
                         </div>
                       ))}
                     </td>
-                    <td data-label="Payment">{order.paymentStatus}</td>
+                    <td data-label="Payment">
+                      {order.paymentStatus
+                        ? order.paymentStatus.charAt(0).toUpperCase() +
+                          order.paymentStatus.slice(1)
+                        : ""}
+                    </td>
                     <td data-label="Created">{order.createdAt?.slice(0, 10)}</td>
                   </tr>
                 ))
@@ -1693,18 +1735,17 @@ export default function AdminDashboard() {
                       ))}
                     </ul>
                   )}
-                  <label htmlFor="product-image-count">Images to generate</label>
-                  <select
-                    id="product-image-count"
-                    value={generatedImageCount}
-                    onChange={(event) => setGeneratedImageCount(Number(event.target.value))}
-                  >
-                    <option value={1}>1 image</option>
-                    <option value={2}>2 images</option>
-                    <option value={3}>3 images</option>
-                    <option value={4}>4 images</option>
-                    <option value={5}>5 images (recommended)</option>
-                  </select>
+                  <label id="product-image-count-label">Images to generate</label>
+                  <PremiumSelect
+                    labelId="product-image-count-label"
+                    value={String(generatedImageCount)}
+                    options={[1, 2, 3, 4, 5].map((count) => ({
+                      value: String(count),
+                      label: `${count} image${count === 1 ? "" : "s"}${count === 5 ? " (recommended)" : ""}`,
+                    }))}
+                    placeholder="5 images (recommended)"
+                    onChange={(value) => setGeneratedImageCount(Number(value))}
+                  />
                   <label htmlFor="product-image-direction">
                     Additional creative direction <span>(optional)</span>
                   </label>
