@@ -80,6 +80,10 @@ function enquiryDisplayStatus(enquiry: Enquiry) {
   return { key: "pending", label: "Pending" };
 }
 
+function enquiryTypeLabel(enquiry: Enquiry) {
+  return enquiryTypeLabels[enquiry.enquiryType || ""] || enquiry.enquiryType || "General enquiry";
+}
+
 function EnquiryStatus({ enquiry }: { enquiry: Enquiry }) {
   const { key, label } = enquiryDisplayStatus(enquiry);
   return (
@@ -483,6 +487,9 @@ export default function AdminDashboard() {
   const [updatingEnquiryId, setUpdatingEnquiryId] = useState<string | null>(null);
   const [enquiryMenuId, setEnquiryMenuId] = useState<string | null>(null);
   const [enquiryPendingDeletion, setEnquiryPendingDeletion] = useState<Enquiry | null>(null);
+  const [enquiryTypeFilter, setEnquiryTypeFilter] = useState("all");
+  const [enquiryStatusFilter, setEnquiryStatusFilter] = useState("all");
+  const [enquirySort, setEnquirySort] = useState("newest");
   const [deletingEnquiryId, setDeletingEnquiryId] = useState<string | null>(null);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
@@ -1462,7 +1469,7 @@ export default function AdminDashboard() {
         <span className="admin-menu-toggle-copy">
           <span>Section</span>
         </span>
-        {unreadCount > 0 && <span className="admin-menu-toggle-dot" aria-label="Unread enquiries" />}
+        {unreadCount > 0 && <span className="admin-menu-toggle-dot" aria-label="New enquiries" />}
         <span className="admin-menu-toggle-icon" aria-hidden="true">
           +
         </span>
@@ -1495,7 +1502,7 @@ export default function AdminDashboard() {
           >
             {item}
             {item === "enquiries" && unreadCount > 0 && (
-              <span className="admin-nav-badge" aria-label={`${unreadCount} unread`}>
+              <span className="admin-nav-badge" aria-label={`${unreadCount} new`}>
                 {unreadCount}
               </span>
             )}
@@ -1513,7 +1520,7 @@ export default function AdminDashboard() {
         {showEnquiryAlert && (
           <div className="admin-toast admin-toast-enquiry" role="status" aria-live="polite">
             <span>
-              {alertEnquiries.length} unread {alertEnquiries.length === 1 ? "enquiry" : "enquiries"}
+              {unreadCount} new {unreadCount === 1 ? "enquiry" : "enquiries"}
             </span>
             <span className="admin-toast-actions">
               <button
@@ -1887,20 +1894,86 @@ export default function AdminDashboard() {
             ))}
           </div>
         )}
-        {tab === "enquiries" && !viewingEnquiryId && (
+        {tab === "enquiries" && !viewingEnquiryId && (() => {
+          const typeOptions = Array.from(new Set(enquiries.filter((item) => item.id).map(enquiryTypeLabel))).sort();
+          const visibleEnquiries = enquiries
+            .filter((item) => enquiryTypeFilter === "all" || enquiryTypeLabel(item) === enquiryTypeFilter)
+            .filter((item) => enquiryStatusFilter === "all" || enquiryDisplayStatus(item).key === enquiryStatusFilter)
+            .sort((a, b) => {
+              const diff = new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+              return enquirySort === "oldest" ? diff : -diff;
+            });
+          return (
+          <>
+          <div className="admin-enquiry-filters">
+            <div className="admin-enquiry-filter">
+              <span id="enquiry-type-filter-label">Type</span>
+              <PremiumSelect
+                labelId="enquiry-type-filter-label"
+                value={enquiryTypeFilter}
+                options={[{ value: "all", label: "All types" }, ...typeOptions.map((label) => ({ value: label, label }))]}
+                placeholder="All types"
+                onChange={setEnquiryTypeFilter}
+              />
+            </div>
+            <div className="admin-enquiry-filter">
+              <span id="enquiry-status-filter-label">Status</span>
+              <PremiumSelect
+                labelId="enquiry-status-filter-label"
+                value={enquiryStatusFilter}
+                options={[
+                  { value: "all", label: "All statuses" },
+                  { value: "new", label: "New" },
+                  { value: "pending", label: "Pending" },
+                  { value: "replied", label: "Replied" },
+                ]}
+                placeholder="All statuses"
+                onChange={setEnquiryStatusFilter}
+              />
+            </div>
+            <div className="admin-enquiry-filter">
+              <span id="enquiry-sort-label">Sort by</span>
+              <PremiumSelect
+                labelId="enquiry-sort-label"
+                value={enquirySort}
+                options={[
+                  { value: "newest", label: "Newest first" },
+                  { value: "oldest", label: "Oldest first" },
+                ]}
+                placeholder="Newest first"
+                onChange={setEnquirySort}
+              />
+            </div>
+          </div>
           <table className="table admin-stack-table admin-enquiries-table">
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Request</th>
+                <th>Message</th>
+                <th>Type</th>
                 <th>Status</th>
                 <th aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
-              {enquiries.length ? (
-                enquiries.map((enquiry) => (
-                  <tr key={enquiry.id}>
+              {visibleEnquiries.length ? (
+                visibleEnquiries.map((enquiry) => (
+                  <tr
+                    key={enquiry.id}
+                    className={enquiry.id ? "admin-row-clickable" : undefined}
+                    tabIndex={enquiry.id ? 0 : undefined}
+                    onClick={(event) => {
+                      if (!enquiry.id || (event.target as HTMLElement).closest(".admin-kebab")) return;
+                      openEnquiry(enquiry);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!enquiry.id || event.target !== event.currentTarget) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openEnquiry(enquiry);
+                      }
+                    }}
+                  >
                     <td data-label="Name">
                       {enquiry.name}
                       <br />
@@ -1910,13 +1983,16 @@ export default function AdminDashboard() {
                         {enquiry.phone}
                       </small>
                     </td>
-                    <td data-label="Request">
+                    <td data-label="Message">
                       <span className="admin-enquiry-preview">{enquiry.request}</span>
                       {enquiry.replies?.length ? (
                         <small className="admin-enquiry-reply-count">
                           {enquiry.replies.length} {enquiry.replies.length === 1 ? "reply" : "replies"}
                         </small>
                       ) : null}
+                    </td>
+                    <td data-label="Type">
+                      {enquiryTypeLabels[enquiry.enquiryType || ""] || enquiry.enquiryType || "General enquiry"}
                     </td>
                     <td data-label="Status">
                       <EnquiryStatus enquiry={enquiry} />
@@ -1945,16 +2021,6 @@ export default function AdminDashboard() {
                           </button>
                           {enquiryMenuId === enquiry.id && (
                             <div className="admin-kebab-menu" role="menu">
-                              <button
-                                role="menuitem"
-                                type="button"
-                                onClick={() => {
-                                  setEnquiryMenuId(null);
-                                  openEnquiry(enquiry);
-                                }}
-                              >
-                                View
-                              </button>
                               {(["new", "pending", "replied"] as const)
                                 .filter((status) => enquiryDisplayStatus(enquiry).key !== status)
                                 .map((status) => (
@@ -1991,12 +2057,14 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4}>No enquiries yet</td>
+                  <td colSpan={5}>{enquiries.length ? "No enquiries match these filters" : "No enquiries yet"}</td>
                 </tr>
               )}
             </tbody>
           </table>
-        )}
+          </>
+          );
+        })()}
         {tab === "enquiries" && viewingEnquiryId && (() => {
           const enquiry = enquiries.find((item) => item.id === viewingEnquiryId);
           const formatDate = (value: string) =>
@@ -2020,10 +2088,6 @@ export default function AdminDashboard() {
               <div className="admin-template-editor-heading">
                 {back}
                 <h2>{enquiry.name || "Customer enquiry"}</h2>
-                <p>
-                  {enquiryTypeLabels[enquiry.enquiryType || ""] || enquiry.enquiryType || "General enquiry"}
-                  {enquiry.createdAt ? ` · Received ${formatDate(enquiry.createdAt)}` : ""}
-                </p>
               </div>
               <dl className="admin-enquiry-meta">
                 <div>
@@ -2033,6 +2097,10 @@ export default function AdminDashboard() {
                 <div>
                   <dt>Phone</dt>
                   <dd>{enquiry.phone ? <a href={`tel:${enquiry.phone}`}>{enquiry.phone}</a> : "—"}</dd>
+                </div>
+                <div>
+                  <dt>Type</dt>
+                  <dd>{enquiryTypeLabels[enquiry.enquiryType || ""] || enquiry.enquiryType || "General enquiry"}</dd>
                 </div>
                 <div>
                   <dt>Status</dt>
