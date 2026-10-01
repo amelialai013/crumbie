@@ -481,6 +481,9 @@ export default function AdminDashboard() {
   const [replyError, setReplyError] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
   const [updatingEnquiryId, setUpdatingEnquiryId] = useState<string | null>(null);
+  const [enquiryMenuId, setEnquiryMenuId] = useState<string | null>(null);
+  const [enquiryPendingDeletion, setEnquiryPendingDeletion] = useState<Enquiry | null>(null);
+  const [deletingEnquiryId, setDeletingEnquiryId] = useState<string | null>(null);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
   const [productsLoaded, setProductsLoaded] = useState(false);
@@ -767,7 +770,51 @@ export default function AdminDashboard() {
       .catch(() => {});
   }
 
-  async function setEnquiryStatus(enquiry: Enquiry, status: "replied" | "pending") {
+  async function deleteEnquiry() {
+    const enquiry = enquiryPendingDeletion;
+    if (!enquiry?.id || deletingEnquiryId) return;
+    setDeletingEnquiryId(enquiry.id);
+    const response = await fetch("/api/admin/enquiries/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: enquiry.id }),
+    }).catch(() => null);
+    setDeletingEnquiryId(null);
+    setEnquiryPendingDeletion(null);
+    if (!response?.ok) {
+      finishAdminAction("Unable to delete enquiry. Please try again.");
+      return;
+    }
+    setData((current) =>
+      current
+        ? {
+            ...current,
+            enquiries: (current.enquiries as Enquiry[]).filter((item) => item.id !== enquiry.id),
+          }
+        : current,
+    );
+    if (viewingEnquiryId === enquiry.id) setViewingEnquiryId(null);
+    finishAdminAction("Enquiry deleted");
+  }
+
+  useEffect(() => {
+    if (!enquiryMenuId) return;
+    function closeMenu(event: MouseEvent | KeyboardEvent) {
+      if (event instanceof KeyboardEvent) {
+        if (event.key === "Escape") setEnquiryMenuId(null);
+        return;
+      }
+      if (!(event.target as Element).closest?.(".admin-kebab")) setEnquiryMenuId(null);
+    }
+    document.addEventListener("mousedown", closeMenu);
+    document.addEventListener("keydown", closeMenu);
+    return () => {
+      document.removeEventListener("mousedown", closeMenu);
+      document.removeEventListener("keydown", closeMenu);
+    };
+  }, [enquiryMenuId]);
+
+  async function setEnquiryStatus(enquiry: Enquiry, status: "replied" | "pending" | "new") {
     if (!enquiry.id || updatingEnquiryId) return;
     setUpdatingEnquiryId(enquiry.id);
     const response = await fetch("/api/admin/enquiries/status", {
@@ -791,7 +838,7 @@ export default function AdminDashboard() {
           }
         : current,
     );
-    finishAdminAction(status === "replied" ? "Marked as replied" : "Marked as pending");
+    finishAdminAction(`Marked as ${status}`);
   }
 
   useEffect(() => {
@@ -1472,12 +1519,7 @@ export default function AdminDashboard() {
               <button
                 className="admin-toast-view"
                 type="button"
-                onClick={() => {
-                  const target = alertEnquiries.length === 1 ? alertEnquiries[0] : undefined;
-                  void selectTab("enquiries").then(() => {
-                    if (target) openEnquiry(target);
-                  });
-                }}
+                onClick={() => void selectTab("enquiries")}
               >
                 View
               </button>
@@ -1575,6 +1617,49 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+        {enquiryPendingDeletion && (
+          <div
+            className="admin-confirm-overlay"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !deletingEnquiryId)
+                setEnquiryPendingDeletion(null);
+            }}
+          >
+            <div
+              aria-labelledby="enquiry-delete-title"
+              aria-describedby="enquiry-delete-copy"
+              aria-modal="true"
+              className="admin-confirm-modal"
+              role="dialog"
+            >
+              <h2 id="enquiry-delete-title">Delete this enquiry?</h2>
+              <p id="enquiry-delete-copy">
+                This will permanently delete the enquiry from{" "}
+                <strong>{enquiryPendingDeletion.name}</strong>, including its reply
+                history. This can&apos;t be undone.
+              </p>
+              <div className="admin-confirm-actions">
+                <button
+                  className="btn btn-light"
+                  type="button"
+                  onClick={() => setEnquiryPendingDeletion(null)}
+                  disabled={Boolean(deletingEnquiryId)}
+                >
+                  Keep enquiry
+                </button>
+                <button
+                  className="btn btn-dark admin-confirm-danger"
+                  type="button"
+                  onClick={() => void deleteEnquiry()}
+                  disabled={Boolean(deletingEnquiryId)}
+                >
+                  {deletingEnquiryId ? "Deleting..." : "Yes, delete it"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
         {pickupDatePendingRemoval && (
@@ -1837,26 +1922,70 @@ export default function AdminDashboard() {
                       <EnquiryStatus enquiry={enquiry} />
                     </td>
                     <td className="admin-table-action">
-                      <div className="admin-table-action-group">
-                      <button
-                        className="text-button"
-                        type="button"
-                        onClick={() =>
-                          setEnquiryStatus(enquiry, isUnreplied(enquiry) ? "replied" : "pending")
-                        }
-                        disabled={!enquiry.id || updatingEnquiryId === enquiry.id}
-                      >
-                        {isUnreplied(enquiry) ? "Mark as replied" : "Mark as pending"}
-                      </button>
-                      <button
-                        className="text-button"
-                        type="button"
-                        onClick={() => openEnquiry(enquiry)}
-                        disabled={!enquiry.id}
-                      >
-                        View
-                      </button>
-                      </div>
+                      {enquiry.id && (
+                        <div className="admin-kebab">
+                          <button
+                            aria-expanded={enquiryMenuId === enquiry.id}
+                            aria-haspopup="menu"
+                            aria-label="Enquiry actions"
+                            className="admin-kebab-trigger"
+                            type="button"
+                            onClick={() =>
+                              setEnquiryMenuId((current) =>
+                                current === enquiry.id ? null : enquiry.id!,
+                              )
+                            }
+                            disabled={updatingEnquiryId === enquiry.id}
+                          >
+                            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                              <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+                              <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                              <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+                            </svg>
+                          </button>
+                          {enquiryMenuId === enquiry.id && (
+                            <div className="admin-kebab-menu" role="menu">
+                              <button
+                                role="menuitem"
+                                type="button"
+                                onClick={() => {
+                                  setEnquiryMenuId(null);
+                                  openEnquiry(enquiry);
+                                }}
+                              >
+                                View
+                              </button>
+                              {(["new", "pending", "replied"] as const)
+                                .filter((status) => enquiryDisplayStatus(enquiry).key !== status)
+                                .map((status) => (
+                                  <button
+                                    key={status}
+                                    role="menuitem"
+                                    type="button"
+                                    onClick={() => {
+                                      setEnquiryMenuId(null);
+                                      void setEnquiryStatus(enquiry, status);
+                                    }}
+                                  >
+                                    <span className={`admin-status-dot is-${status}`} aria-hidden="true" />
+                                    Mark as {status}
+                                  </button>
+                                ))}
+                              <button
+                                className="is-danger"
+                                role="menuitem"
+                                type="button"
+                                onClick={() => {
+                                  setEnquiryMenuId(null);
+                                  setEnquiryPendingDeletion(enquiry);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -1937,16 +2066,6 @@ export default function AdminDashboard() {
                   disabled={!enquiry.email}
                 >
                   Reply
-                </button>
-                <button
-                  className="text-button admin-editor-actions-end"
-                  type="button"
-                  onClick={() =>
-                    setEnquiryStatus(enquiry, isUnreplied(enquiry) ? "replied" : "pending")
-                  }
-                  disabled={updatingEnquiryId === enquiry.id}
-                >
-                  {isUnreplied(enquiry) ? "Mark as replied" : "Mark as pending"}
                 </button>
               </div>
             </div>

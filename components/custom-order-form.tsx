@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import PremiumSelect from "./premium-select";
 
@@ -92,6 +93,14 @@ export default function CustomOrderForm({ enquiryTypes }: { enquiryTypes: string
       <div className="enquiry-form enquiry-success">
         <h2>Thank you.</h2>
         <p>Your message is in the oven, we’ll be in touch soon.<br />Can’t find our reply? Take a peek in your junk folder.</p>
+        <div className="actions">
+          <Link className="btn btn-dark btn-arrow" href="/crumbs">
+            Explore crumbs
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="m7 4.5 5.5 5.5L7 15.5" />
+            </svg>
+          </Link>
+        </div>
       </div>
     );
   }

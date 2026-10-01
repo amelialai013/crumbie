@@ -5,7 +5,7 @@ import { getRecord, setRecord } from "@/lib/store";
 
 const schema = z.object({
 	id: z.string().trim().min(1).max(100),
-	status: z.enum(["replied", "pending"]),
+	status: z.enum(["replied", "pending", "new"]),
 });
 
 type Enquiry = { id: string; status?: string; repliedAt?: string; readAt?: string };
@@ -22,8 +22,8 @@ export async function POST(req: Request) {
 
 	const updated: Enquiry = {
 		...enquiry,
-		status,
-		readAt: enquiry.readAt || new Date().toISOString(),
+		status: status === "replied" ? "replied" : "pending",
+		readAt: status === "new" ? undefined : enquiry.readAt || new Date().toISOString(),
 		repliedAt: status === "replied" ? enquiry.repliedAt || new Date().toISOString() : undefined,
 	};
 	await setRecord("custom-order", id, updated);
