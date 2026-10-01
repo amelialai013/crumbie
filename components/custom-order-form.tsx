@@ -91,7 +91,7 @@ export default function CustomOrderForm({ enquiryTypes }: { enquiryTypes: string
     return (
       <div className="enquiry-form enquiry-success">
         <h2>Thank you.</h2>
-        <p>We’ve received your message and will be in touch soon. Keep an eye on your inbox, and check your junk or spam folder in case our reply ends up there.</p>
+        <p>Your message is in the oven, we’ll be in touch soon.<br />Can’t find our reply? Take a peek in your junk folder.</p>
       </div>
     );
   }
@@ -147,7 +147,7 @@ export default function CustomOrderForm({ enquiryTypes }: { enquiryTypes: string
           <path d="m7 4.5 5.5 5.5L7 15.5" />
         </svg>
       </button>
-      {status === "error" && Object.keys(validationErrors).length === 0 && <p className="field-error enquiry-submit-error" role="alert">{errorMessage || "We couldn’t send your message. Please try again."}</p>}
+      {status === "error" && errorMessage && <p className="field-error enquiry-submit-error" role="alert">{errorMessage}</p>}
     </form>
   );
 }

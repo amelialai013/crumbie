@@ -11,7 +11,7 @@ const schema = z.object({
 });
 
 type EnquiryReply = { subject: string; message: string; sentAt: string };
-type Enquiry = { id: string; email?: string; status?: string; replies?: EnquiryReply[]; repliedAt?: string };
+type Enquiry = { id: string; email?: string; status?: string; replies?: EnquiryReply[]; repliedAt?: string; readAt?: string };
 
 export async function POST(req: Request) {
 	if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -39,6 +39,7 @@ export async function POST(req: Request) {
 		...enquiry,
 		status: "replied",
 		repliedAt: sentAt,
+		readAt: enquiry.readAt || sentAt,
 		replies: [...(enquiry.replies || []), { subject, message, sentAt }],
 	};
 	await setRecord("custom-order", id, updated);
