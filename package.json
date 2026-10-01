@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check:config": "node scripts/check-config.mjs"
+    "check:config": "node scripts/check-config.mjs",
+    "test:images": "node --experimental-strip-types --test tests/product-image-normalization.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1123.0",

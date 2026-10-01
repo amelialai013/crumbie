@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import signatureSide from "@/assets/cookies/choc-chip-cookie/catalog.png";
-import biscoffSide from "@/assets/cookies/biscoff-white-chocolate-cookie/catalog.png";
+import signatureSide from "@/assets/cookies/choc-chip-cookie/catalog-normalized.png";
+import biscoffSide from "@/assets/cookies/biscoff-white-chocolate-cookie/catalog-normalized.png";
 
 export default function ProductCookieImage({
   image,

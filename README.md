@@ -54,3 +54,5 @@ Use `npm run dev` from this checkout. It loads `.env` and `.env.local`, checks S
 Run `npm run check:config` to verify datastore connectivity, Stripe access, the verified Resend sending domain, OpenAI image-model access, R2 bucket access, and session credentials without printing secrets. A missing service produces a nonzero exit status. OpenAI uses a restricted non-expiring image key.
 
 R2 must have all five `R2_*` credentials configured. Until then, Admin Settings explicitly shows “Local storage only”. Local files survive app restarts but are not durable hosted storage. Production requires R2, a public production media domain, and a deployed Stripe webhook destination; the development listener does not serve production.
+
+Product covers use a shared 3:2 canvas. The generator measures visible cookie pixels, removes surplus transparent canvas, and fits the subject inside 5% safe margins. Built-in covers use the same normalization, so generated covers match their displayed size without cropping. Rotation frames use a square canvas with the same safe margins. Run `npm run test:images` to check sizing against varied source resolutions and transparent padding.

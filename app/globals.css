@@ -2822,7 +2822,7 @@ body {
 .cookie-catalog .product-card-render .product-cookie-image-transparent {
   object-fit: contain;
   transform: none;
-  padding: 6%;
+  padding: 0;
 }
 .cookie-catalog .product-card:hover .product-cookie-image-transparent {
   transform: none;
@@ -2837,7 +2837,7 @@ body {
   transition: transform .8s var(--motion-ease), filter .5s ease;
 }
 .cookie-catalog .product-card:hover img {
-  transform: scale(1.035);
+  transform: none;
   filter: saturate(1) contrast(1.02) drop-shadow(0 24px 22px rgba(27, 21, 15, .34));
 }
 .cookie-catalog .product-card-body {

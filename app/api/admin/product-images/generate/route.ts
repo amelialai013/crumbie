@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { normalizeProductImage } from "@/lib/product-image-normalization";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/session";
 import { uploadMedia } from "@/lib/r2";
@@ -104,11 +104,7 @@ export async function POST(request: Request) {
 			}
 			return uploadMedia(
 				`products/${productSlugFromName(name)}/generated-${timestamp}-${index + 1}.png`,
-				await sharp(Buffer.from(result.data[0].b64_json, "base64"))
-					.trim({ threshold: 10 })
-					.resize(800, 800, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-					.extend({ top: 112, bottom: 112, left: 112, right: 112, background: { r: 0, g: 0, b: 0, alpha: 0 } })
-					.png().toBuffer(),
+				await normalizeProductImage(Buffer.from(result.data[0].b64_json, "base64"), index === 0 ? "cover" : "rotation"),
 				"image/png",
 			);
 		}));
