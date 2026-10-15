@@ -6,14 +6,17 @@ import OrbLoader from "@/components/orb-loader";
 const pulseDuration = 2400; // two pulses
 const fadeDuration = 700;
 
-// Only play on the first visit to the home page per full page load.
-let hasPlayed = false;
-
 // Shared with the hero video so it waits on its first frame until the orb lifts.
 export const orbIntroState = { revealed: false };
 
 export function isOrbIntroCovering() {
   return !orbIntroState.revealed && document.querySelector(".orb-intro") !== null;
+}
+
+// Each visit to the home page starts covered again, before the hero video's effects run.
+function resetReveal() {
+  orbIntroState.revealed = false;
+  return "pulse" as const;
 }
 
 function reveal() {
@@ -25,17 +28,30 @@ function reveal() {
 }
 
 export default function OrbIntro() {
-  const [phase, setPhase] = useState<"pulse" | "fade" | "done">(() => (hasPlayed ? "done" : "pulse"));
+  const [phase, setPhase] = useState<"pulse" | "fade" | "done">(resetReveal);
 
   useEffect(() => {
-    if (phase === "done") {
-      return;
-    }
-    hasPlayed = true;
     window.scrollTo(0, 0);
+    // Block wheel, touch and keyboard scrolling until the orb lifts.
+    const blockScroll = (event: Event) => event.preventDefault();
+    const scrollKeys = new Set([" ", "PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"]);
+    const blockKeys = (event: KeyboardEvent) => {
+      if (scrollKeys.has(event.key)) {
+        event.preventDefault();
+      }
+    };
+    const unlock = () => {
+      window.removeEventListener("wheel", blockScroll);
+      window.removeEventListener("touchmove", blockScroll);
+      window.removeEventListener("keydown", blockKeys);
+    };
+    window.addEventListener("wheel", blockScroll, { passive: false });
+    window.addEventListener("touchmove", blockScroll, { passive: false });
+    window.addEventListener("keydown", blockKeys);
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const fadeTimer = setTimeout(() => {
       window.scrollTo(0, 0);
+      unlock();
       setPhase("fade");
       reveal();
     }, reduceMotion ? 600 : pulseDuration);
@@ -44,10 +60,10 @@ export default function OrbIntro() {
       (reduceMotion ? 600 : pulseDuration) + fadeDuration,
     );
     return () => {
+      unlock();
       clearTimeout(fadeTimer);
       clearTimeout(doneTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (phase === "done") {

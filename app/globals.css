@@ -3022,9 +3022,16 @@ body {
       rgba(27, 21, 15, .64) 29%,
       rgba(27, 21, 15, .58) 35%,
       rgba(27, 21, 15, .55) 42%,
-      rgba(27, 21, 15, .5) 62%,
-      rgba(27, 21, 15, .58) 80%,
-      rgba(27, 21, 15, .78) 92%,
+      rgba(27, 21, 15, 0.50) 52%,
+      rgba(27, 21, 15, 0.51) 57%,
+      rgba(27, 21, 15, 0.55) 62%,
+      rgba(27, 21, 15, 0.61) 66%,
+      rgba(27, 21, 15, 0.68) 71%,
+      rgba(27, 21, 15, 0.75) 76%,
+      rgba(27, 21, 15, 0.82) 81%,
+      rgba(27, 21, 15, 0.89) 86%,
+      rgba(27, 21, 15, 0.95) 90%,
+      rgba(27, 21, 15, 0.99) 95%,
       #1b150f 100%
     );
   }
@@ -4645,11 +4652,23 @@ textarea { resize: none; }
   position: fixed;
   inset: 0;
   z-index: 300;
-  padding-top: 80px;
+  display: grid;
+  place-items: center;
   background: #1b150f;
+  overscroll-behavior: contain;
+  touch-action: none;
   transition: opacity .7s ease;
 }
-.orb-intro .orb-loading { animation: none; }
+.orb-intro .orb-loading {
+  min-height: 0;
+  padding: 0;
+  animation: none;
+}
+/* No scrolling while the orb covers the page. */
+html:has(.orb-intro:not(.is-leaving)),
+html:has(.orb-intro:not(.is-leaving)) body {
+  overflow: hidden;
+}
 .orb-intro.is-leaving {
   opacity: 0;
   pointer-events: none;
