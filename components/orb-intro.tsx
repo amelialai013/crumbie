@@ -32,8 +32,10 @@ export default function OrbIntro() {
       return;
     }
     hasPlayed = true;
+    window.scrollTo(0, 0);
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const fadeTimer = setTimeout(() => {
+      window.scrollTo(0, 0);
       setPhase("fade");
       reveal();
     }, reduceMotion ? 600 : pulseDuration);
