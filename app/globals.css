@@ -2502,6 +2502,10 @@ html,
 body {
   overscroll-behavior-y: none;
 }
+/* Match the footer so the area behind mobile browser toolbars blends in. */
+html {
+  background: #110d09;
+}
 .hero-media {
   isolation: isolate;
   background: var(--paper);
