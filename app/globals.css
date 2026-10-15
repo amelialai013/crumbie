@@ -2494,22 +2494,6 @@ body {
 html {
   background: #110d09;
 }
-/* iOS Safari tints its bottom toolbar from a fixed element it can hit-test 4-6px inside the
-   bottom edge, so the strip must be taller than that. It only appears while the footer covers the
-   bottom of the screen, where it is the same colour and invisible. */
-@supports (-webkit-touch-callout: none) {
-  html[data-footer-visible] body::after {
-    content: "";
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 12px;
-    background: #110d09;
-    pointer-events: none;
-    z-index: 2147483647;
-  }
-}
 .hero-media {
   isolation: isolate;
   background: var(--paper);
