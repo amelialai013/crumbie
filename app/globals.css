@@ -3010,9 +3010,11 @@ body {
     margin-left: 0;
   }
   .hero-media::after {
+    /* Start solid so the top blends into the phone's status bar. */
     background: linear-gradient(
       to bottom,
-      rgba(27, 21, 15, .62) 0%,
+      #1b150f 0%,
+      rgba(27, 21, 15, .62) 14%,
       rgba(27, 21, 15, .8) 26%,
       rgba(27, 21, 15, .92) 50%,
       #1b150f 76%,
