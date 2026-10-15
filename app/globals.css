@@ -4577,3 +4577,71 @@ textarea { resize: none; }
   width: max-content;
   min-width: 100%;
 }
+
+/* Glowing orb loading state */
+.orb-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100svh - 80px);
+  padding-bottom: 8vh;
+  background: #1b150f;
+  animation: orb-loading-in .7s var(--motion-ease, cubic-bezier(.22, 1, .36, 1)) both;
+}
+.orb {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.orb-halo,
+.orb-core {
+  position: absolute;
+  border-radius: 50%;
+}
+.orb-halo {
+  inset: -110%;
+  background: radial-gradient(circle, rgba(201, 173, 148, .38) 0%, rgba(201, 173, 148, .14) 35%, transparent 68%);
+  filter: blur(24px);
+  animation: orb-halo 1.2s ease-in-out infinite;
+}
+.orb-core {
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 240, 224, .95) 0%, rgba(230, 205, 181, .75) 30%, rgba(201, 173, 148, .35) 60%, transparent 80%);
+  filter: blur(10px);
+  animation: orb-breathe 1.2s ease-in-out infinite;
+}
+@keyframes orb-breathe {
+  0%, 100% { opacity: .8; transform: scale(.9); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+@keyframes orb-halo {
+  0%, 100% { opacity: .5; transform: scale(.85); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+@keyframes orb-loading-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb-loading,
+  .orb-halo,
+  .orb-core { animation: none; }
+}
+
+/* Show the first hero clip instantly; only later clips crossfade. */
+.hero-video.is-first { transition: none; }
+
+/* Home intro: the orb pulses briefly over the page, then fades away. */
+.orb-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  padding-top: 80px;
+  background: #1b150f;
+  transition: opacity .7s ease;
+}
+.orb-intro .orb-loading { animation: none; }
+.orb-intro.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
