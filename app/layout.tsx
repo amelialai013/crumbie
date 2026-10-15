@@ -6,6 +6,9 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { CartProvider } from "@/components/cart-context";
 
+// A full page load or refresh always starts at the top; in-app back/forward still restores scroll.
+const scrollTopOnLoadScript = `try{if(!location.hash){history.scrollRestoration="manual";addEventListener("load",function(){scrollTo(0,0);setTimeout(function(){history.scrollRestoration="auto"},0)})}}catch(e){}`;
+
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };
@@ -23,6 +26,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" className={dmSans.variable} data-scroll-behavior="smooth">
+			<head>
+				<script dangerouslySetInnerHTML={{ __html: scrollTopOnLoadScript }} />
+			</head>
 			<body>
 				<CartProvider>
 					<Header />
