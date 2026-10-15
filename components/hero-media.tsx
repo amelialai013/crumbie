@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { preconnect } from "react-dom";
+import { isOrbIntroCovering } from "@/components/orb-intro";
 
 const clips = [
   { src: "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4", cutAt: 7 },
@@ -11,7 +13,11 @@ const clips = [
 const crossfadeDuration = 1800;
 
 export default function HeroMedia() {
-  const [reduceMotion, setReduceMotion] = useState(true);
+  preconnect("https://videos.pexels.com");
+  // Render the videos on the server so they start downloading before hydration;
+  // reduced-motion users are handled by CSS and by the effect below.
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [hasCrossfaded, setHasCrossfaded] = useState(false);
   const [activeClip, setActiveClip] = useState(0);
   const [outgoingClip, setOutgoingClip] = useState<number | null>(null);
   const [readyClips, setReadyClips] = useState<number[]>([]);
@@ -86,6 +92,7 @@ export default function HeroMedia() {
         activeClipRef.current = nextClip;
         setOutgoingClip(fromIndex);
         setActiveClip(nextClip);
+        setHasCrossfaded(true);
 
         transitionTimerRef.current = setTimeout(() => {
           currentVideo?.pause();
@@ -114,6 +121,10 @@ export default function HeroMedia() {
 
   function ensurePlaying(video: HTMLVideoElement | null | undefined) {
     if (!video || !video.paused) {
+      return;
+    }
+    // Hold the first clip on its opening frame while the home intro covers it.
+    if (video === videoRefs.current[0] && activeClipRef.current === 0 && isOrbIntroCovering()) {
       return;
     }
     video.muted = true;
@@ -179,6 +190,32 @@ export default function HeroMedia() {
     }
   }, [nextClipToPreload, reduceMotion]);
 
+  // Autoplay can start before hydration, so catch up on media events React missed.
+  useEffect(() => {
+    if (reduceMotion) {
+      return;
+    }
+    videoRefs.current.forEach((video, index) => {
+      if (!video) {
+        return;
+      }
+      if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+        markClipReady(index);
+      }
+      if (!video.paused && !video.ended) {
+        markClipPlaying(index);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduceMotion]);
+
+  // The first clip waits on its opening frame until the home intro fades.
+  useEffect(() => {
+    const start = () => ensurePlaying(videoRefs.current[activeClipRef.current]);
+    window.addEventListener("orb-intro-reveal", start);
+    return () => window.removeEventListener("orb-intro-reveal", start);
+  }, []);
+
   // Some browsers ignore the autoplay attribute or block it until the user interacts,
   // so start playback explicitly and retry on the first interaction.
   useEffect(() => {
@@ -216,6 +253,7 @@ export default function HeroMedia() {
           const className = [
             "hero-video",
             isReady && isPlaying && index === activeClip ? "is-active" : "",
+            !hasCrossfaded && index === activeClip ? "is-first" : "",
             isReady && isPlaying && index === outgoingClip ? "is-outgoing" : "",
           ]
             .filter(Boolean)
@@ -232,7 +270,7 @@ export default function HeroMedia() {
                 }
               }}
               className={className}
-              autoPlay={index === activeClip || index === nextClipToPreload}
+              autoPlay={index !== 0 && (index === activeClip || index === nextClipToPreload)}
               loop
               muted
               playsInline
