@@ -16,7 +16,7 @@ export default function Footer() {
     const root = document.documentElement;
     const observer = new IntersectionObserver(([entry]) => {
       root.toggleAttribute("data-footer-visible", entry.isIntersecting);
-    });
+    }, { rootMargin: "0px 0px -16px 0px" });
     observer.observe(footer);
     return () => {
       observer.disconnect();

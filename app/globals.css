@@ -18,7 +18,7 @@
   --line: #4a433a;
   --muted: #b5b3b0;
 }
-.site-header { background: rgba(27, 21, 15, .94); border-bottom: 0; }
+.site-header { background: #1b150f; border-bottom: 0; }
 .nav-links a { color: #bdb6ac; }
 .cart-link span { background: var(--accent); color: #1b150f; }
 .menu-button { color: #fff; }
@@ -2465,10 +2465,10 @@ body::-webkit-scrollbar {
     border-color .35s ease,
     backdrop-filter .35s ease;
 }
+/* Solid so it matches the status bar Safari paints above it, with no seam. */
 .site-header.home-header.scrolled {
-  background: rgba(27, 21, 15, .94);
+  background: #1b150f;
   border-bottom-color: transparent;
-  backdrop-filter: blur(16px);
 }
 @media(max-width:900px) {
   .site-header.home-header.menu-open {
@@ -2494,8 +2494,9 @@ body {
 html {
   background: #110d09;
 }
-/* iOS Safari tints its bottom toolbar from a fixed element touching the bottom edge.
-   The strip only appears once the footer reaches the bottom, so it never shows as a line over other content. */
+/* iOS Safari tints its bottom toolbar from a fixed element it can hit-test 4-6px inside the
+   bottom edge, so the strip must be taller than that. It only appears while the footer covers the
+   bottom of the screen, where it is the same colour and invisible. */
 @supports (-webkit-touch-callout: none) {
   html[data-footer-visible] body::after {
     content: "";
@@ -2503,7 +2504,7 @@ html {
     left: 0;
     right: 0;
     bottom: 0;
-    height: 2px;
+    height: 12px;
     background: #110d09;
     pointer-events: none;
     z-index: 2147483647;
