@@ -1,13 +1,14 @@
 /* One motion scale for route reveals, controls and media. Durations are in ms
    so the reveal controller can read the same values as CSS. */
 :root {
-  --motion-fast: 280ms;
-  --motion-panel: 620ms;
-  --motion-reveal: 1400ms;
-  --motion-stagger: 140ms;
+  --motion-fast: 160ms;
+  --motion-panel: 320ms;
+  --motion-reveal: 450ms;
+  --motion-stagger: 60ms;
   --motion-media: 1200ms;
-  --motion-exit: 420ms;
-  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-exit: 220ms;
+  --motion-rise: 12px;
+  --motion-ease: cubic-bezier(.23, 1, .32, 1);
   --motion-fade: cubic-bezier(.25, .1, .25, 1);
 }
 
@@ -19,14 +20,14 @@
   .hero-content .hero-logo-heading,
   .hero-content .actions > * {
     opacity: 0;
-    animation: hero-content-reveal var(--motion-panel) var(--motion-ease) both;
+    animation: hero-content-reveal var(--motion-reveal) var(--motion-ease) both;
   }
-  .hero-content .hero-logo-heading { animation-delay: 80ms; }
-  .hero-content .actions > *:nth-child(1) { animation-delay: 240ms; }
-  .hero-content .actions > *:nth-child(2) { animation-delay: 320ms; }
+  .hero-content .hero-logo-heading { animation-delay: 40ms; }
+  .hero-content .actions > *:nth-child(1) { animation-delay: 120ms; }
+  .hero-content .actions > *:nth-child(2) { animation-delay: 180ms; }
 }
 @keyframes hero-content-reveal {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(var(--motion-rise)); }
   to { opacity: 1; transform: translateY(0); }
 }
 .hero-media-loading { transition: opacity var(--motion-panel) var(--motion-fade); }
@@ -37,20 +38,16 @@
   transition-timing-function: var(--motion-ease);
 }
 .cookie-catalog .product-card img {
-  transition: transform var(--motion-reveal) var(--motion-ease);
+  transition: transform 300ms var(--motion-ease), filter 300ms var(--motion-ease);
 }
 /* Keep direct manipulation responsive; never add a slow ease to dragging. */
 .cookie-explorer-object { transition: transform 180ms var(--motion-ease); }
 .cookie-explorer.is-dragging .cookie-explorer-object { transition: none; }
 .product-gallery-image,
 .cart-empty.is-appearing { animation-duration: var(--motion-panel); animation-timing-function: var(--motion-ease); }
-.cart-confirmation, .cart-confirmation-check {
+.cart-confirmation-check {
   animation-duration: var(--motion-panel);
   animation-timing-function: var(--motion-ease);
-}
-.cart-confirmation.is-closing {
-  animation-duration: var(--motion-exit);
-  animation-timing-function: var(--motion-fade);
 }
 .cart-layout, .cart-row {
   transition-duration: var(--motion-panel);
@@ -87,7 +84,9 @@
       view-timeline-name: --hero-view;
       view-timeline-axis: block;
     }
+    /* Own compositor layers so the scroll-linked scale never repaints the filtered video. */
     .hero-media {
+      will-change: transform;
       animation: hero-scroll-depth linear both;
       animation-timeline: --hero-view;
       animation-range: exit 0% exit 100%;
@@ -98,6 +97,7 @@
       view-timeline-axis: block;
     }
     .about-image img {
+      will-change: transform;
       animation: editorial-image-settle linear both;
       animation-timeline: --about-view;
       animation-range: entry 0% cover 70%;
@@ -118,14 +118,14 @@
 @media (prefers-reduced-motion: no-preference) and (min-width: 901px) {
   .how-it-works .steps {
     border-color: transparent;
-    transition: border-color var(--motion-panel) var(--motion-ease);
+    transition: border-color var(--motion-reveal) var(--motion-ease);
   }
   .how-it-works .step {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(var(--motion-rise));
     border-color: transparent;
-    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease),
-      border-color var(--motion-panel) var(--motion-ease);
+    transition: opacity var(--motion-reveal) var(--motion-ease), transform var(--motion-reveal) var(--motion-ease),
+      border-color var(--motion-reveal) var(--motion-ease);
   }
   .how-it-works.is-visible .steps,
   .how-it-works.is-visible .step {
@@ -137,17 +137,17 @@
   }
   .how-it-works.is-visible .steps,
   .how-it-works.is-visible .step:nth-child(1) { transition-delay: 0ms; }
-  .how-it-works.is-visible .step:nth-child(2) { transition-delay: 220ms; }
-  .how-it-works.is-visible .step:nth-child(3) { transition-delay: 440ms; }
+  .how-it-works.is-visible .step:nth-child(2) { transition-delay: 60ms; }
+  .how-it-works.is-visible .step:nth-child(3) { transition-delay: 120ms; }
   .how-it-works .how-it-works-cta {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+    transform: translateY(var(--motion-rise));
+    transition: opacity var(--motion-reveal) var(--motion-ease), transform var(--motion-reveal) var(--motion-ease);
   }
   .how-it-works.is-visible .how-it-works-cta {
     opacity: 1;
     transform: translateY(0);
-    transition-delay: 560ms;
+    transition-delay: 180ms;
   }
 }
 
@@ -156,14 +156,14 @@
 @media (prefers-reduced-motion: no-preference) and (max-width: 900px) {
   .how-it-works .steps {
     border-color: transparent;
-    transition: border-color var(--motion-panel) var(--motion-ease);
+    transition: border-color var(--motion-reveal) var(--motion-ease);
   }
   .how-it-works .step {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(var(--motion-rise));
     border-color: transparent;
-    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease),
-      border-color var(--motion-panel) var(--motion-ease);
+    transition: opacity var(--motion-reveal) var(--motion-ease), transform var(--motion-reveal) var(--motion-ease),
+      border-color var(--motion-reveal) var(--motion-ease);
   }
   .how-it-works .steps:has(.step.is-visible) {
     border-color: var(--line);
@@ -175,8 +175,8 @@
   }
   .how-it-works .how-it-works-cta {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+    transform: translateY(var(--motion-rise));
+    transition: opacity var(--motion-reveal) var(--motion-ease), transform var(--motion-reveal) var(--motion-ease);
   }
   .how-it-works .steps:has(.step:last-child.is-visible) ~ .how-it-works-cta {
     opacity: 1;
@@ -191,19 +191,19 @@
   .about-section .about-image,
   .about-section .prose > * {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+    transform: translateY(var(--motion-rise));
+    transition: opacity var(--motion-reveal) var(--motion-ease), transform var(--motion-reveal) var(--motion-ease);
   }
   .about-section .about-image.is-visible,
   .about-section .prose > *.is-visible {
     opacity: 1;
     transform: translateY(0);
   }
-  .about-section .prose > *:nth-child(1).is-visible { transition-delay: 80ms; }
-  .about-section .prose > *:nth-child(2).is-visible { transition-delay: 160ms; }
-  .about-section .prose > *:nth-child(3).is-visible { transition-delay: 240ms; }
-  .about-section .prose > *:nth-child(4).is-visible { transition-delay: 320ms; }
-  .about-section .prose > *:nth-child(5).is-visible { transition-delay: 400ms; }
+  .about-section .prose > *:nth-child(1).is-visible { transition-delay: 0ms; }
+  .about-section .prose > *:nth-child(2).is-visible { transition-delay: 60ms; }
+  .about-section .prose > *:nth-child(3).is-visible { transition-delay: 120ms; }
+  .about-section .prose > *:nth-child(4).is-visible { transition-delay: 180ms; }
+  .about-section .prose > *:nth-child(5).is-visible { transition-delay: 240ms; }
 }
 
 /* Each policy heading/paragraph reveals on its own, in order, as it individually scrolls
@@ -211,8 +211,8 @@
 @media (prefers-reduced-motion: no-preference) {
   .policy-content > * {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+    transform: translateY(var(--motion-rise));
+    transition: opacity var(--motion-reveal) var(--motion-ease), transform var(--motion-reveal) var(--motion-ease);
   }
   .policy-content > *.is-visible {
     opacity: 1;
@@ -225,28 +225,28 @@
 @media (prefers-reduced-motion: no-preference) {
   .home-product-catalog .product-card {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease);
+    transform: translateY(var(--motion-rise));
+    transition: opacity var(--motion-reveal) var(--motion-ease), transform var(--motion-reveal) var(--motion-ease);
   }
   .home-product-catalog .product-card.is-visible {
     opacity: 1;
     transform: translateY(0);
   }
   .home-product-catalog .product-card:nth-child(1).is-visible { transition-delay: 0ms; }
-  .home-product-catalog .product-card:nth-child(2).is-visible { transition-delay: 140ms; }
-  .home-product-catalog .product-card:nth-child(3).is-visible { transition-delay: 280ms; }
-  .home-product-catalog .product-card:nth-child(4).is-visible { transition-delay: 420ms; }
+  .home-product-catalog .product-card:nth-child(2).is-visible { transition-delay: 60ms; }
+  .home-product-catalog .product-card:nth-child(3).is-visible { transition-delay: 120ms; }
+  .home-product-catalog .product-card:nth-child(4).is-visible { transition-delay: 180ms; }
 
   /* The Crumbs page catalog is often the first thing on the page, so it cascades in on
      load instead of waiting on scroll. */
   .crumbs-catalog .product-card {
     opacity: 0;
-    animation: field-group-reveal var(--motion-fast) var(--motion-ease) both;
+    animation: field-group-reveal var(--motion-reveal) var(--motion-ease) both;
   }
   .crumbs-catalog .product-card:nth-child(1) { animation-delay: 0ms; }
-  .crumbs-catalog .product-card:nth-child(2) { animation-delay: 80ms; }
-  .crumbs-catalog .product-card:nth-child(3) { animation-delay: 160ms; }
-  .crumbs-catalog .product-card:nth-child(4) { animation-delay: 240ms; }
+  .crumbs-catalog .product-card:nth-child(2) { animation-delay: 60ms; }
+  .crumbs-catalog .product-card:nth-child(3) { animation-delay: 120ms; }
+  .crumbs-catalog .product-card:nth-child(4) { animation-delay: 180ms; }
 }
 
 /* Form field groups cascade in on load rather than on scroll, since this section sits
@@ -255,7 +255,7 @@
   .custom-order-section .enquiry-field-group,
   .custom-order-section .enquiry-submit {
     opacity: 0;
-    animation: field-group-reveal var(--motion-fast) var(--motion-ease) both;
+    animation: field-group-reveal var(--motion-reveal) var(--motion-ease) both;
   }
   .custom-order-section .enquiry-fields-row .enquiry-field-group:nth-child(1) { animation-delay: 0ms; }
   .custom-order-section .enquiry-fields-row .enquiry-field-group:nth-child(2) { animation-delay: 60ms; }
@@ -265,7 +265,7 @@
   .custom-order-section .enquiry-submit { animation-delay: 300ms; }
 }
 @keyframes field-group-reveal {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(var(--motion-rise)); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -274,21 +274,22 @@
   .cart-empty h2,
   .cart-empty .btn {
     opacity: 0;
-    animation: field-group-reveal var(--motion-panel) var(--motion-ease) both;
+    animation: field-group-reveal var(--motion-reveal) var(--motion-ease) both;
   }
   .cart-empty h2 { animation-delay: 0ms; }
-  .cart-empty .btn { animation-delay: 160ms; }
+  .cart-empty .btn { animation-delay: 60ms; }
 
+  /* backwards (not both) so the finished entrance doesn't pin opacity/transform and the
+     removal transition can run. */
   .cart-items .cart-row,
   .cart-summary {
-    opacity: 0;
-    animation: field-group-reveal var(--motion-panel) var(--motion-ease) both;
+    animation: field-group-reveal var(--motion-reveal) var(--motion-ease) backwards;
   }
   .cart-items .cart-row:nth-child(1) { animation-delay: 0ms; }
-  .cart-items .cart-row:nth-child(2) { animation-delay: 140ms; }
-  .cart-items .cart-row:nth-child(3) { animation-delay: 280ms; }
-  .cart-items .cart-row:nth-child(4) { animation-delay: 420ms; }
-  .cart-summary { animation-delay: 140ms; }
+  .cart-items .cart-row:nth-child(2) { animation-delay: 60ms; }
+  .cart-items .cart-row:nth-child(3) { animation-delay: 120ms; }
+  .cart-items .cart-row:nth-child(4) { animation-delay: 180ms; }
+  .cart-summary { animation-delay: 60ms; }
 }
 
 /* Product detail content cascades in on load: heading, description, order form, then the image. */
@@ -301,23 +302,43 @@
   .cookie-explorer,
   .product-gallery {
     opacity: 0;
-    animation: field-group-reveal var(--motion-panel) var(--motion-ease) both;
+    animation: field-group-reveal var(--motion-reveal) var(--motion-ease) both;
   }
   .product-detail-heading h1 { animation-delay: 0ms; }
-  .product-detail-heading p { animation-delay: 140ms; }
-  .product-order-heading { animation-delay: 280ms; }
-  .product-order-fields { animation-delay: 420ms; }
-  .product-order-total { animation-delay: 560ms; }
+  .product-detail-heading p { animation-delay: 60ms; }
+  .product-order-heading { animation-delay: 120ms; }
+  .product-order-fields { animation-delay: 180ms; }
+  .product-order-total { animation-delay: 240ms; }
   .cookie-explorer,
   .product-gallery {
-    animation-delay: 140ms;
+    animation-delay: 60ms;
   }
 }
+/* Reduced motion: drop movement but keep gentle opacity/colour changes, so reveals and
+   state changes cross-fade instead of snapping. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto !important; }
+  :root { --motion-rise: 0px; }
+  .btn:active:not(:disabled) { transform: none; }
   *, *::before, *::after {
     animation: none !important;
-    transition: none !important;
     scroll-behavior: auto !important;
+  }
+  *:not(.how-it-works .step, .how-it-works .steps, .how-it-works-cta, .about-section .about-image,
+    .about-section .prose > *, .policy-content > *, .home-product-catalog .product-card),
+  *::before, *::after {
+    transition: none !important;
+  }
+  .how-it-works .step, .how-it-works .how-it-works-cta, .about-section .about-image,
+  .about-section .prose > *, .policy-content > *, .home-product-catalog .product-card {
+    opacity: 0;
+    transition: opacity 300ms ease !important;
+  }
+  .how-it-works.is-visible .step, .how-it-works .step.is-visible,
+  .how-it-works.is-visible .how-it-works-cta,
+  .how-it-works .steps:has(.step:last-child.is-visible) ~ .how-it-works-cta,
+  .about-section .about-image.is-visible, .about-section .prose > *.is-visible,
+  .policy-content > *.is-visible, .home-product-catalog .product-card.is-visible {
+    opacity: 1;
   }
 }
