@@ -3,17 +3,33 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import whiteLogo from "@/brand/logo/new-logo/full-white.png";
 
 export default function Footer() {
   const pathname = usePathname();
+  const footerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const footer = footerRef.current;
+    if (!footer) return;
+    const root = document.documentElement;
+    const observer = new IntersectionObserver(([entry]) => {
+      root.toggleAttribute("data-footer-visible", entry.isIntersecting);
+    });
+    observer.observe(footer);
+    return () => {
+      observer.disconnect();
+      root.removeAttribute("data-footer-visible");
+    };
+  }, []);
 
   function handleHomeClick() {
     if (pathname === "/") window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
 
   return (
-    <footer className="footer">
+    <footer ref={footerRef} className="footer">
       <div className="shell footer-grid">
         <div>
           <Link href="/" className="footer-brand" onClick={handleHomeClick} aria-label="Club Crumbie home">

@@ -2495,9 +2495,9 @@ html {
   background: #110d09;
 }
 /* iOS Safari tints its bottom toolbar from a fixed element touching the bottom edge.
-   This hidden strip sits under the toolbar so only that area takes the footer colour. */
+   The strip only appears once the footer reaches the bottom, so it never shows as a line over other content. */
 @supports (-webkit-touch-callout: none) {
-  body::after {
+  html[data-footer-visible] body::after {
     content: "";
     position: fixed;
     left: 0;
