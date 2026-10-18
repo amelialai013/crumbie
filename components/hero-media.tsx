@@ -246,6 +246,9 @@ export default function HeroMedia() {
 
   return (
     <div className="hero-media" aria-hidden="true">
+      {/* Still of the first clip's opening frame, shown whenever no video is playing. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized 45KB webp, must render before hydration */}
+      <img className="hero-poster" src="/hero-poster.webp" alt="" fetchPriority="high" decoding="async" />
       {!reduceMotion &&
         clips.map((clip, index) => {
           const isReady = readyClips.includes(index) && !failedClips.includes(index);
