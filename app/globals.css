@@ -3058,8 +3058,16 @@ body {
     margin-left: 0;
   }
   .hero-media::after {
-    /* Start solid so the top blends into the phone's status bar. */
+    /* Start at the body colour Safari paints behind the status bar, then ease into the brown wash. */
     background: linear-gradient(
+      to bottom,
+      #110d09 0%,
+      rgba(17, 13, 9, .82) 4%,
+      rgba(17, 13, 9, .55) 9%,
+      rgba(17, 13, 9, .28) 15%,
+      rgba(17, 13, 9, .1) 21%,
+      rgba(17, 13, 9, 0) 28%
+    ), linear-gradient(
       to bottom,
       #1b150f 0%,
       rgba(27, 21, 15, .97) 4%,

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import whiteLogo from "@/brand/logo/new-logo/full-white.png";
+import whiteLogo from "@/brand/latest-logos/new-text-logo/white-full-logo.png";
 
 export default function Footer() {
   const pathname = usePathname();
