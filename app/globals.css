@@ -1370,10 +1370,23 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   background: #1b150f;
 }
 .admin-generate-button {
-  display: flex;
+  display: grid;
   justify-self: end;
   width: fit-content;
   margin-left: auto;
+}
+/* Both labels share one cell so the button keeps its size while loading. */
+.admin-generate-button > .admin-generate-label,
+.admin-generate-button > .admin-generate-loading {
+  grid-area: 1 / 1;
+  place-self: center;
+}
+.admin-generate-button > .admin-generate-loading,
+.admin-generate-button[aria-busy="true"] > .admin-generate-label {
+  visibility: hidden;
+}
+.admin-generate-button[aria-busy="true"] > .admin-generate-loading {
+  visibility: visible;
 }
 .admin-image-generator legend {
   padding: 0 6px;
@@ -2125,7 +2138,7 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
     height: 100dvh;
     overflow-y: auto;
     padding: 96px 24px 24px;
-    background: var(--paper);
+    background: #110d09;
     box-shadow: -18px 0 48px rgba(27, 21, 15, .25);
     visibility: hidden;
     transform: translateX(100%);
@@ -2182,10 +2195,25 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
     table-layout: fixed;
   }
   .admin-product-form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .admin-product-form .field:nth-child(n) {
     grid-column: auto;
+    min-width: 0;
+  }
+  .admin-product-form .admin-generate-button {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 16px;
+    white-space: normal;
+    text-align: center;
+  }
+  .admin-generate-extra {
+    display: none;
+  }
+  .admin-modal-body {
+    padding-inline: 20px;
   }
   .admin-add-date {
     grid-template-columns: 1fr;
@@ -2479,6 +2507,14 @@ body::-webkit-scrollbar {
 .site-header.home-header + main .hero {
   min-height: 100svh;
 }
+/* Safari's floating toolbar sits over the page, so fill the whole screen (lvh) and keep the
+   content centred in the visible area above the toolbar. */
+@supports (height: 100lvh) {
+  .site-header.home-header + main .hero {
+    min-height: 100lvh;
+    padding-bottom: calc(100lvh - 100svh);
+  }
+}
 @media(prefers-reduced-motion:reduce) {
   .site-header.home-header {
     transition: none;
@@ -2494,12 +2530,30 @@ body {
 html {
   background: #110d09;
 }
+/* Safari tints the area beyond the page (under its bottom toolbar) with body's
+   background-color, so make that the footer colour while the image keeps the page brown. */
+body {
+  background-color: #110d09;
+  background-image: linear-gradient(var(--paper), var(--paper));
+}
 .hero-media {
   isolation: isolate;
   background: var(--paper);
 }
 .hero-media::before {
   content: none;
+}
+.hero-poster {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(.92) contrast(1.04);
+  pointer-events: none;
 }
 .hero-video {
   position: absolute;
@@ -4657,6 +4711,12 @@ textarea { resize: none; }
 
 /* Show the first hero clip instantly; only later clips crossfade. */
 .hero-video.is-first { transition: none; }
+
+/* Holds the hero's space while the home page streams in, so the footer doesn't jump. */
+.home-loading {
+  min-height: 100svh;
+  background: #1b150f;
+}
 
 /* Home intro: the orb pulses briefly over the page, then fades away. */
 .orb-intro {

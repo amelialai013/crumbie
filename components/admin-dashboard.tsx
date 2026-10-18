@@ -66,6 +66,49 @@ function readDismissedEnquiryIds(): Set<string> | null {
   }
 }
 
+// Vercel rejects request bodies over 4.5MB, so shrink phone photos before upload.
+const REFERENCE_UPLOAD_BUDGET = 3.5 * 1024 * 1024;
+const REFERENCE_COMPRESSION_STEPS = [
+  { maxSide: 1536, quality: 0.85 },
+  { maxSide: 1280, quality: 0.8 },
+  { maxSide: 1024, quality: 0.75 },
+  { maxSide: 768, quality: 0.7 },
+];
+
+async function compressReferenceImage(file: File, maxSide: number, quality: number): Promise<File> {
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    return file;
+  }
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext("2d");
+  if (!context) {
+    bitmap.close();
+    return file;
+  }
+  context.fillStyle = "#fff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  if (!blob || blob.size >= file.size) return file;
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+}
+
+async function compressReferenceImages(files: File[]): Promise<File[]> {
+  let result = files;
+  for (const { maxSide, quality } of REFERENCE_COMPRESSION_STEPS) {
+    result = await Promise.all(files.map((file) => compressReferenceImage(file, maxSide, quality)));
+    if (result.reduce((total, file) => total + file.size, 0) <= REFERENCE_UPLOAD_BUDGET) break;
+  }
+  return result;
+}
+
 function isUnreplied(enquiry: Enquiry) {
   return Boolean(enquiry.id) && enquiry.status !== "replied";
 }
@@ -1204,6 +1247,7 @@ export default function AdminDashboard() {
     setGenerationStatus("Generating images with OpenAI...");
     const images: string[] = [];
     try {
+      const references = await compressReferenceImages(referenceImageFiles);
       // Request frames individually so a complete rotation can exceed one
       // hosting request's duration without losing the generation job.
       const framePlan = ROTATION_FRAME_PLANS[generatedImageCount] ?? ROTATION_FRAME_PLANS[RECOMMENDED_IMAGE_COUNT];
@@ -1215,10 +1259,17 @@ export default function AdminDashboard() {
         formData.set("count", "1");
         formData.set("frameIndex", String(frameIndex));
         formData.set("previousImages", JSON.stringify(images));
-        referenceImageFiles.forEach((file) => formData.append("references", file));
+        references.forEach((file) => formData.append("references", file));
         const response = await fetch("/api/admin/product-images/generate", { method: "POST", body: formData });
         const result = await response.json().catch(() => null);
-        if (!response.ok || !Array.isArray(result?.images)) throw new Error(result?.error || "Unable to generate an image.");
+        if (!response.ok || !Array.isArray(result?.images)) {
+          throw new Error(
+            result?.error ||
+              (response.status === 413
+                ? "Reference photos are too large. Try fewer or smaller photos."
+                : "Unable to generate an image."),
+          );
+        }
         images.push(...result.images);
       }
       setProductImages(images);
@@ -1526,7 +1577,10 @@ export default function AdminDashboard() {
               <button
                 className="admin-toast-view"
                 type="button"
-                onClick={() => void selectTab("enquiries")}
+                onClick={() => {
+                  dismissEnquiryAlert();
+                  void selectTab("enquiries");
+                }}
               >
                 View
               </button>
@@ -2272,10 +2326,17 @@ export default function AdminDashboard() {
                     className="btn btn-light admin-generate-button"
                     onClick={generateProductDescription}
                     disabled={descriptionStatus.startsWith("Generating")}
+                    aria-busy={descriptionStatus.startsWith("Generating")}
+                    aria-label={
+                      descriptionStatus.startsWith("Generating")
+                        ? "Generating description"
+                        : "Generate description with OpenAI"
+                    }
                   >
-                    {descriptionStatus.startsWith("Generating")
-                      ? "Generating..."
-                      : "Generate description with OpenAI"}
+                    <span className="admin-generate-label">
+                      Generate <span className="admin-generate-extra">description </span>with OpenAI
+                    </span>
+                    <span className="admin-generate-loading">Generating...</span>
                   </button>
                   {descriptionStatus && !descriptionStatus.startsWith("Generating") && (
                     <p className="admin-generator-status">{descriptionStatus}</p>
@@ -2409,11 +2470,13 @@ export default function AdminDashboard() {
                     className="btn btn-light admin-generate-button"
                     type="button"
                     disabled={generationStatus.startsWith("Generating")}
+                    aria-busy={generationStatus.startsWith("Generating")}
                     onClick={generateProductImage}
                   >
-                    {generationStatus.startsWith("Generating")
-                      ? "Generating..."
-                      : `Generate ${generatedImageCount} image${generatedImageCount === 1 ? "" : "s"} with OpenAI`}
+                    <span className="admin-generate-label">
+                      Generate {generatedImageCount} image{generatedImageCount === 1 ? "" : "s"} with OpenAI
+                    </span>
+                    <span className="admin-generate-loading">Generating...</span>
                   </button>
                   {generationStatus && (
                     <p className="admin-generator-status" role="status">
