@@ -1260,7 +1260,17 @@ export default function AdminDashboard() {
         formData.set("frameIndex", String(frameIndex));
         formData.set("previousImages", JSON.stringify(images));
         references.forEach((file) => formData.append("references", file));
-        const response = await fetch("/api/admin/product-images/generate", { method: "POST", body: formData });
+        // Mobile browsers can drop a long-running request ("Load failed"); retry the frame.
+        let response: Response | undefined;
+        for (let attempt = 0; attempt < 3 && !response; attempt++) {
+          try {
+            response = await fetch("/api/admin/product-images/generate", { method: "POST", body: formData });
+          } catch (error) {
+            if (attempt === 2) throw error;
+            setGenerationStatus(`Connection lost. Retrying image ${step + 1} of ${framePlan.length}...`);
+          }
+        }
+        if (!response) throw new Error("Unable to generate an image.");
         const result = await response.json().catch(() => null);
         if (!response.ok || !Array.isArray(result?.images)) {
           throw new Error(

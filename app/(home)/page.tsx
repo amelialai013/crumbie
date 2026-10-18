@@ -2,8 +2,8 @@ import { productSideProfile } from "@/lib/catalog";
 import Link from "next/link";
 import Image from "next/image";
 import { getProducts } from "@/lib/catalog-store";
-import whiteLogo from "@/brand/logo/new-logo/text-white.png";
-import whiteVerticalLogo from "@/assets/other/logo/white-vertical-logo-mobile.png";
+import whiteLogo from "@/brand/latest-logos/new-text-logo/text-white.png";
+import whiteVerticalLogo from "@/brand/latest-logos/new-text-logo/white-vertical-logo.png";
 import HeroMedia from "@/components/hero-media";
 import ProductCookieImage from "@/components/product-cookie-image";
 import SectionReveal from "@/components/section-reveal";
@@ -17,7 +17,7 @@ export default async function Home() {
         <div className="hero-content">
           <h1 className="hero-logo-heading">
             <Image className="hero-logo hero-logo-desktop" src={whiteLogo} alt="Club Crumbie" preload quality={100} sizes="640px" />
-            <Image className="hero-logo hero-logo-mobile" src={whiteVerticalLogo} alt="Club Crumbie" preload unoptimized />
+            <Image className="hero-logo hero-logo-mobile" src={whiteVerticalLogo} alt="Club Crumbie" preload quality={100} sizes="340px" />
           </h1>
           <div className="actions">
             <Link className="btn btn-dark btn-arrow" href="/crumbs">
