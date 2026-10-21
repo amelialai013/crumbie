@@ -7,12 +7,14 @@ import { useLayoutEffect, useRef, type ReactNode } from "react";
  * itself lives in motion.css. Items reveal individually (a section is often taller than the
  * viewport), a little above the bottom edge so the motion plays where the reader is looking.
  */
-const REVEAL_MARGIN = "0px 0px -10% 0px";
+const REVEAL_MARGIN = "0px 0px -32px 0px";
+// Closing actions have no scroll moment of their own: they arrive with the last item before them.
+const FOLLOWER_SELECTOR = ".how-it-works-cta, .prose > .btn";
 
 export default function SectionReveal({
   children,
   className,
-  itemSelector = ".step, .how-it-works-cta",
+  itemSelector = ".step",
 }: {
   children: ReactNode;
   className?: string;
@@ -24,26 +26,32 @@ export default function SectionReveal({
     const section = ref.current;
     if (!section) return;
 
+    const items = Array.from(section.querySelectorAll<HTMLElement>(itemSelector));
+    const followers = Array.from(section.querySelectorAll<HTMLElement>(FOLLOWER_SELECTOR));
+    const last = items[items.length - 1];
+
+    const show = (item: HTMLElement) => item.classList.add("is-visible");
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           // Items already scrolled past (anchor jumps, restored scroll) must never stay hidden.
           if (!entry.isIntersecting && entry.boundingClientRect.top > 0) continue;
-          entry.target.classList.add("is-visible");
+          show(entry.target as HTMLElement);
           observer.unobserve(entry.target);
+          if (entry.target === last) followers.forEach(show);
         }
       },
       { rootMargin: REVEAL_MARGIN },
     );
-    const items = section.querySelectorAll<HTMLElement>(itemSelector);
-    items.forEach((item) => {
+    if (!last) followers.forEach(show);
+    [...items, ...followers].forEach((item) => {
       item.dataset.revealItem = "";
-      observer.observe(item);
     });
+    items.forEach((item) => observer.observe(item));
 
     return () => {
       observer.disconnect();
-      items.forEach((item) => delete item.dataset.revealItem);
+      [...items, ...followers].forEach((item) => delete item.dataset.revealItem);
     };
   }, [itemSelector]);
 

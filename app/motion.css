@@ -170,7 +170,8 @@ html { scrollbar-gutter: stable; }
   .product-order-fields,
   .product-order-total,
   .cookie-explorer,
-  .product-gallery
+  .product-gallery,
+  .about-section .about-image
 ) {
   animation: reveal-up var(--motion-reveal) var(--motion-ease) backwards;
   animation-delay: calc(var(--reveal-base, 0ms) + var(--i, 0) * var(--motion-stagger));
@@ -207,6 +208,7 @@ html { scrollbar-gutter: stable; }
 .product-order-total { --i: 4; }
 .cookie-explorer,
 .product-gallery { --i: 1; }
+.about-section .about-image { --i: 0; }
 
 /* The home intro orb covers the hero: hold its content on the first frame until the orb
    starts lifting, so the entrance plays where it can be seen. */

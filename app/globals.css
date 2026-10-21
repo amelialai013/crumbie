@@ -4772,3 +4772,13 @@ html:has(.orb-intro:not(.is-leaving)) body {
   .orb-intro .orb { animation: none; transition: opacity var(--motion-panel) linear; }
   .orb-intro.is-leaving .orb { transform: none; }
 }
+
+/* The header spans the full viewport; only the gutter scales, so the logo and cart hug the
+   edges on widescreens instead of floating inside the 1280px content column. */
+@media (min-width: 641px) {
+  .nav-shell {
+    width: 100%;
+    margin: 0;
+    padding-inline: clamp(32px, 3vw, 56px);
+  }
+}

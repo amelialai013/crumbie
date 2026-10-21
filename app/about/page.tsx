@@ -12,10 +12,10 @@ export default function About() {
       <section className="page-hero">
         <div className="shell"><h1 className="page-title">Crumbie beginnings</h1></div>
       </section>
-      <SectionReveal className="section about-section" itemSelector=".about-image, .prose > *">
+      <SectionReveal className="section about-section" itemSelector=".prose > *:not(.btn)">
         <div className="shell content-grid">
           <div className="relative about-image">
-            <Image src={aboutUsImage} alt="Baker preparing ingredients in a kitchen" fill sizes="(max-width: 900px) 100vw, 50vw" quality={100} />
+            <Image src={aboutUsImage} alt="Baker preparing ingredients in a kitchen" fill priority placeholder="blur" sizes="(max-width: 900px) 100vw, 50vw" quality={80} />
           </div>
           <div className="prose">
             <h2>Our story</h2>
