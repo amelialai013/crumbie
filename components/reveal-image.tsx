@@ -5,10 +5,10 @@ import { useLayoutEffect, useRef } from "react";
 
 /**
  * Keeps its image invisible until the bytes are decoded, then marks the wrapper
- * `data-ready` so CSS fades it in once. The image never paints progressively. It works on
+ * `data-ready` so CSS fades it in once (`mode="css"` leaves the fade to the caller's own rules). The image never paints progressively. It works on
  * direct loads and on client-side navigations alike (inline scripts do not run on the latter).
  */
-export default function RevealImage({ alt, ...props }: ImageProps) {
+export default function RevealImage({ alt, mode = "animate", ...props }: ImageProps & { mode?: "animate" | "css" }) {
   const ref = useRef<HTMLImageElement>(null);
 
   useLayoutEffect(() => {
@@ -41,5 +41,5 @@ export default function RevealImage({ alt, ...props }: ImageProps) {
     };
   }, []);
 
-  return <Image ref={ref} alt={alt} {...props} />;
+  return <Image ref={ref} alt={alt} data-reveal-image={mode === "animate" ? "" : undefined} {...props} />;
 }

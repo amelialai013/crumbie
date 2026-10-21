@@ -1,7 +1,7 @@
 "use client";
 
 import Image, { StaticImageData } from "next/image";
-import { PointerEvent, useRef, useState } from "react";
+import { PointerEvent, useLayoutEffect, useRef, useState } from "react";
 
 import frame01 from "@/assets/cookies/choc-chip-cookie/turntable-natural/frame-01.png";
 import frame02 from "@/assets/cookies/choc-chip-cookie/turntable-natural/frame-02.png";
@@ -46,6 +46,31 @@ export default function CookieExplorer({
   const [hasInteracted, setHasInteracted] = useState(false);
   const [tilt, setTilt] = useState(0);
   const dragStart = useRef({ x: 0, y: 0, rotation: 0 });
+  const objectRef = useRef<HTMLDivElement>(null);
+
+  // The object stays hidden until the first visible frame is decoded, so it never paints in strips.
+  useLayoutEffect(() => {
+    const box = objectRef.current;
+    const img = box?.querySelectorAll("img")[wrap(initialRotation)];
+    if (!box || !img) return;
+    let cancelled = false;
+    const show = () => !cancelled && box.setAttribute("data-ready", "");
+    const ready = () => (img.decode ? img.decode() : Promise.resolve()).catch(() => undefined).then(show);
+    if (img.complete && img.naturalWidth > 0) ready();
+    else {
+      img.addEventListener("load", ready);
+      img.addEventListener("error", show);
+    }
+    const fallback = setTimeout(show, 5000);
+    return () => {
+      cancelled = true;
+      clearTimeout(fallback);
+      img.removeEventListener("load", ready);
+      img.removeEventListener("error", show);
+      box.removeAttribute("data-ready");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frames[0]]);
 
   function startDrag(event: PointerEvent<HTMLElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -84,7 +109,7 @@ export default function CookieExplorer({
         setRotation((current) => wrap(Math.round(current) + (event.key === "ArrowLeft" ? -1 : 1)));
       }}
     >
-      <div className="cookie-explorer-object" style={{ transform: `perspective(1000px) rotateX(${tilt}deg)` }}>
+      <div ref={objectRef} className="cookie-explorer-object" style={{ transform: `perspective(1000px) rotateX(${tilt}deg)` }}>
         {frames.map((frame, index) => {
           const directDistance = Math.abs(rotation - index);
           const distance = Math.min(directDistance, frames.length - directDistance);
@@ -96,7 +121,7 @@ export default function CookieExplorer({
               alt=""
               className={typeof frame === "string" && /\.jpe?g(?:$|\?)/i.test(frame) ? "cookie-explorer-legacy-jpeg" : undefined}
               fill
-              priority
+              priority={index === wrap(initialRotation)}
               draggable={false}
               unoptimized={typeof frame === "string" && !frame.includes("images.unsplash.com")}
               sizes="(max-width: 900px) 100vw, 46vw"

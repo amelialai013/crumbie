@@ -225,7 +225,6 @@ html:has(.orb-intro:not(.is-leaving)) :is(.hero-content .hero-logo-heading, .her
   html { scroll-behavior: auto !important; }
   .btn:active:not(:disabled) { transform: none; }
   @keyframes reveal-up { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes product-image-in { from { opacity: .45; } to { opacity: 1; } }
   @keyframes cart-empty-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes admin-auth-loading-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes checkout-error-in { from { opacity: 0; } to { opacity: 1; } }
@@ -238,7 +237,22 @@ html:has(.orb-intro:not(.is-leaving)) :is(.hero-content .hero-logo-heading, .her
 @media (scripting: enabled) {
   .about-image img {
     opacity: 0;
-    transition: opacity 900ms var(--motion-fade);
+    transition: opacity 1400ms cubic-bezier(.4, 0, .2, 1);
   }
   .about-image[data-ready] img { opacity: 1; }
 }
+
+/* Every RevealImage stays hidden until it is decoded, then fades in once: no progressive
+   paint, no pop. Gated on JS so the images are still visible without it. */
+@media (scripting: enabled) {
+  img[data-reveal-image] { opacity: 0; }
+  [data-ready] > img[data-reveal-image] {
+    opacity: 1;
+    animation: media-in var(--motion-reveal) var(--motion-fade) backwards;
+  }
+}
+@media (scripting: enabled) {
+  .cookie-explorer-object { opacity: 0; }
+  .cookie-explorer-object[data-ready] { opacity: 1; animation: media-in var(--motion-reveal) var(--motion-fade) backwards; }
+}
+@keyframes media-in { from { opacity: 0; } }

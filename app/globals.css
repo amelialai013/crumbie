@@ -2909,7 +2909,15 @@ body {
 }
 .about-image {
   min-height: 620px;
-  background: rgba(255, 255, 255, .04);
+  overflow: hidden;
+  background: #2b2420;
+}
+.about-image-ph {
+  position: absolute;
+  inset: -8%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) saturate(1.1);
 }
 .content-grid .prose h2 {
   margin-bottom: 1rem;
@@ -3428,11 +3436,6 @@ body {
 }
 .product-gallery-image {
   object-fit: cover;
-  animation: product-image-in .4s ease both;
-}
-@keyframes product-image-in {
-  from { opacity: .45; transform: scale(1.01); }
-  to { opacity: 1; transform: scale(1); }
 }
 .product-gallery-thumbnails {
   display: grid;
@@ -4781,5 +4784,28 @@ html:has(.orb-intro:not(.is-leaving)) body {
     width: 100%;
     margin: 0;
     padding-inline: clamp(32px, 3vw, 56px);
+  }
+}
+
+/* Suppress the iOS long-press link preview on the mobile menu; the links stay real anchors. */
+@media (max-width: 900px) {
+  .nav-links a { -webkit-touch-callout: none; }
+}
+
+/* Closing the mobile menu is a single, quiet fade. Nothing travels, so the panel and its links
+   can't move against each other; the offsets reset only after everything is invisible. */
+@media (max-width: 900px) {
+  .nav-links:not(.open) {
+    transition:
+      opacity var(--motion-exit) var(--motion-fade),
+      transform 0s linear var(--motion-exit),
+      visibility 0s linear var(--motion-exit);
+  }
+  .nav-links:not(.open) > a:not(.cart-link) {
+    transition:
+      color var(--motion-fast) ease,
+      opacity var(--motion-exit) var(--motion-fade),
+      transform 0s linear var(--motion-exit);
+    transition-delay: 0s, 0s, var(--motion-exit);
   }
 }

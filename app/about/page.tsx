@@ -15,7 +15,8 @@ export default function About() {
       <SectionReveal className="section about-section" itemSelector=".prose > *:not(.btn)">
         <div className="shell content-grid">
           <div className="relative about-image">
-            <RevealImage src={aboutUsImage} alt="Baker preparing ingredients in a kitchen" fill priority sizes="(max-width: 900px) 100vw, 50vw" quality={75} />
+            <div className="about-image-ph" aria-hidden style={{ backgroundImage: `url("${aboutUsImage.blurDataURL}")` }} />
+            <RevealImage mode="css" src={aboutUsImage} alt="Baker preparing ingredients in a kitchen" fill priority sizes="(max-width: 900px) 100vw, 50vw" quality={75} />
           </div>
           <div className="prose">
             <h2>Our story</h2>

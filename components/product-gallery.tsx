@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import RevealImage from "@/components/reveal-image";
 import { useState } from "react";
 
 export default function ProductGallery({ images, name }: { images: string[]; name: string }) {
@@ -13,7 +14,7 @@ export default function ProductGallery({ images, name }: { images: string[]; nam
   return (
     <div className="product-gallery">
       <div className="product-gallery-main">
-        <Image
+        <RevealImage
           key={images[activeIndex]}
           className="product-gallery-image"
           src={images[activeIndex]}

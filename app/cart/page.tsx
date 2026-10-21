@@ -2,7 +2,7 @@
 
 import { motionDuration } from "@/lib/motion";
 
-import Image from "next/image";
+import RevealImage from "@/components/reveal-image";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -114,7 +114,7 @@ export default function Cart() {
                   return (
               <div className={`cart-row${removingKey === line.key ? " is-removing" : ""}`} key={line.key}>
                 <Link className="cart-product-link" href={`/crumbs/${canonicalProductSlug}`} aria-label={`View ${line.productName}`}>
-                  <Image
+                  <RevealImage
                     className="cart-product-image"
                     src={line.productId === "product-seasonal" ? biscoffCookie : signatureCookie}
                     alt={line.productName}

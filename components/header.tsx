@@ -37,7 +37,14 @@ export default function Header() {
 
   useEffect(() => {
     const closeMenuOnNavigation = (event: MouseEvent) => {
-      if (!(event.target instanceof Element) || !event.target.closest("a[href]")) return;
+      if (!(event.target instanceof Element)) return;
+      const link = event.target.closest<HTMLAnchorElement>("a[href]");
+      if (!link) return;
+      const opensHere = event.button === 0 && !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) && !link.target;
+      const leavingPage = link.origin === location.origin && link.pathname !== location.pathname;
+      // A menu link to another page keeps the menu covering the screen. It fades once the new
+      // route has rendered (menuVisible follows the pathname), so the old page never flashes.
+      if (link.closest(".nav-links") && opensHere && leavingPage) return;
       setOpen(false);
     };
 
