@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { preconnect } from "react-dom";
 import { isOrbIntroCovering } from "@/components/orb-intro";
+import { motionDuration } from "@/lib/motion";
 
 const clips = [
   { src: "https://videos.pexels.com/video-files/5309774/5309774-hd_1920_1080_30fps.mp4", cutAt: 7 },
@@ -10,7 +11,6 @@ const clips = [
   { src: "https://videos.pexels.com/video-files/20315770/20315770-hd_1920_1080_25fps.mp4", cutAt: 7 },
 ];
 
-const crossfadeDuration = 1800;
 
 export default function HeroMedia() {
   preconnect("https://videos.pexels.com");
@@ -101,7 +101,7 @@ export default function HeroMedia() {
           }
           setOutgoingClip(null);
           transitioningRef.current = false;
-        }, crossfadeDuration);
+        }, motionDuration("crossfade", 1800));
       };
 
       if ("requestVideoFrameCallback" in nextVideo) {
@@ -282,7 +282,7 @@ export default function HeroMedia() {
               onPlaying={() => markClipPlaying(index)}
               onPause={() => markClipPaused(index)}
               onTimeUpdate={(event) => {
-                const transitionAt = Math.max(0, clip.cutAt - crossfadeDuration / 1000);
+                const transitionAt = Math.max(0, clip.cutAt - motionDuration("crossfade", 1800) / 1000);
 
                 if (
                   index === activeClipRef.current &&

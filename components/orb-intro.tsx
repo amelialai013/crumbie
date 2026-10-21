@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import OrbLoader from "@/components/orb-loader";
+import { motionDuration } from "@/lib/motion";
 
-const pulseDuration = 2400; // two pulses
-const fadeDuration = 700;
+const breatheCycle = 1200;
+const minimumCycles = 2;
+const maxWait = 3000;
 
 // Shared with the hero video so it waits on its first frame until the orb lifts.
 export const orbIntroState = { revealed: false };
@@ -27,42 +29,52 @@ function reveal() {
   window.dispatchEvent(new Event("orb-intro-reveal"));
 }
 
+// Resolves once the hero poster is decoded, so the orb never lifts onto an empty frame.
+function posterReady() {
+  const poster = document.querySelector<HTMLImageElement>(".hero-poster");
+  if (!poster) {
+    return Promise.resolve();
+  }
+  return poster.decode().catch(() => undefined);
+}
+
 export default function OrbIntro() {
   const [phase, setPhase] = useState<"pulse" | "fade" | "done">(resetReveal);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    // Block wheel, touch and keyboard scrolling until the orb lifts.
-    const blockScroll = (event: Event) => event.preventDefault();
-    const scrollKeys = new Set([" ", "PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"]);
-    const blockKeys = (event: KeyboardEvent) => {
-      if (scrollKeys.has(event.key)) {
-        event.preventDefault();
-      }
-    };
-    const unlock = () => {
-      window.removeEventListener("wheel", blockScroll);
-      window.removeEventListener("touchmove", blockScroll);
-      window.removeEventListener("keydown", blockKeys);
-    };
-    window.addEventListener("wheel", blockScroll, { passive: false });
-    window.addEventListener("touchmove", blockScroll, { passive: false });
-    window.addEventListener("keydown", blockKeys);
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const fadeTimer = setTimeout(() => {
-      window.scrollTo(0, 0);
-      unlock();
-      setPhase("fade");
-      reveal();
-    }, reduceMotion ? 600 : pulseDuration);
-    const doneTimer = setTimeout(
-      () => setPhase("done"),
-      (reduceMotion ? 600 : pulseDuration) + fadeDuration,
-    );
+    const start = performance.now();
+    const minimum = reduceMotion ? 600 : minimumCycles * breatheCycle;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let cancelled = false;
+
+    const ready = Promise.race([
+      posterReady(),
+      new Promise<void>((resolve) => timers.push(setTimeout(resolve, maxWait))),
+    ]);
+    ready.then(() => {
+      if (cancelled) {
+        return;
+      }
+      const elapsed = performance.now() - start;
+      // Lift on a breathe boundary so the pulse never cuts off mid-swell.
+      const target = reduceMotion
+        ? minimum
+        : Math.max(minimum, Math.ceil(elapsed / breatheCycle) * breatheCycle);
+      timers.push(
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          setPhase("fade");
+          reveal();
+          timers.push(setTimeout(() => setPhase("done"), motionDuration("orb-exit", 1000)));
+        }, Math.max(0, target - elapsed)),
+      );
+    });
+
     return () => {
-      unlock();
-      clearTimeout(fadeTimer);
-      clearTimeout(doneTimer);
+      cancelled = true;
+      timers.forEach(clearTimeout);
     };
   }, []);
 

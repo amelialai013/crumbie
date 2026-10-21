@@ -1,5 +1,7 @@
+type MotionToken = "panel" | "media" | "exit" | "crossfade" | "orb-exit";
+
 /** Read the shared CSS motion scale for completion timers. Browser use only. */
-export function motionDuration(token: "panel" | "media" | "exit", fallback: number): number {
+export function motionDuration(token: MotionToken, fallback: number): number {
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(`--motion-${token}`).trim();
   const duration = Number.parseFloat(value);
