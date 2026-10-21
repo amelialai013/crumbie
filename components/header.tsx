@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import pictureLogoWhite from "@/brand/latest-logos/new-image-logo/white-image-logo.png";
+import pictureLogoLeft from "@/brand/latest-logos/new-image-logo/white-image-logo-left.png";
+import pictureLogoRight from "@/brand/latest-logos/new-image-logo/white-image-logo-right.png";
 import { useCart } from "./cart-context";
 
 const links = [
@@ -18,6 +19,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [menuPathname, setMenuPathname] = useState(pathname);
   const [scrolled, setScrolled] = useState(false);
+  const [logoPlaying, setLogoPlaying] = useState(false);
   const { count } = useCart();
   const menuVisible = open && menuPathname === pathname;
   const isActive = (href: string) => pathname === href || (href === "/crumbs" && pathname.startsWith("/crumbs/"));
@@ -94,8 +96,17 @@ export default function Header() {
   return (
     <header className={`site-header${pathname === "/" ? " home-header" : ""}${scrolled ? " scrolled" : ""}${menuVisible ? " menu-open" : ""}`}>
       <div className="nav-shell">
-        <Link href="/" className="brand" onClick={handleHomeClick} aria-label="Club Crumbie home">
-          <Image src={pictureLogoWhite} alt="Club Crumbie" preload quality={100} sizes="52px" />
+        <Link
+          href="/"
+          className={`brand${logoPlaying ? " is-playing" : ""}`}
+          onClick={handleHomeClick}
+          onPointerEnter={() => { setLogoPlaying(true); }}
+          onFocus={() => { setLogoPlaying(true); }}
+          onAnimationEnd={() => setLogoPlaying(false)} aria-label="Club Crumbie home">
+          <span className="brand-mark" role="img" aria-label="Club Crumbie">
+            <Image className="brand-piece brand-piece-left" src={pictureLogoLeft} alt="" preload quality={100} sizes="26px" />
+            <Image className="brand-piece brand-piece-right" src={pictureLogoRight} alt="" preload quality={100} sizes="26px" />
+          </span>
         </Link>
         <nav id="primary-navigation" className={menuVisible ? "nav-links open" : "nav-links"} aria-label="Primary navigation" aria-hidden={!menuVisible ? undefined : false}>
           {links.map(([label, href]) => (
