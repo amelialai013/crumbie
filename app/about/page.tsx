@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
-import aboutUsImage from "@/assets/images/about-us.png";
+import aboutUsImage from "@/assets/images/about-us.webp";
+import RevealImage from "@/components/reveal-image";
 import SectionReveal from "@/components/section-reveal";
 
 export const metadata: Metadata = { title: "About" };
@@ -15,7 +15,7 @@ export default function About() {
       <SectionReveal className="section about-section" itemSelector=".prose > *:not(.btn)">
         <div className="shell content-grid">
           <div className="relative about-image">
-            <Image src={aboutUsImage} alt="Baker preparing ingredients in a kitchen" fill priority placeholder="blur" sizes="(max-width: 900px) 100vw, 50vw" quality={80} />
+            <RevealImage src={aboutUsImage} alt="Baker preparing ingredients in a kitchen" fill priority sizes="(max-width: 900px) 100vw, 50vw" quality={75} />
           </div>
           <div className="prose">
             <h2>Our story</h2>

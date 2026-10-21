@@ -2909,6 +2909,7 @@ body {
 }
 .about-image {
   min-height: 620px;
+  background: rgba(255, 255, 255, .04);
 }
 .content-grid .prose h2 {
   margin-bottom: 1rem;

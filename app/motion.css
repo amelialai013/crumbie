@@ -170,8 +170,7 @@ html { scrollbar-gutter: stable; }
   .product-order-fields,
   .product-order-total,
   .cookie-explorer,
-  .product-gallery,
-  .about-section .about-image
+  .product-gallery
 ) {
   animation: reveal-up var(--motion-reveal) var(--motion-ease) backwards;
   animation-delay: calc(var(--reveal-base, 0ms) + var(--i, 0) * var(--motion-stagger));
@@ -208,7 +207,6 @@ html { scrollbar-gutter: stable; }
 .product-order-total { --i: 4; }
 .cookie-explorer,
 .product-gallery { --i: 1; }
-.about-section .about-image { --i: 0; }
 
 /* The home intro orb covers the hero: hold its content on the first frame until the orb
    starts lifting, so the entrance plays where it can be seen. */
@@ -233,4 +231,14 @@ html:has(.orb-intro:not(.is-leaving)) :is(.hero-content .hero-logo-heading, .her
   @keyframes checkout-error-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes premium-select-menu-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes cart-confirmation-check-in { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* The About photo stays invisible until RevealImage has confirmed it is decoded, then
+   fades in once, so it never paints progressively. Without JS it is simply shown. */
+@media (scripting: enabled) {
+  .about-image img {
+    opacity: 0;
+    transition: opacity 900ms var(--motion-fade);
+  }
+  .about-image[data-ready] img { opacity: 1; }
 }
