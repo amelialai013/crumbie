@@ -2319,6 +2319,7 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
 @media(max-width:900px) {
   .site-header {
     isolation: isolate;
+    padding-top: env(safe-area-inset-top);
   }
   .nav-shell {
     position: relative;
@@ -2357,8 +2358,8 @@ section:has(#policy-modal-toggle:checked) .admin-policy-sections {
   .nav-links {
     display: flex;
     position: fixed;
-    inset: 80px 0 0;
-    height: calc(100dvh - 80px);
+    inset: calc(80px + env(safe-area-inset-top)) 0 0;
+    height: calc(100dvh - 80px - env(safe-area-inset-top));
     padding: clamp(40px, 8vh, 80px) max(32px, calc((100vw - 1280px) / 2 + 32px)) 32px;
     flex-direction: column;
     align-items: stretch;
@@ -3826,8 +3827,18 @@ body {
 .product-order .fine-print {
   margin: 0 0 26px;
 }
+/* Sticky, not fixed: iOS Safari tints its toolbar from fixed elements near the edge, which put a
+   brown block behind the domain name whenever the toast showed. */
+.cart-toast-layer {
+  position: sticky;
+  bottom: 0;
+  z-index: 80;
+  height: 0;
+  pointer-events: none;
+}
 .cart-confirmation {
-  position: fixed;
+  position: absolute;
+  pointer-events: auto;
   bottom: 24px;
   left: 50%;
   z-index: 80;

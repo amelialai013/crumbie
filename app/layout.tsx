@@ -11,7 +11,7 @@ const scrollTopOnLoadScript = `try{if(!location.hash){history.scrollRestoration=
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1b150f" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#1b150f" };
 export const metadata: Metadata = {
 	metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://clubcrumbie.com"),
 	title: { default: "Club Crumbie", template: "Club Crumbie — %s" },
