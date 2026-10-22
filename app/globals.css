@@ -4773,9 +4773,12 @@ textarea { resize: none; }
 }
 
 /* Home intro: the orb eases in, pulses over the page, then dissolves into the hero. */
+/* Absolute rather than fixed, so iOS Safari doesn't tint its status and toolbar areas from this
+   overlay and then drop the tint when it fades. Scrolling is locked while it shows. */
 .orb-intro {
-  position: fixed;
-  inset: 0;
+  position: absolute;
+  inset: 0 0 auto;
+  height: 100vh;
   z-index: 300;
   display: grid;
   place-items: center;
@@ -4783,6 +4786,12 @@ textarea { resize: none; }
   overscroll-behavior: contain;
   touch-action: none;
   transition: opacity var(--motion-orb-exit) var(--motion-fade);
+}
+@supports (height: 100lvh) {
+  .orb-intro {
+    height: 100lvh;
+    padding-bottom: calc(100lvh - 100svh);
+  }
 }
 .orb-intro .orb-loading {
   min-height: 0;
