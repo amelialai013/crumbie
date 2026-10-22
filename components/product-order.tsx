@@ -129,16 +129,19 @@ export default function ProductOrder({ product, pickupDates }: { product: Produc
           }}
         >
           <span className="cart-confirmation-check" aria-hidden="true">
-            <svg viewBox="0 0 20 20"><path d="m4 10.5 3.5 3.5L16 6" /></svg>
+            <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" pathLength="1" /></svg>
           </span>
-          <div>
+          <div className="cart-confirmation-text">
             <strong>Added to your cart</strong>
             <p>{confirmation.quantity} × {confirmation.variant} · {product.name}</p>
           </div>
-          <div className="cart-confirmation-actions">
-            <Link className="btn btn-dark" href="/cart">View cart</Link>
-            <button className="text-button" type="button" onClick={closeConfirmation}>Close</button>
-          </div>
+          <Link className="cart-confirmation-link" href="/cart">
+            View cart
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5" /></svg>
+          </Link>
+          <button className="cart-confirmation-close" type="button" onClick={closeConfirmation} aria-label="Close">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 5.5 9 9M14.5 5.5l-9 9" /></svg>
+          </button>
         </div>,
         document.body,
       )}
