@@ -132,7 +132,10 @@ export default function ProductOrder({ product, pickupDates }: { product: Produc
             <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" pathLength="1" /></svg>
           </span>
           <div className="cart-confirmation-text">
-            <strong>Added to your cart</strong>
+            <strong>
+              <span className="cart-confirmation-full">Added to your cart</span>
+              <span className="cart-confirmation-short">Added to cart</span>
+            </strong>
             <p>{confirmation.quantity} × {confirmation.variant} · {product.name}</p>
           </div>
           <Link className="cart-confirmation-link" href="/cart">

@@ -3836,13 +3836,10 @@ body {
   gap: 16px;
   align-items: center;
   padding: 14px 14px 14px 18px;
-  border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 999px;
-  background: rgba(52, 44, 37, .94);
+  background: #2b2420;
   color: #f7f7f5;
-  box-shadow: 0 18px 50px rgba(27, 21, 15, .35), 0 2px 8px rgba(27, 21, 15, .2);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 14px 32px -10px rgba(0, 0, 0, .45), 0 3px 10px -3px rgba(0, 0, 0, .3);
   transform: translateX(-50%);
   transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease), filter var(--motion-panel) var(--motion-ease);
 }
@@ -3887,6 +3884,9 @@ body {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: cart-confirmation-draw .45s var(--motion-ease) .3s forwards;
+}
+.cart-confirmation-short {
+  display: none;
 }
 .cart-confirmation-text {
   min-width: 0;
@@ -4043,11 +4043,15 @@ body {
     gap: 10px;
     padding: 10px 6px 10px 14px;
   }
-  .cart-confirmation p {
+  .cart-confirmation p,
+  .cart-confirmation-full {
     display: none;
   }
   .cart-confirmation-link {
-    font-size: .84rem;
+    font-size: .86rem;
+  }
+  .cart-confirmation-short {
+    display: inline;
   }
 }
 
