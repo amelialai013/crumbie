@@ -3836,6 +3836,17 @@ body {
   height: 0;
   pointer-events: none;
 }
+/* Safari colours its bottom toolbar from whatever sits at the bottom edge. This keeps it the
+   page colour while the toast is up, instead of picking up the toast's brown. */
+.cart-toast-backstop {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: max(6px, env(safe-area-inset-bottom));
+  background: #110d09;
+  pointer-events: none;
+}
 .cart-confirmation {
   position: absolute;
   pointer-events: auto;
@@ -4816,6 +4827,15 @@ textarea { resize: none; }
 @keyframes orb-arrive {
   from { opacity: 0; transform: scale(.6); }
   to { opacity: 1; transform: scale(1); }
+}
+/* Safari paints its status bar from the page background; match the overlay while it is up
+   (html's usual footer-dark would show as a darker strip). The same goes for the top of the
+   home page, whose hero is #1b150f. */
+html:has(.orb-intro),
+html:has(.orb-intro) body,
+html:has(.site-header.home-header:not(.scrolled)),
+html:has(.site-header.home-header:not(.scrolled)) body {
+  background: #1b150f;
 }
 /* No scrolling while the orb covers the page. */
 html:has(.orb-intro:not(.is-leaving)),

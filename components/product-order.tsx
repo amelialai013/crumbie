@@ -119,6 +119,7 @@ export default function ProductOrder({ product, pickupDates }: { product: Produc
       </div>
       {confirmation && typeof document !== "undefined" && createPortal(
         <div className="cart-toast-layer">
+          <div className="cart-toast-backstop" aria-hidden="true" />
           <div
             className={`cart-confirmation${confirmationClosing ? " is-closing" : ""}`}
             role="status"

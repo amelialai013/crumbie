@@ -29,8 +29,14 @@ export default function Header() {
   };
 
   useEffect(() => {
-    const updateHeader = () => setScrolled(window.scrollY > 8);
-    updateHeader();
+    let wasScrolled = window.scrollY > 8;
+    const updateHeader = () => {
+      const isScrolled = window.scrollY > 8;
+      if (isScrolled && !wasScrolled && pathname === "/") setLogoPlaying(true);
+      wasScrolled = isScrolled;
+      setScrolled(isScrolled);
+    };
+    setScrolled(wasScrolled);
     window.addEventListener("scroll", updateHeader, { passive: true });
     return () => window.removeEventListener("scroll", updateHeader);
   }, [pathname]);
