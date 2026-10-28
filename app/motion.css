@@ -21,7 +21,7 @@ html { scrollbar-gutter: stable; }
 .site-header.home-header { transition-duration: var(--motion-panel); }
 .hero-video { transition: opacity var(--motion-crossfade) var(--motion-fade); }
 
-.btn, .menu-button, .product-gallery-thumbnails button,
+.menu-button, .product-gallery-thumbnails button,
 .premium-select-trigger, .premium-select-menu li, .quantity-stepper-controls button {
   transition-duration: var(--motion-fast);
   transition-timing-function: var(--motion-ease);
