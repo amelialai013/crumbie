@@ -142,7 +142,7 @@ export default function ProductOrder({ product, pickupDates }: { product: Produc
             </div>
             <Link className="cart-confirmation-link" href="/cart">
               View cart
-              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5" /></svg>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4.5 5.5 5.5L7 15.5" /></svg>
             </Link>
             <button className="cart-confirmation-close" type="button" onClick={closeConfirmation} aria-label="Close">
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 5.5 9 9M14.5 5.5l-9 9" /></svg>
