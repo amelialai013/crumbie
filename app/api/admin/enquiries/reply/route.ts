@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { enquiryReplySubject } from "@/lib/enquiry-mail";
 import { sendEnquiryReply } from "@/lib/email";
 import { isAdmin } from "@/lib/session";
 import { appendEnquiryReply, getRecord } from "@/lib/store";
@@ -22,7 +23,8 @@ export async function POST(req: Request) {
 	const parsed = schema.safeParse(await req.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: "Add a subject and message." }, { status: 400 });
 
-	const { id, subject, message } = parsed.data;
+	const { id, message } = parsed.data;
+	const subject = enquiryReplySubject(id, parsed.data.subject);
 	const enquiry = await getRecord<Enquiry>("custom-order", id);
 	if (!enquiry) return NextResponse.json({ error: "Enquiry not found." }, { status: 404 });
 	if (!enquiry.email) return NextResponse.json({ error: "This enquiry has no email address." }, { status: 400 });

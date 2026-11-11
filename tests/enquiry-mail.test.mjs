@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { enquiryIdFromSubject, enquiryReference, notificationRecipients, emailAddresses } from '../lib/enquiry-mail.ts';
+import { enquiryIdFromSubject, enquiryReference, notificationRecipients, emailAddresses, enquiryReplySubject } from '../lib/enquiry-mail.ts';
 const id = '6d107334-81b4-4d02-8f62-e122125e0b41';
 test('normal Gmail reply subjects retain the exact enquiry ID', () => {
  assert.equal(enquiryIdFromSubject(`Re: ${enquiryReference(id)} Customer question`), id);
@@ -13,4 +13,10 @@ test('Gmail is always included alongside existing recipients without duplicates'
 test('recipient matching uses complete email addresses rather than substrings', () => {
  assert.deepEqual(emailAddresses('Customer <client@example.com>, Other <other@example.com>'), ['client@example.com', 'other@example.com']);
  assert.equal(emailAddresses('fakeclient@example.com').includes('client@example.com'), false);
+});
+
+test('portal replies always carry exactly one reference to their own enquiry', () => {
+ assert.equal(enquiryIdFromSubject(enquiryReplySubject(id, 'Re: your enquiry')), id);
+ assert.equal(enquiryReplySubject(id, `${enquiryReference(id)} Hello`), `${enquiryReference(id)} Hello`);
+ assert.equal(enquiryReplySubject(id, '[Crumbie enquiry: wrong] Hello'), `${enquiryReference(id)} Hello`);
 });

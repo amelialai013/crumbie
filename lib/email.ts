@@ -1,7 +1,7 @@
 import "server-only";
 import { Resend } from "resend";
 import { enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
-import { enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
+import { enquiryMailbox, enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
 import { getRecord } from "@/lib/store";
 
 type Content = { fields: Record<string, string> };
@@ -109,9 +109,7 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 }
 
 export async function sendEnquiryReply(reply: { to: string; subject: string; message: string }) {
-	const settings = await contentFields("settings");
-	const replyTo = settings.notificationEmail?.trim() || process.env.CRUMBIE_NOTIFICATION_EMAIL?.trim() || undefined;
-	await sendTextEmail({ to: reply.to, subject: reply.subject, text: reply.message, replyTo });
+	await sendTextEmail({ to: reply.to, subject: reply.subject, text: reply.message, replyTo: enquiryMailbox });
 }
 
 export async function sendOrderConfirmation(order: Order) {

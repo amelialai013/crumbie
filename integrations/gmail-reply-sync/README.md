@@ -26,3 +26,5 @@ Activated and tested in production on 11 November 2026. The production secret is
 ## Incoming reply upgrade
 
 Deploy the updated app first, then replace Code.gs in the installed project and save it. Run syncCrumbieReplies once. The first successful upgraded run backfills the last 30 days (with a one-day overlap), including customer responses previously skipped; existing sent replies are deduplicated. The existing five-minute trigger continues running. Messages must retain the enquiry reference in their subject.
+
+Incoming sync activated on 12 November 2026: saved Code.gs was checked against the repository source, installCrumbieSync completed successfully, and the trigger list confirmed one time-based syncCrumbieReplies trigger. Portal replies now carry the enquiry reference and direct customer responses to the synced Gmail mailbox. Historical conversations lacking references cannot be automatically matched; the initial backfill found no matching incoming responses among the six existing enquiries.
