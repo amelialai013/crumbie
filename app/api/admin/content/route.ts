@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getRecord, setRecord } from "@/lib/store";
 import { isAdmin } from "@/lib/session";
 import { policyBodyMaxChars } from "@/lib/text-limits";
@@ -55,6 +56,7 @@ export async function PUT(request: Request) {
 	}))) return NextResponse.json({ error: "Policy sections exceed the character limits" }, { status: 413 });
 	try {
 		await setRecord("content", payload.module, { fields: Object.fromEntries(Object.entries(payload.fields).map(([field, value]) => [field, (value as string).trim()])), ...(payload.module === "policy" ? { sections: (payload.sections || []).map((section: { heading: string; body: string }) => ({ heading: section.heading.trim(), body: section.body.trim() })), removedFields: payload.removedFields || [] } : {}) });
+		revalidatePath("/", "layout");
 		return NextResponse.json({ ok: true });
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to save content";
