@@ -1179,7 +1179,7 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 }
 .admin-product-form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 .admin-editor .field > input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
@@ -1221,10 +1221,11 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   margin-top: auto;
   padding-top: 8px;
 }
-.admin-product-form .field:nth-child(4),
+.admin-product-form .field:nth-child(1),
 .admin-product-form .field:nth-child(5),
 .admin-product-form .field:nth-child(6),
-.admin-product-form .field:nth-child(7) {
+.admin-product-form .field:nth-child(7),
+.admin-product-form .field:nth-child(8) {
   grid-column: 1 / -1;
 }
 .admin-product-form .field label {
@@ -1780,15 +1781,16 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
     grid-template-areas: "date action";
   }
   .admin-product-table tr {
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto auto auto 1fr;
     grid-template-areas:
-      "product product product"
-      "six twelve action";
+      "product product product product"
+      "four six twelve action";
     column-gap: 12px;
   }
   .admin-product-table td:nth-child(1) { grid-area: product; }
-  .admin-product-table td:nth-child(2) { grid-area: six; color: var(--ink); }
-  .admin-product-table td:nth-child(3) { grid-area: twelve; justify-self: start; }
+  .admin-product-table td:nth-child(2) { grid-area: four; color: var(--ink); }
+  .admin-product-table td:nth-child(3) { grid-area: six; color: var(--ink); }
+  .admin-product-table td:nth-child(4) { grid-area: twelve; justify-self: start; }
   .admin-product-table td.admin-table-action { justify-self: end; }
   .admin-product-price::before {
     content: attr(data-label) ": ";

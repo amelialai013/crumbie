@@ -242,7 +242,7 @@ const contentModules: Record<string, ContentModule> = {
         heroSecondaryLabel: "Make an enquiry",
         howTitle: "How it works",
         stepOneTitle: "Choose your box",
-        stepOneBody: "Pick a curated collection in a box of six or twelve.",
+        stepOneBody: "Pick a curated collection in a box of four, six or twelve.",
         stepTwoTitle: "Select pickup",
         stepTwoBody:
           "Choose an available pickup date and time in Ivanhoe, Victoria.",
@@ -546,6 +546,7 @@ export default function AdminDashboard() {
     description: "",
     ingredients: defaultProductIngredients,
     allergens: defaultProductAllergens,
+    price4: "",
     price6: "",
     price12: "",
   });
@@ -1075,10 +1076,10 @@ export default function AdminDashboard() {
       fieldErrors.ingredients = "Enter order information.";
     if (!newProduct.allergens.trim())
       fieldErrors.allergens = "Enter allergen information.";
-    if (!newProduct.price6.trim())
-      fieldErrors.price6 = "Enter a box of 6 price.";
-    if (!newProduct.price12.trim())
-      fieldErrors.price12 = "Enter a box of 12 price.";
+    // A box size with no price isn't offered on the storefront.
+    const hasPrice = (value: string) => value.trim() !== "" && Number(value) > 0;
+    if (!hasPrice(newProduct.price4) && !hasPrice(newProduct.price6) && !hasPrice(newProduct.price12))
+      fieldErrors.price4 = "Enter a price for at least one box size.";
     setProductFieldErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return;
     const wasEditing = Boolean(editingProductId);
@@ -1097,18 +1098,15 @@ export default function AdminDashboard() {
       images: productImages,
       imageMode: productImages.length > 0 ? "gallery" : undefined,
       variants: [
-        {
-          id: `${slug}-6`,
-          label: "Box of 6",
-          quantity: 6,
-          price: Number(newProduct.price6),
-        },
-        {
-          id: `${slug}-12`,
-          label: "Box of 12",
-          quantity: 12,
-          price: Number(newProduct.price12),
-        },
+        ...(hasPrice(newProduct.price4)
+          ? [{ id: `${slug}-4`, label: "Box of 4", quantity: 4, price: Number(newProduct.price4) }]
+          : []),
+        ...(hasPrice(newProduct.price6)
+          ? [{ id: `${slug}-6`, label: "Box of 6", quantity: 6, price: Number(newProduct.price6) }]
+          : []),
+        ...(hasPrice(newProduct.price12)
+          ? [{ id: `${slug}-12`, label: "Box of 12", quantity: 12, price: Number(newProduct.price12) }]
+          : []),
       ],
     };
     formData.set("product", JSON.stringify(product));
@@ -1134,6 +1132,7 @@ export default function AdminDashboard() {
       description: "",
       ingredients: defaultProductIngredients,
       allergens: defaultProductAllergens,
+      price4: "",
       price6: "",
       price12: "",
     });
@@ -1155,6 +1154,7 @@ export default function AdminDashboard() {
       description: product.description,
       ingredients: product.ingredients,
       allergens: product.allergens,
+      price4: String(product.variants.find((variant) => variant.quantity === 4)?.price || ""),
       price6: String(product.variants.find((variant) => variant.quantity === 6)?.price || ""),
       price12: String(product.variants.find((variant) => variant.quantity === 12)?.price || ""),
     };
@@ -1172,7 +1172,7 @@ export default function AdminDashboard() {
   function startNewProduct() {
     setEditingProductId(null);
     setProductFieldErrors({});
-    setNewProduct({ name: "", description: "", ingredients: defaultProductIngredients, allergens: defaultProductAllergens, price6: "", price12: "" });
+    setNewProduct({ name: "", description: "", ingredients: defaultProductIngredients, allergens: defaultProductAllergens, price4: "", price6: "", price12: "" });
     setProductImages([]);
     setReferenceImageFiles([]);
     setImageDirection("");
@@ -1201,7 +1201,7 @@ export default function AdminDashboard() {
     finishAdminAction("Product successfully removed");
   }
 
-  function adjustProductPrice(field: "price6" | "price12", amount: number) {
+  function adjustProductPrice(field: "price4" | "price6" | "price12", amount: number) {
     const current = Number(newProduct[field]) || 0;
     setNewProduct({
       ...newProduct,
@@ -2240,6 +2240,48 @@ export default function AdminDashboard() {
                     <p className="field-error" role="alert">{productFieldErrors.name}</p>
                   )}
                 </div>
+                <div className={`field${productFieldErrors.price4 ? " has-error" : ""}`}>
+                  <label htmlFor="product-price-4">Box of 4 price</label>
+                  <div className="quantity-stepper admin-number-stepper">
+                    <input
+                      id="product-price-4"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newProduct.price4}
+                      onChange={(event) =>
+                        setNewProduct({
+                          ...newProduct,
+                          price4: event.target.value,
+                        })
+                      }
+                    />
+                    <div className="quantity-stepper-controls">
+                      <button
+                        type="button"
+                        onClick={() => adjustProductPrice("price4", -1)}
+                        disabled={Number(newProduct.price4) <= 0}
+                        aria-label="Decrease box of 4 price"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                          <path d="M3 8h10" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => adjustProductPrice("price4", 1)}
+                        aria-label="Increase box of 4 price"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 3v10M3 8h10" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  {productFieldErrors.price4 && (
+                    <p className="field-error" role="alert">{productFieldErrors.price4}</p>
+                  )}
+                </div>
                 <div className={`field${productFieldErrors.price6 ? " has-error" : ""}`}>
                   <label htmlFor="product-price-6">Box of 6 price</label>
                   <div className="quantity-stepper admin-number-stepper">
@@ -2600,6 +2642,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th>Product</th>
+                  <th className="admin-product-price">Four</th>
                   <th className="admin-product-price">Six</th>
                   <th className="admin-product-price">Twelve</th>
                   <th>
@@ -2617,14 +2660,14 @@ export default function AdminDashboard() {
                           {product.description}
                         </div>
                       </td>
-                      {[6, 12].map((quantity) => {
+                      {[4, 6, 12].map((quantity) => {
                         const variant = product.variants.find(
                           (item) => item.quantity === quantity,
                         );
                         return (
                           <td
                             className="admin-product-price"
-                            data-label={quantity === 6 ? "Six" : "Twelve"}
+                            data-label={quantity === 4 ? "Four" : quantity === 6 ? "Six" : "Twelve"}
                             key={quantity}
                           >
                             {variant ? `$${variant.price}` : "—"}

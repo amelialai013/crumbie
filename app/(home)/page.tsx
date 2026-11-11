@@ -39,7 +39,7 @@ export default async function Home() {
           <div className="steps">
             <div className="step">
               <h3>Choose your box</h3>
-              <p>Pick a curated collection in a box of six or twelve.</p>
+              <p>Pick a curated collection in a box of four, six or twelve.</p>
             </div>
             <div className="step">
               <h3>Select pickup</h3>
