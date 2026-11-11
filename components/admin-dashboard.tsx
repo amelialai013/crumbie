@@ -52,7 +52,7 @@ type Enquiry = {
   createdAt?: string;
   repliedAt?: string;
   readAt?: string;
-  replies?: Array<{ subject: string; message: string; sentAt: string }>;
+  replies?: Array<{ subject: string; message: string; sentAt: string; source?: "gmail"; externalId?: string }>;
 };
 const DISMISSED_ENQUIRY_ALERTS_KEY = "crumbie-dismissed-enquiry-alerts";
 
@@ -2186,9 +2186,9 @@ export default function AdminDashboard() {
                   <p>{enquiry.request || "No message provided."}</p>
                 </li>
                 {enquiry.replies?.map((reply) => (
-                  <li className="admin-enquiry-message is-reply" key={reply.sentAt}>
+                  <li className="admin-enquiry-message is-reply" key={reply.externalId || reply.sentAt}>
                     <div className="admin-enquiry-message-head">
-                      <strong>Club Crumbie</strong>
+                      <strong>Club Crumbie{reply.source === "gmail" ? " · Gmail" : ""}</strong>
                       <small>{formatDate(reply.sentAt)}</small>
                     </div>
                     {reply.subject && <span className="admin-enquiry-message-subject">{reply.subject}</span>}

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendEnquiryReply } from "@/lib/email";
 import { isAdmin } from "@/lib/session";
-import { getRecord, setRecord } from "@/lib/store";
+import { appendEnquiryReply, getRecord } from "@/lib/store";
 
 const schema = z.object({
 	id: z.string().trim().min(1).max(100),
@@ -35,13 +35,7 @@ export async function POST(req: Request) {
 	}
 
 	const sentAt = new Date().toISOString();
-	const updated: Enquiry = {
-		...enquiry,
-		status: "replied",
-		repliedAt: sentAt,
-		readAt: enquiry.readAt || sentAt,
-		replies: [...(enquiry.replies || []), { subject, message, sentAt }],
-	};
-	await setRecord("custom-order", id, updated);
+	const updated = await appendEnquiryReply(id, { subject, message, sentAt });
+	if (!updated) return NextResponse.json({ error: "Enquiry no longer exists." }, { status: 404 });
 	return NextResponse.json(updated);
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { Resend } from "resend";
 import { enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
+import { enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
 import { getRecord } from "@/lib/store";
 
 type Content = { fields: Record<string, string> };
@@ -19,6 +20,8 @@ type Order = {
 	currency: string | null;
 	amountTotal: number | null;
 };
+
+const defaultNotificationEmail = "clubcrumbieadmin@gmail.com";
 
 const defaultTemplates = {
 	confirmationSubject: "Your Club Crumbie order is confirmed",
@@ -67,7 +70,7 @@ async function contentFields(moduleName: string) {
 	return (await getRecord<Content>("content", moduleName))?.fields || {};
 }
 
-async function sendTextEmail(message: { to: string; subject: string; text: string; replyTo?: string }) {
+async function sendTextEmail(message: { to: string | string[]; subject: string; text: string; replyTo?: string }) {
 	const apiKey = process.env.RESEND_API_KEY?.trim();
 	const from = process.env.RESEND_FROM_EMAIL?.trim() || "Club Crumbie <hello@clubcrumbie.com>";
 	if (!apiKey) throw new Error("Resend is not configured");
@@ -87,7 +90,7 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 		contentFields("email templates"),
 		contentFields("settings"),
 	]);
-	const to = settings.notificationEmail?.trim() || process.env.CRUMBIE_NOTIFICATION_EMAIL?.trim();
+	const to = notificationRecipients(defaultNotificationEmail, settings.notificationEmail, process.env.CRUMBIE_NOTIFICATION_EMAIL);
 	if (!to) throw new Error("Notification email is not configured");
 
 	const values = {
@@ -100,8 +103,8 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 	await sendTextEmail({
 		to,
 		replyTo: enquiry.email,
-		subject: renderTemplate(templates.enquirySubject || defaultTemplates.enquirySubject, values),
-		text: renderTemplate(withEnquiryType(templates.enquiryBody || defaultTemplates.enquiryBody), values),
+		subject: `${enquiryReference(enquiry.id)} ${renderTemplate(templates.enquirySubject || defaultTemplates.enquirySubject, values)}`,
+		text: `${renderTemplate(withEnquiryType(templates.enquiryBody || defaultTemplates.enquiryBody), values)}\n\nReply to this email to contact the customer. Keep the [Crumbie enquiry: ...] reference in the subject so your reply can sync to the admin portal.\nPortal: ${process.env.NEXT_PUBLIC_SITE_URL || "https://clubcrumbie.com"}/admin`,
 	});
 }
 
