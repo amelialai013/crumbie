@@ -49,6 +49,10 @@
           "envKey": "ADMIN_SESSION_SECRET"
         },
         {
+          "variableName": "gmail-reply-sync-secret",
+          "envKey": "GMAIL_REPLY_SYNC_SECRET"
+        },
+        {
           "variableName": "notification-email",
           "envKey": "CRUMBIE_NOTIFICATION_EMAIL"
         }
@@ -63,6 +67,10 @@
     "admin-session-secret": {
       "name": "admin-session-secret",
       "backendId": "fprjvar_61VUyGl8y2erRcWbW16VRo2iFw8S22NaNcaNWf1UeJLs"
+    },
+    "gmail-reply-sync-secret": {
+      "name": "gmail-reply-sync-secret",
+      "backendId": "fprjvar_61VjxLVNaNqSs6BZM16VRo2iFw8S22NaNcaNWf1UeBVw"
     },
     "notification-email": {
       "name": "notification-email",

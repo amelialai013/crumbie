@@ -1,0 +1,8 @@
+PASS: OTF, TTF and WOFF2 parse and reopen.
+PASS: all 95 printable ASCII characters encoded; 104 encoded characters in total.
+PASS: sample phrases, prices and punctuation shape without missing glyphs in OTF/TTF.
+PASS: ss01 / ss02 stylistic sets activate their intended alternate letters.
+PASS: all 23 supplied/default+alternate vector glyphs retain bounds within 0.4143 font units after OTF compilation.
+PASS: desktop specimen rendered from the generated TTF.
+Not tested: installation in every desktop design application, multilingual text outside the included character set.
+PASS: version 1.001 changes only numeral three in all three font formats; all other outlines, advance widths, character maps, kerning and OpenType features match version 1.000.

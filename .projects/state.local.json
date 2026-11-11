@@ -78,7 +78,8 @@
     ".env": [
       "ADMIN_PASSWORD",
       "ADMIN_SESSION_SECRET",
-      "CRUMBIE_NOTIFICATION_EMAIL"
+      "CRUMBIE_NOTIFICATION_EMAIL",
+      "GMAIL_REPLY_SYNC_SECRET"
     ]
   }
 }

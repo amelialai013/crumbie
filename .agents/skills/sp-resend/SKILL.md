@@ -27,6 +27,12 @@ Reach for Resend when a task involves sending, receiving, or managing email prog
 
 How to call Resend: authenticate with a `Bearer` API key against `https://api.resend.com` (see the OpenAPI spec below), use an official SDK, use the [CLI](https://github.com/resend/resend-cli), or connect to the [MCP server](https://mcp.resend.com/mcp). Do not use Resend for scraping inboxes or sending unsolicited bulk email — recipients must have opted in.
 
+## Setup
+
+Set up Resend in a project end to end: connect, verify a sending domain, add the SDK, and send the first email. Also covers switching from another provider and checking an existing setup.
+
+- [Setup guide for agents](https://resend.com/setup.md)
+
 ## Command line tool
 
 Install and use the Resend CLI from the terminal.
@@ -36,11 +42,13 @@ Install and use the Resend CLI from the terminal.
 
 ## MCP Server
 
-Add Resend to Cursor, Claude, and other MCP clients.
+Add Resend to Cursor, Claude, and other MCP clients. Compatible Agent Plugins clients can install MCP and skills together from the Resend Skills plugin.
 
 - [Remote MCP Server](https://mcp.resend.com/mcp)
 - [Self-hosted MCP Server](https://github.com/resend/resend-mcp)
 - [MCP Discovery](https://resend.com/.well-known/mcp.json)
+- [Agent Plugin](https://github.com/resend/resend-skills)
+- [Agent Plugins standard](https://agent-plugins.org)
 
 ## Skills
 
@@ -55,13 +63,26 @@ Best practices for building and sending emails with agents.
 
 ## Documentation
 
-The llms.txt file containing all Resend documentation.
+The llms.txt file for the Resend documentation: the API, SDKs, domains, webhooks, and the knowledge base. Guides, including the deliverability guides, are listed separately below.
 
 - [Full documentation](https://resend.com/docs/llms.txt)
 
+## Deliverability
+
+Emails that show as delivered but land in spam or Junk, even with SPF, DKIM, and DMARC passing, are a placement question. Inbox providers decide placement from the sending domain's reputation, content, and how recipients engage, not from Resend's sending IPs. Start with these guides:
+
+- [Why are my emails going to spam?](https://resend.com/docs/knowledge-base/why-are-my-emails-going-to-spam.md)
+- [New domain going to spam](https://resend.com/guides/email/new-domain-emails-going-to-spam.md): why a new domain is held back and how to warm it up
+- [Gmail spam folder](https://resend.com/guides/email/deliverability/avoid-gmail-spam-folder.md)
+- [Outlook and Microsoft 365 Junk folder](https://resend.com/guides/email/deliverability/avoid-outlook-spam-folder.md)
+- [Yahoo spam folder](https://resend.com/guides/email/deliverability/avoid-yahoo-spam-folder.md)
+- [iCloud Junk folder](https://resend.com/guides/email/deliverability/avoid-icloud-spam-folder.md)
+
+When to contact support about placement, and what to include: [Deliverability and spam placement](https://resend.com/support/llms.txt#deliverability-and-spam-placement).
+
 ## Support
 
-How to get help from the Resend support team, and how to write a request that gets resolved on the first reply. Agents contacting support on a user's behalf should read the agent guide first — there is no Support API; diagnose, draft, and have the user submit.
+How to get help from the Resend support team, and how to write a request that gets resolved on the first reply. Agents contacting support on a user's behalf should read the agent guide first — there is no Support API; diagnose, draft, and have the user submit. For emails landing in spam or Junk, apply the [Deliverability](#deliverability) guides before writing in.
 
 - [Support (llms.txt)](https://resend.com/support/llms.txt)
 - [Support guide for agents](https://resend.com/support/agent.md)
@@ -81,6 +102,20 @@ Plans, features, and cost-per-email for transactional and marketing emails.
 - [Pricing (Markdown)](https://resend.com/pricing.md)
 - [Pricing (HTML)](https://resend.com/pricing)
 
+## Enterprise
+
+Enterprise plans, SLAs, security and compliance, and how to contact sales.
+
+- [Enterprise (Markdown)](https://resend.com/enterprise.md)
+- [Enterprise (HTML)](https://resend.com/enterprise)
+
+## Nonprofits
+
+The nonprofit program: the discount, who is eligible, how verification works, and how to apply.
+
+- [Nonprofits (Markdown)](https://resend.com/nonprofits.md)
+- [Nonprofits (HTML)](https://resend.com/nonprofits)
+
 ## Blog
 
 Articles on email infrastructure, developer experience, and product updates. The index enumerates every post as a flat list of links. Append `.md` to any post URL, or send `Accept: text/markdown`, to receive the raw markdown source.
@@ -88,6 +123,14 @@ Articles on email infrastructure, developer experience, and product updates. The
 - [Blog index (Markdown)](https://resend.com/blog.md)
 - [Blog index (HTML)](https://resend.com/blog)
 - Example: [https://resend.com/blog/agent-experience.md](https://resend.com/blog/agent-experience.md)
+
+## Guides
+
+Step-by-step guides for sending, receiving, and delivering email with Resend. The index enumerates every guide as a list of links grouped by category and subcategory. Append `.md` to any guide, category, or subcategory URL, or send `Accept: text/markdown`, to receive the raw markdown source.
+
+- [Guides index (Markdown)](https://resend.com/guides.md)
+- [Guides index (HTML)](https://resend.com/guides)
+- Example: [https://resend.com/guides/email/new-domain-emails-going-to-spam.md](https://resend.com/guides/email/new-domain-emails-going-to-spam.md)
 
 ## Changelog
 
@@ -115,7 +158,7 @@ Customer stories — how teams use Resend in production. The index enumerates ev
 
 ## Legal
 
-Terms of service, privacy policy, DPA, and other legal documents. The index enumerates every legal document as a flat list of links. Append `.md` to any legal URL, or send `Accept: text/markdown`, to receive the raw markdown source.
+Terms of service, privacy policy, DPA, and other legal documents. The [Acceptable Use Policy](https://resend.com/legal/acceptable-use.md) sets out which use cases and content are allowed. The index enumerates every legal document as a flat list of links. Append `.md` to any legal URL, or send `Accept: text/markdown`, to receive the raw markdown source.
 
 - [Legal index (Markdown)](https://resend.com/legal.md)
 - [Legal index (HTML)](https://resend.com/legal)
@@ -131,7 +174,7 @@ Guides for migrating from other email providers to Resend. The index enumerates 
 
 ## Security
 
-Security and compliance documentation — GDPR, SOC 2, responsible disclosure. The index enumerates every security document as a flat list of links. Append `.md` to any security URL, or send `Accept: text/markdown`, to receive the raw markdown source.
+Security and compliance documentation — GDPR, SOC 2, responsible disclosure. Covers the signed DPA, data location, retention, transfers, subprocessors, HIPAA and ISO 27001, and whether we sign country-specific DPAs (we don't). The index enumerates every security document as a flat list of links. Append `.md` to any security URL, or send `Accept: text/markdown`, to receive the raw markdown source.
 
 - [Security index (Markdown)](https://resend.com/security.md)
 - [Security index (HTML)](https://resend.com/security)

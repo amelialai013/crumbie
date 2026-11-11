@@ -104,7 +104,7 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 		to,
 		replyTo: enquiry.email,
 		subject: `${enquiryReference(enquiry.id)} ${renderTemplate(templates.enquirySubject || defaultTemplates.enquirySubject, values)}`,
-		text: `${renderTemplate(withEnquiryType(templates.enquiryBody || defaultTemplates.enquiryBody), values)}\n\nReply to this email to contact the customer. Keep the [Crumbie enquiry: ...] reference in the subject so your reply can sync to the admin portal.\nPortal: ${process.env.NEXT_PUBLIC_SITE_URL || "https://clubcrumbie.com"}/admin`,
+		text: renderTemplate(withEnquiryType(templates.enquiryBody || defaultTemplates.enquiryBody), values),
 	});
 }
 

@@ -1,0 +1,20 @@
+languagesystem DFLT dflt;
+feature kern {
+pos A V -70;
+pos A Y -65;
+pos A T -35;
+pos T A -65;
+pos T O -35;
+pos V A -70;
+pos W A -40;
+pos Y A -65;
+pos Y O -35;
+pos L T -35;
+pos L Y -50;
+pos L V -45;
+pos O T -20;
+pos R T -20;
+pos R Y -20;
+} kern;
+feature ss01 { sub C by C.coming; sub M by M.coming; sub N by N.coming; } ss01;
+feature ss02 { sub T by T.tuned; sub U by U.tuned; sub N by N.tuned; sub E by E.tuned; } ss02;
