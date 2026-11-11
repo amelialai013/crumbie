@@ -104,7 +104,10 @@ export function DatePicker({
         tabIndex={-1}
         aria-hidden="true"
         value={toIso(parts)}
-        onChange={(event) => update(toParts(event.target.value))}
+        onChange={(event) => {
+          update(toParts(event.target.value));
+          event.target.blur();
+        }}
       />
       <button
         type="button"

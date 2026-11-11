@@ -91,6 +91,7 @@ export async function POST(request: Request) {
 			const deadline = Date.now() + 250_000;
 			let feedback = "";
 			let normalized: Buffer | undefined;
+			let timedOut = false;
 			for (let attempt = 0; attempt < 4; attempt++) {
 				const upstream = new FormData();
 				upstream.set("model", "gpt-image-2.5-sunburst");
@@ -102,10 +103,18 @@ export async function POST(request: Request) {
 				else references.forEach((file) => upstream.append("image[]", file, file.name));
 				const remaining = deadline - Date.now();
 				if (remaining < 20_000) break;
-				const response = await fetch("https://api.openai.com/v1/images/edits", {
-					method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: upstream, signal: AbortSignal.timeout(remaining),
-				});
-				const result = await response.json().catch(() => null);
+				// Cap each attempt so one stalled OpenAI call can't use the whole budget; retry it instead.
+				let response: Response;
+				let result: any;
+				try {
+					response = await fetch("https://api.openai.com/v1/images/edits", {
+						method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: upstream, signal: AbortSignal.timeout(Math.min(remaining, 100_000)),
+					});
+					result = await response.json().catch(() => null);
+				} catch (error) {
+					if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) { timedOut = true; continue; }
+					throw error;
+				}
 				if (response.status === 429) {
 					const seconds = Number(response.headers.get("retry-after")) || Number(result?.error?.message?.match(/try again in ([\d.]+)s/i)?.[1]) || 20;
 					await new Promise((resolve) => setTimeout(resolve, Math.min(60, Math.max(1, seconds)) * 1000)); continue;
@@ -117,7 +126,7 @@ export async function POST(request: Request) {
 				console.warn("Rejected rotation image", rotationViews[index].label, issue);
 				normalized = undefined; feedback = `The previous attempt was rejected: ${issue} Correct this viewpoint.`;
 			}
-			if (!normalized) throw new Error(`Could not generate a distinct ${rotationViews[index].label} view. Existing product images were preserved; please retry generation.`);
+			if (!normalized) throw new Error(timedOut ? "OpenAI took too long to respond. Please try again." : `Could not generate a distinct ${rotationViews[index].label} view. Existing product images were preserved; please retry generation.`);
 			return uploadMedia(
 				`products/${productSlugFromName(name)}/generated-${timestamp}-${index + 1}.png`,
 				normalized,

@@ -1535,6 +1535,7 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 .admin-generator-status {
   color: #ff8f8f !important;
   font-size: .8rem;
+  text-align: right;
 }
 .admin-reference-selection {
   display: grid;

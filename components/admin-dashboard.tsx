@@ -1286,8 +1286,7 @@ export default function AdminDashboard() {
         setGenerationProgress({ done: step + 1, total: framePlan.length });
       }
       setProductImages(images);
-      const angles = images.length - 1;
-      setGenerationStatus(`${images.length} transparent PNG${images.length === 1 ? "" : "s"} generated. Three-quarter cover${angles ? ` and ${angles} rotation angle${angles === 1 ? "" : "s"}, opening bird’s-eye` : ""}. Save the product to publish.`);
+      setGenerationStatus("");
     } catch (error) {
       setGenerationStatus(error instanceof Error ? error.message : "Unable to generate images.");
     }
