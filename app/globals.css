@@ -2790,7 +2790,12 @@ body {
   min-height: 146px;
 }
 .enquiry-form .field textarea::placeholder {
-  color: #efcdaa;
+  color: rgba(239, 205, 170, 0.6);
+  opacity: 1;
+  transition: opacity .15s ease;
+}
+.enquiry-form .field textarea:focus::placeholder {
+  opacity: 0;
 }
 .enquiry-submit {
   width: auto;
