@@ -29,6 +29,10 @@ export async function POST(req: Request) {
  if (Buffer.byteLength(body) > 100000) return NextResponse.json({ error: "Message too large." }, { status: 413 });
  let json: unknown;
  try { json = JSON.parse(body); } catch { return NextResponse.json({ error: "Invalid JSON." }, { status: 400 }); }
+ if (json && typeof json === "object" && "capability" in json && json.capability === "message-headers-v2") {
+  await setRecord("integration", "gmail-headers", { version: 2, enabledAt: new Date().toISOString() });
+  return NextResponse.json({ ok: true });
+ }
  const parsed = schema.safeParse(json);
  if (!parsed.success) return NextResponse.json({ error: "Invalid reply." }, { status: 400 });
  const reply = parsed.data;

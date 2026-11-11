@@ -15,11 +15,11 @@ test('bridge imports both directions, excludes drafts, backfills once and retain
  const context = vm.createContext({Date,Set,PropertiesService:{getScriptProperties:()=>({getProperty:k=>props.get(k),setProperty:(k,v)=>props.set(k,v)})},Session:{getEffectiveUser:()=>({getEmail:()=> 'clubcrumbieadmin@gmail.com'})},LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},GmailApp:{search:q=>{queries.push(q);return [{getMessages:()=>[message('out','clubcrumbieadmin@gmail.com','customer@example.com'),message('in','customer@example.com','clubcrumbieadmin@gmail.com'),message('draft','clubcrumbieadmin@gmail.com','customer@example.com',true)]}]}},UrlFetchApp:{fetch:(_,options)=>{sent.push(JSON.parse(options.payload));return {getResponseCode:()=>status}}}});
  vm.runInContext(code,context);
  context.syncCrumbieReplies();
- assert.deepEqual(sent.map(m=>m.messageId),['out','in']);
+ assert.deepEqual(sent.filter(m=>m.messageId).map(m=>m.messageId),['out','in']);
  assert.ok(!queries[0].includes('in:sent'));
  assert.equal(props.get('INCOMING_SYNC_VERSION'),'2');
  context.syncCrumbieReplies();
- assert.equal(sent.length,2);
+ assert.equal(sent.filter(m=>m.messageId).length,2);
  props.delete('INCOMING_SYNC_VERSION');
  const watermark=props.get('LAST_SUCCESS_MS'); status=500;
  assert.throws(()=>context.syncCrumbieReplies(),/HTTP 500/);

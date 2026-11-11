@@ -69,6 +69,12 @@ function syncCrumbieReplies() {
           if (status === 400 || status === 404) continue;
           if (status !== 200) throw new Error('Crumbie sync failed (HTTP ' + status + '). Check configuration and retry.');
     }
+    // Enable clean subjects only after this version has successfully completed a sync.
+    const ready = UrlFetchApp.fetch(c.endpoint, {
+      method: 'post', contentType: 'application/json', headers: { Authorization: 'Bearer ' + c.secret },
+      payload: JSON.stringify({ capability: 'message-headers-v2' }), muteHttpExceptions: true, followRedirects: false
+    });
+    if (ready.getResponseCode() !== 200) throw new Error('Could not enable header matching.');
     c.props.setProperty('LAST_SUCCESS_MS', String(started));
     c.props.setProperty('INCOMING_SYNC_VERSION', '2');
   } finally { lock.releaseLock(); }
