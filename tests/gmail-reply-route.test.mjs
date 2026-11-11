@@ -8,11 +8,13 @@ const require = createRequire(import.meta.url);
 const asModule = source => 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
 const transpile = source => ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
 const helpers = asModule(transpile(await readFile(new URL('../lib/enquiry-mail.ts', import.meta.url), 'utf8')));
-const store = asModule(`export async function getRecord(){return globalThis.gmailRouteTest.record;} export async function appendEnquiryReply(id,reply){globalThis.gmailRouteTest.appended.push({id,reply});return {id};}`);
+const threadHelpers = asModule(transpile(await readFile(new URL('../lib/enquiry-thread.ts', import.meta.url), 'utf8')));
+const {threadToken} = await import(threadHelpers);
+const store = asModule(`export async function getRecord(kind,key){return kind === "enquiry-message" ? globalThis.gmailRouteTest.linkedId : globalThis.gmailRouteTest.record;} export async function setRecord(){} export async function appendEnquiryReply(id,reply){globalThis.gmailRouteTest.appended.push({id,reply});return {id};}`);
 let source = transpile(await readFile(new URL('../app/api/integrations/gmail/reply/route.ts', import.meta.url), 'utf8'));
 source = source.replace('"next/server"', JSON.stringify(asModule('export const NextResponse={json:(value,init)=>Response.json(value,init)};')))
  .replace('"zod"', JSON.stringify(pathToFileURL(require.resolve('zod')).href))
- .replace('"@/lib/enquiry-mail"', JSON.stringify(helpers)).replace('"@/lib/store"', JSON.stringify(store));
+ .replace('"@/lib/enquiry-thread"', JSON.stringify(threadHelpers)).replace('"@/lib/enquiry-mail"', JSON.stringify(helpers)).replace('"@/lib/store"', JSON.stringify(store));
 const { POST } = await import(asModule(source));
 const id='6d107334-81b4-4d02-8f62-e122125e0b41';
 const secret='test-only-secret-'.repeat(4);
@@ -50,4 +52,23 @@ test('incoming replies must address the mailbox and match the customer', async (
  assert.equal((await call({...valid,from:'customer@example.com',to:'other@example.com'})).status,400);
  assert.equal((await call({...valid,from:'stranger@example.com',to:'clubcrumbieadmin@gmail.com'})).status,400);
  assert.equal((await call({...valid,from:'customer@example.com',to:'other@example.com',cc:'clubcrumbieadmin@gmail.com'})).status,200);
+});
+
+test('signed original registers an invisible anchor without a duplicate reply',async()=>{
+ process.env.GMAIL_REPLY_SYNC_SECRET=secret;
+ const result=await call({...valid,subject:'A clean subject',from:'hello@clubcrumbie.com',threadToken:threadToken(id),rfcMessageId:'<original@example.com>'});
+ assert.equal(result.status,200);
+ assert.equal(globalThis.gmailRouteTest.appended.length,0);
+});
+test('invalid signatures and wrong anchor senders are rejected',async()=>{
+ assert.equal((await call({...valid,subject:'Clean',threadToken:id+'.'+'0'.repeat(64)})).status,400);
+ assert.equal((await call({...valid,subject:'Clean',from:'customer@example.com',threadToken:threadToken(id)})).status,400);
+});
+test('clean subject resolves from known reply headers and still validates customer',async()=>{
+ await call(); globalThis.gmailRouteTest.appended=[];globalThis.gmailRouteTest.linkedId=id;
+ const payload={...valid,subject:'Re: Your enquiry',from:'customer@example.com',to:'clubcrumbieadmin@gmail.com',references:'<original@example.com>'};
+ const request=body=>new Request('https://example.test/api/integrations/gmail/reply',{method:'POST',headers:{authorization:`Bearer ${secret}`},body:JSON.stringify(body)});
+ assert.equal((await POST(request(payload))).status,200);
+ assert.equal(globalThis.gmailRouteTest.appended[0].id,id);
+ assert.equal((await POST(request({...payload,from:'other@example.com'}))).status,400);
 });

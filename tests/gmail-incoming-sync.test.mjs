@@ -10,14 +10,14 @@ test('bridge imports both directions, excludes drafts, backfills once and retain
  const code = await readFile(new URL('../integrations/gmail-reply-sync/Code.gs', import.meta.url), 'utf8');
  const props = new Map([['GMAIL_REPLY_SYNC_SECRET','test'.repeat(16)],['LAST_SUCCESS_MS',String(Date.now())]]);
  const sent = []; const queries = [];
- const message = (id, from, to, draft=false) => ({getId:()=>id,getFrom:()=>from,getTo:()=>to,getCc:()=>'',isDraft:()=>draft,getSubject:()=>'Re: [Crumbie enquiry: 6d107334-81b4-4d02-8f62-e122125e0b41]',getDate:()=>new Date(Date.now()-7*86400000),getPlainBody:()=> 'Hello'});
+ const message = (id, from, to, draft=false) => ({getHeader:()=>'',getId:()=>id,getFrom:()=>from,getTo:()=>to,getCc:()=>'',isDraft:()=>draft,getSubject:()=>'Re: [Crumbie enquiry: 6d107334-81b4-4d02-8f62-e122125e0b41]',getDate:()=>new Date(Date.now()-7*86400000),getPlainBody:()=> 'Hello'});
  let status = 200;
  const context = vm.createContext({Date,Set,PropertiesService:{getScriptProperties:()=>({getProperty:k=>props.get(k),setProperty:(k,v)=>props.set(k,v)})},Session:{getEffectiveUser:()=>({getEmail:()=> 'clubcrumbieadmin@gmail.com'})},LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},GmailApp:{search:q=>{queries.push(q);return [{getMessages:()=>[message('out','clubcrumbieadmin@gmail.com','customer@example.com'),message('in','customer@example.com','clubcrumbieadmin@gmail.com'),message('draft','clubcrumbieadmin@gmail.com','customer@example.com',true)]}]}},UrlFetchApp:{fetch:(_,options)=>{sent.push(JSON.parse(options.payload));return {getResponseCode:()=>status}}}});
  vm.runInContext(code,context);
  context.syncCrumbieReplies();
  assert.deepEqual(sent.map(m=>m.messageId),['out','in']);
  assert.ok(!queries[0].includes('in:sent'));
- assert.equal(props.get('INCOMING_SYNC_VERSION'),'1');
+ assert.equal(props.get('INCOMING_SYNC_VERSION'),'2');
  context.syncCrumbieReplies();
  assert.equal(sent.length,2);
  props.delete('INCOMING_SYNC_VERSION');

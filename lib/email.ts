@@ -1,7 +1,8 @@
 import "server-only";
 import { Resend } from "resend";
 import { enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
-import { enquiryMailbox, enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
+import { enquiryMailbox, notificationRecipients } from "@/lib/enquiry-mail";
+import { threadToken } from "@/lib/enquiry-thread";
 import { getRecord } from "@/lib/store";
 
 type Content = { fields: Record<string, string> };
@@ -70,7 +71,7 @@ async function contentFields(moduleName: string) {
 	return (await getRecord<Content>("content", moduleName))?.fields || {};
 }
 
-async function sendTextEmail(message: { to: string | string[]; subject: string; text: string; replyTo?: string }) {
+async function sendTextEmail(message: { to: string | string[]; subject: string; text: string; replyTo?: string; headers?: Record<string, string>; bcc?: string }) {
 	const apiKey = process.env.RESEND_API_KEY?.trim();
 	const from = process.env.RESEND_FROM_EMAIL?.trim() || "Club Crumbie <hello@clubcrumbie.com>";
 	if (!apiKey) throw new Error("Resend is not configured");
@@ -81,6 +82,8 @@ async function sendTextEmail(message: { to: string | string[]; subject: string; 
 		subject: singleLine(message.subject),
 		text: message.text,
 		replyTo: message.replyTo,
+		headers: message.headers,
+		bcc: message.bcc,
 	});
 	if (error) throw new Error(error.message);
 }
@@ -103,13 +106,14 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 	await sendTextEmail({
 		to,
 		replyTo: enquiry.email,
-		subject: `${enquiryReference(enquiry.id)} ${renderTemplate(templates.enquirySubject || defaultTemplates.enquirySubject, values)}`,
+		subject: renderTemplate(templates.enquirySubject || defaultTemplates.enquirySubject, values),
+		headers: { "X-Crumbie-Enquiry": threadToken(enquiry.id) },
 		text: renderTemplate(withEnquiryType(templates.enquiryBody || defaultTemplates.enquiryBody), values),
 	});
 }
 
-export async function sendEnquiryReply(reply: { to: string; subject: string; message: string }) {
-	await sendTextEmail({ to: reply.to, subject: reply.subject, text: reply.message, replyTo: enquiryMailbox });
+export async function sendEnquiryReply(reply: { id: string; to: string; subject: string; message: string }) {
+	await sendTextEmail({ to: reply.to, subject: reply.subject, text: reply.message, replyTo: enquiryMailbox, bcc: enquiryMailbox, headers: { "X-Crumbie-Enquiry": threadToken(reply.id) } });
 }
 
 export async function sendOrderConfirmation(order: Order) {

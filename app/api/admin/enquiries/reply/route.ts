@@ -24,13 +24,13 @@ export async function POST(req: Request) {
 	if (!parsed.success) return NextResponse.json({ error: "Add a subject and message." }, { status: 400 });
 
 	const { id, message } = parsed.data;
-	const subject = enquiryReplySubject(id, parsed.data.subject);
+	const subject = enquiryReplySubject(parsed.data.subject);
 	const enquiry = await getRecord<Enquiry>("custom-order", id);
 	if (!enquiry) return NextResponse.json({ error: "Enquiry not found." }, { status: 404 });
 	if (!enquiry.email) return NextResponse.json({ error: "This enquiry has no email address." }, { status: 400 });
 
 	try {
-		await sendEnquiryReply({ to: enquiry.email, subject, message });
+		await sendEnquiryReply({ id, to: enquiry.email, subject, message });
 	} catch (error) {
 		console.error("Enquiry reply failed", error);
 		return NextResponse.json({ error: "Unable to send reply. Please try again." }, { status: 502 });

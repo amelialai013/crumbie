@@ -15,8 +15,7 @@ test('recipient matching uses complete email addresses rather than substrings', 
  assert.equal(emailAddresses('fakeclient@example.com').includes('client@example.com'), false);
 });
 
-test('portal replies always carry exactly one reference to their own enquiry', () => {
- assert.equal(enquiryIdFromSubject(enquiryReplySubject(id, 'Re: your enquiry')), id);
- assert.equal(enquiryReplySubject(id, `${enquiryReference(id)} Hello`), `${enquiryReference(id)} Hello`);
- assert.equal(enquiryReplySubject(id, '[Crumbie enquiry: wrong] Hello'), `${enquiryReference(id)} Hello`);
+test('portal subjects are clean, including replies to legacy messages', () => {
+ assert.equal(enquiryReplySubject('Your Club Crumbie enquiry'), 'Your Club Crumbie enquiry');
+ assert.equal(enquiryReplySubject(`${enquiryReference(id)} Re: your enquiry`), 'Re: your enquiry');
 });

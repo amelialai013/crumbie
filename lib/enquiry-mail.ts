@@ -18,7 +18,7 @@ export function emailAddresses(value: string) {
 
 export type StoredEnquiryReply = { subject: string; message: string; sentAt: string; source?: "gmail"; direction?: "incoming" | "outgoing"; externalId?: string };
 
-export function enquiryReplySubject(id: string, subject: string) {
+export function enquiryReplySubject(subject: string) {
  const clean = subject.replace(/\[Crumbie enquiry: [^\]]*\]/gi, "").trim();
- return `${enquiryReference(id)} ${clean}`.trim();
+ return clean || "Your Club Crumbie enquiry";
 }

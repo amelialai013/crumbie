@@ -1,6 +1,6 @@
 # Gmail enquiry reply sync
 
-New enquiries remain in the admin portal and notify `clubcrumbieadmin@gmail.com`, plus any existing configured notification addresses. Notifications use the customer's Reply-To address. Reply normally from Gmail, keeping the `[Crumbie enquiry: UUID]` reference in the subject. The sync imports both outgoing replies and customer responses every five minutes. Outgoing replies mark the enquiry replied; a new latest customer response marks it unread and pending. It does not send emails, delete mail, change labels, or import unrelated conversations. Existing notification emails without a reference cannot be linked automatically. Attachments are not imported; the complete plain-text message (including quoted history) is shown. Only messages between the enquiry customer and the Club Crumbie mailbox are accepted. Drafts are excluded.
+New enquiries remain in the admin portal and notify `clubcrumbieadmin@gmail.com`, plus any existing configured notification addresses. Notifications use the customer's Reply-To address. Reply normally from Gmail. New messages use clean subjects; hidden signed headers and standard Message-ID / References / In-Reply-To headers link replies. The sync imports both outgoing replies and customer responses every five minutes. Outgoing replies mark the enquiry replied; a new latest customer response marks it unread and pending. It does not send emails, delete mail, change labels, or import unrelated conversations. Legacy messages with enquiry references remain supported. Historical messages without references or a registered message ID cannot be linked automatically. Attachments are not imported; the complete plain-text message (including quoted history) is shown. Only messages between the enquiry customer and the Club Crumbie mailbox are accepted. Drafts are excluded.
 
 ## One-time setup
 
@@ -25,6 +25,12 @@ Activated and tested in production on 11 November 2026. The production secret is
 
 ## Incoming reply upgrade
 
-Deploy the updated app first, then replace Code.gs in the installed project and save it. Run syncCrumbieReplies once. The first successful upgraded run backfills the last 30 days (with a one-day overlap), including customer responses previously skipped; existing sent replies are deduplicated. The existing five-minute trigger continues running. Messages must retain the enquiry reference in their subject.
+Deploy the updated app first, then replace Code.gs in the installed project and save it. Run syncCrumbieReplies once. The first successful upgraded run backfills the last 30 days (with a one-day overlap), including customer responses previously skipped; existing sent replies are deduplicated. The existing five-minute trigger continues running. Legacy threads retain reference-based matching; new threads use hidden message identifiers.
 
 Incoming sync activated on 12 November 2026: saved Code.gs was checked against the repository source, installCrumbieSync completed successfully, and the trigger list confirmed one time-based syncCrumbieReplies trigger. Portal replies now carry the enquiry reference and direct customer responses to the synced Gmail mailbox. Historical conversations lacking references cannot be automatically matched; the initial backfill found no matching incoming responses among the six existing enquiries.
+
+## Clean subject matching
+
+New notification and portal reply messages include a signed `X-Crumbie-Enquiry` header. Portal replies BCC the admin mailbox so Gmail can register the delivered Message-ID, which can differ from the provider API ID. The bridge registers these originals before processing replies. The endpoint stores Message-ID mappings and resolves References / In-Reply-To, while validating the enquiry customer and mailbox. Original copies are not appended as duplicate replies. No matching by subject text or customer address alone is used. Existing reference-bearing conversations continue to sync. The bridge scans recent mail metadata to discover references even after a subject changes.
+
+Deployment order: deploy the backward-compatible endpoint and sender, then save the revised Apps Script and run syncCrumbieReplies. Version 2 backfills the last 30 days. Never remove the legacy subject parser while historical threads remain active.
