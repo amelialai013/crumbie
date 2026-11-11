@@ -555,6 +555,7 @@ export default function AdminDashboard() {
   const [imageDirection, setImageDirection] = useState("");
   const [generatedImageCount, setGeneratedImageCount] = useState<number>(RECOMMENDED_IMAGE_COUNT);
   const [generationStatus, setGenerationStatus] = useState("");
+  const [generationProgress, setGenerationProgress] = useState({ done: 0, total: 0 });
   const [descriptionStatus, setDescriptionStatus] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [emailTemplateKey, setEmailTemplateKey] = useState<string | null>(null);
@@ -1251,6 +1252,7 @@ export default function AdminDashboard() {
       // Request frames individually so a complete rotation can exceed one
       // hosting request's duration without losing the generation job.
       const framePlan = ROTATION_FRAME_PLANS[generatedImageCount] ?? ROTATION_FRAME_PLANS[RECOMMENDED_IMAGE_COUNT];
+      setGenerationProgress({ done: 0, total: framePlan.length });
       for (const [step, frameIndex] of framePlan.entries()) {
         setGenerationStatus(`Generating image ${step + 1} of ${framePlan.length} with OpenAI...`);
         const formData = new FormData();
@@ -1281,6 +1283,7 @@ export default function AdminDashboard() {
           );
         }
         images.push(...result.images);
+        setGenerationProgress({ done: step + 1, total: framePlan.length });
       }
       setProductImages(images);
       const angles = images.length - 1;
@@ -2476,23 +2479,54 @@ export default function AdminDashboard() {
                     onChange={(event) => setImageDirection(event.target.value)}
                     placeholder="For example: show a broken edge and generous chocolate chunks."
                   />
-                  <button
-                    className="btn btn-light admin-generate-button"
-                    type="button"
-                    disabled={generationStatus.startsWith("Generating")}
-                    aria-busy={generationStatus.startsWith("Generating")}
-                    onClick={generateProductImage}
-                  >
-                    <span className="admin-generate-label">
-                      Generate {generatedImageCount} image{generatedImageCount === 1 ? "" : "s"} with OpenAI
-                    </span>
-                    <span className="admin-generate-loading">Generating...</span>
-                  </button>
-                  {generationStatus && (
-                    <p className="admin-generator-status" role="status">
-                      {generationStatus}
-                    </p>
+                  {generationStatus.startsWith("Generating") || generationStatus.startsWith("Connection lost") ? (
+                    <div className="admin-generate-progress" role="status">
+                      <div className="admin-generate-progress-text">
+                        <span>
+                          {generationProgress.total
+                            ? `Generating image ${Math.min(generationProgress.done + 1, generationProgress.total)} of ${generationProgress.total}`
+                            : "Preparing photos"}
+                        </span>
+                        <span>
+                          {generationProgress.total
+                            ? `${Math.round((generationProgress.done / generationProgress.total) * 100)}%`
+                            : ""}
+                        </span>
+                      </div>
+                      <div
+                        className="admin-generate-progress-track"
+                        role="progressbar"
+                        aria-label="Image generation progress"
+                        aria-valuemin={0}
+                        aria-valuemax={generationProgress.total || 1}
+                        aria-valuenow={generationProgress.done}
+                      >
+                        <div
+                          className="admin-generate-progress-fill"
+                          style={{
+                            width: `${generationProgress.total ? Math.max(4, (generationProgress.done / generationProgress.total) * 100) : 4}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      className="btn btn-light admin-generate-button"
+                      type="button"
+                      onClick={generateProductImage}
+                    >
+                      <span className="admin-generate-label">
+                        Generate {generatedImageCount} image{generatedImageCount === 1 ? "" : "s"} with OpenAI
+                      </span>
+                    </button>
                   )}
+                  {generationStatus &&
+                    !generationStatus.startsWith("Generating") &&
+                    !generationStatus.startsWith("Connection lost") && (
+                      <p className="admin-generator-status" role="status">
+                        {generationStatus}
+                      </p>
+                    )}
                   {productImages.length > 0 && (
                     <ol className="admin-product-images">
                       {productImages.map((image, index) => (

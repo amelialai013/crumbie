@@ -1348,6 +1348,30 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 .admin-generate-button[aria-busy="true"] > .admin-generate-loading {
   visibility: visible;
 }
+.admin-generate-progress {
+  display: grid;
+  gap: 10px;
+}
+.admin-generate-progress-text {
+  display: flex;
+  justify-content: space-between;
+  color: #efcdaa;
+  font-size: .85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.admin-generate-progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(201, 173, 148, .25);
+}
+.admin-generate-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #efcdaa;
+  transition: width 600ms cubic-bezier(.32, .72, 0, 1);
+}
 .admin-image-generator legend {
   padding: 0 6px;
   color: #efcdaa;
