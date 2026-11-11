@@ -9,6 +9,7 @@ const schema = z.object({
  subject: z.string().max(500),
  from: z.string().max(500),
  to: z.string().max(2000),
+ cc: z.string().max(2000).optional(),
  message: z.string().trim().min(1).max(50000),
  sentAt: z.string().datetime(),
 });
@@ -27,12 +28,17 @@ export async function POST(req: Request) {
  if (!parsed.success) return NextResponse.json({ error: "Invalid reply." }, { status: 400 });
  const reply = parsed.data;
  const id = enquiryIdFromSubject(reply.subject);
- if (!id || !emailAddresses(reply.from).includes(enquiryMailbox)) return NextResponse.json({ error: "Reply does not match the enquiry mailbox." }, { status: 400 });
+ if (!id) return NextResponse.json({ error: "Reply does not match the enquiry mailbox." }, { status: 400 });
  const enquiry = await getRecord<{ email?: string; createdAt?: string }>("custom-order", id);
  if (!enquiry) return NextResponse.json({ error: "Enquiry not found." }, { status: 404 });
- if (!enquiry.email || !emailAddresses(reply.to).includes(enquiry.email.toLowerCase()) || (enquiry.createdAt && Date.parse(reply.sentAt) < Date.parse(enquiry.createdAt)) || Date.parse(reply.sentAt) > Date.now() + 300000) {
+ const senders = emailAddresses(reply.from);
+ const recipients = emailAddresses(reply.to + "," + (reply.cc || ""));
+ const customer = enquiry.email?.trim().toLowerCase();
+ const outgoing = senders.length === 1 && senders[0] === enquiryMailbox && !!customer && recipients.includes(customer);
+ const incoming = senders.length === 1 && senders[0] === customer && recipients.includes(enquiryMailbox);
+ if ((!outgoing && !incoming) || (enquiry.createdAt && Date.parse(reply.sentAt) < Date.parse(enquiry.createdAt)) || Date.parse(reply.sentAt) > Date.now() + 300000) {
   return NextResponse.json({ error: "Reply recipient or date does not match." }, { status: 400 });
  }
- const updated = await appendEnquiryReply(id, { subject: reply.subject, message: reply.message, sentAt: reply.sentAt, source: "gmail", externalId: `gmail:${reply.messageId}` });
+ const updated = await appendEnquiryReply(id, { subject: reply.subject, message: reply.message, sentAt: reply.sentAt, source: "gmail", direction: incoming ? "incoming" : "outgoing", externalId: `gmail:${reply.messageId}` });
  return updated ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "Enquiry not found." }, { status: 404 });
 }

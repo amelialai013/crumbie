@@ -1,6 +1,6 @@
 # Gmail enquiry reply sync
 
-New enquiries remain in the admin portal and notify `clubcrumbieadmin@gmail.com`, plus any existing configured notification addresses. Notifications use the customer's Reply-To address. Reply normally from Gmail, keeping the `[Crumbie enquiry: UUID]` reference in the subject. The sync imports the sent reply into the portal every five minutes and marks the enquiry replied. It does not send emails, delete mail, change labels, or import unrelated conversations. Existing notification emails without a reference cannot be linked automatically. Attachments and customer follow-up emails are not imported; the complete plain-text sent message (including quoted history) is shown.
+New enquiries remain in the admin portal and notify `clubcrumbieadmin@gmail.com`, plus any existing configured notification addresses. Notifications use the customer's Reply-To address. Reply normally from Gmail, keeping the `[Crumbie enquiry: UUID]` reference in the subject. The sync imports both outgoing replies and customer responses every five minutes. Outgoing replies mark the enquiry replied; a new latest customer response marks it unread and pending. It does not send emails, delete mail, change labels, or import unrelated conversations. Existing notification emails without a reference cannot be linked automatically. Attachments are not imported; the complete plain-text message (including quoted history) is shown. Only messages between the enquiry customer and the Club Crumbie mailbox are accepted. Drafts are excluded.
 
 ## One-time setup
 
@@ -9,7 +9,7 @@ New enquiries remain in the admin portal and notify `clubcrumbieadmin@gmail.com`
 3. In Project Settings → Script Properties, set:
    - `CRUMBIE_SYNC_URL` (optional): defaults to `https://clubcrumbie.com/api/integrations/gmail/reply`
    - `GMAIL_REPLY_SYNC_SECRET`: the exact same generated secret as the deployment.
-4. Run `installCrumbieSync` and authorise Google. It checks the account, performs an initial sync of the last 30 days and installs one five-minute trigger. Running it again replaces the trigger without duplicating portal replies. GmailApp requires Google's broad Gmail scope even though this script only reads sent messages; review the supplied source before authorising.
+4. Run `installCrumbieSync` and authorise Google. It checks the account, performs an initial sync of the last 30 days and installs one five-minute trigger. Running it again replaces the trigger without duplicating portal replies. GmailApp requires Google's broad Gmail scope even though this script only reads messages; review the supplied source before authorising.
 5. Submit a real enquiry, receive its notification, and reply to the customer in Gmail. Run `syncCrumbieReplies` (or wait five minutes), then open the portal: the reply should display with “Gmail”, the sent time, and replied status. Run again to confirm it appears only once.
 
 Check Apps Script Executions for failures. Failed HTTP requests retain the watermark and retry next time. Invalid/deleted enquiry references or mismatched recipients are ignored. The secret authenticates the bridge; rotate it in both places if exposed. No app password or Gmail OAuth token is stored in the Crumbie app. Run `uninstallCrumbieSync` to stop syncing.
@@ -22,3 +22,7 @@ Crumbie Gmail Reply Sync is installed under clubcrumbieadmin@gmail.com:
 https://script.google.com/home/projects/1RN27m8EpTzH2zvzKIAvKVrSjUiCNZCy9DHBRhcnrKnPdL26RmQPPSjLT/edit
 
 Activated and tested in production on 11 November 2026. The production secret is configured in Vercel and Script Properties, and one five-minute trigger is installed. A live test enquiry delivered its notification to Gmail; a normal Gmail reply imported with source `gmail` and status `replied`. A second sync left exactly one reply, confirming duplicate protection. The test enquiry was removed after verification.
+
+## Incoming reply upgrade
+
+Deploy the updated app first, then replace Code.gs in the installed project and save it. Run syncCrumbieReplies once. The first successful upgraded run backfills the last 30 days (with a one-day overlap), including customer responses previously skipped; existing sent replies are deduplicated. The existing five-minute trigger continues running. Messages must retain the enquiry reference in their subject.

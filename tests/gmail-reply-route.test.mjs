@@ -39,5 +39,15 @@ test('unrelated subjects and future dates are rejected',async()=>{
 });
 test('valid customer reply is recorded with the Gmail deduplication key',async()=>{
  assert.equal((await call()).status,200);
- assert.deepEqual(globalThis.gmailRouteTest.appended,[{id,reply:{subject:valid.subject,message:valid.message,sentAt:valid.sentAt,source:'gmail',externalId:'gmail:a0123456'}}]);
+ assert.deepEqual(globalThis.gmailRouteTest.appended,[{id,reply:{subject:valid.subject,message:valid.message,sentAt:valid.sentAt,source:'gmail',direction:'outgoing',externalId:'gmail:a0123456'}}]);
+});
+
+test('incoming customer replies are recorded as incoming', async () => {
+ assert.equal((await call({...valid, from:'Customer <customer@example.com>', to:'clubcrumbieadmin@gmail.com'})).status,200);
+ assert.equal(globalThis.gmailRouteTest.appended[0].reply.direction,'incoming');
+});
+test('incoming replies must address the mailbox and match the customer', async () => {
+ assert.equal((await call({...valid,from:'customer@example.com',to:'other@example.com'})).status,400);
+ assert.equal((await call({...valid,from:'stranger@example.com',to:'clubcrumbieadmin@gmail.com'})).status,400);
+ assert.equal((await call({...valid,from:'customer@example.com',to:'other@example.com',cc:'clubcrumbieadmin@gmail.com'})).status,200);
 });

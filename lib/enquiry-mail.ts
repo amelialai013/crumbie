@@ -16,4 +16,4 @@ export function emailAddresses(value: string) {
  return (value.match(/[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}/gi) || []).map(address => address.toLowerCase());
 }
 
-export type StoredEnquiryReply = { subject: string; message: string; sentAt: string; source?: "gmail"; externalId?: string };
+export type StoredEnquiryReply = { subject: string; message: string; sentAt: string; source?: "gmail"; direction?: "incoming" | "outgoing"; externalId?: string };

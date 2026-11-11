@@ -117,9 +117,16 @@ export async function appendEnquiryReply(id: string, reply: import("./enquiry-ma
    end
    table.insert(record.replies, reply)
    table.sort(record.replies, function(a, b) return a.sentAt < b.sentAt end)
-   record.status = 'replied'
-   record.repliedAt = record.replies[#record.replies].sentAt
-   record.readAt = record.readAt or reply.sentAt
+   for _, message in ipairs(record.replies) do
+    if message.direction ~= 'incoming' then record.repliedAt = message.sentAt end
+   end
+   if record.replies[#record.replies].externalId == reply.externalId and reply.direction == 'incoming' then
+    record.status = 'pending'
+    record.readAt = nil
+   elseif record.replies[#record.replies].direction ~= 'incoming' then
+    record.status = 'replied'
+    record.readAt = record.readAt or reply.sentAt
+   end
    local updated = cjson.encode(record)
    redis.call('SET', KEYS[1], updated)
    return updated
@@ -134,7 +141,16 @@ export async function appendEnquiryReply(id: string, reply: import("./enquiry-ma
   if (!record) return null;
   if (reply.externalId && record.replies?.some(existing => existing.externalId === reply.externalId)) return record;
   const replies = [...(record.replies || []), reply].sort((a, b) => a.sentAt.localeCompare(b.sentAt));
-  const updated = { ...record, status: "replied", repliedAt: replies[replies.length - 1].sentAt, readAt: record.readAt || reply.sentAt, replies };
+  const latest = replies[replies.length - 1];
+  const lastOutgoing = replies.filter(message => message.direction !== "incoming").at(-1);
+  const updated: Record<string, unknown> = { ...record, replies, repliedAt: lastOutgoing?.sentAt || record.repliedAt };
+  if (latest === reply && reply.direction === "incoming") {
+   updated.status = "pending";
+   delete updated.readAt;
+  } else if (latest.direction !== "incoming") {
+   updated.status = "replied";
+   updated.readAt = record.readAt || reply.sentAt;
+  }
   store[key("custom-order", id)] = updated;
   await writeLocalStore(store);
   return updated;

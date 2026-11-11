@@ -29,20 +29,20 @@ function syncCrumbieReplies() {
     if (Session.getEffectiveUser().getEmail().toLowerCase() !== c.mailbox) throw new Error('Wrong Gmail account.');
     const started = Date.now();
     // One-day overlap catches indexing delays; the endpoint deduplicates message IDs.
-    const since = Number(c.props.getProperty('LAST_SUCCESS_MS')) || started - 30 * 86400000;
+    const since = c.props.getProperty('INCOMING_SYNC_VERSION') === '1'
+      ? Number(c.props.getProperty('LAST_SUCCESS_MS')) || started - 30 * 86400000
+      : started - 30 * 86400000;
     const after = Math.floor((since - 86400000) / 1000);
-    const query = 'in:sent from:' + c.mailbox + ' after:' + after + ' subject:"Crumbie enquiry"';
+    const query = '-in:spam -in:trash after:' + after + ' subject:"Crumbie enquiry"';
     const seen = new Set();
     let complete = false;
     for (let offset = 0; offset < 1000; offset += 50) {
       const threads = GmailApp.search(query, offset, 50);
       for (const thread of threads) {
         for (const mail of thread.getMessages()) {
-          if (seen.has(mail.getId()) || mail.getDate().getTime() < after * 1000 || mail.getDate().getTime() > started) continue;
+          if (mail.isDraft() || seen.has(mail.getId()) || mail.getDate().getTime() < after * 1000 || mail.getDate().getTime() > started) continue;
           seen.add(mail.getId());
           const from = mail.getFrom();
-          const sender = from.match(/<([^>]+)>/);
-          if ((sender ? sender[1] : from).trim().toLowerCase() !== c.mailbox) continue;
           if (!/\[Crumbie enquiry: [0-9a-f-]{36}\]/i.test(mail.getSubject())) continue;
           // Keep the complete plain-text email, including signature/quoted context.
           const message = mail.getPlainBody().trim();
@@ -50,7 +50,7 @@ function syncCrumbieReplies() {
           const response = UrlFetchApp.fetch(c.endpoint, {
             method: 'post', contentType: 'application/json',
             headers: { Authorization: 'Bearer ' + c.secret },
-            payload: JSON.stringify({ messageId: mail.getId(), from, to: mail.getTo(),
+            payload: JSON.stringify({ messageId: mail.getId(), from, to: mail.getTo(), cc: mail.getCc(),
               subject: mail.getSubject(), message, sentAt: mail.getDate().toISOString() }),
             muteHttpExceptions: true, followRedirects: false
           });
@@ -64,6 +64,7 @@ function syncCrumbieReplies() {
     }
     if (!complete) throw new Error('Sync backlog exceeds 1000 threads. Watermark retained; narrow the initial window before retrying.');
     c.props.setProperty('LAST_SUCCESS_MS', String(started));
+    c.props.setProperty('INCOMING_SYNC_VERSION', '1');
   } finally { lock.releaseLock(); }
 }
 
