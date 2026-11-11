@@ -14,7 +14,7 @@ function installCrumbieSync() {
 function crumbieConfig_() {
   const props = PropertiesService.getScriptProperties();
   const secret = (props.getProperty('GMAIL_REPLY_SYNC_SECRET') || '').trim();
-  const endpoint = (props.getProperty('CRUMBIE_SYNC_URL') || '').trim();
+  const endpoint = (props.getProperty('CRUMBIE_SYNC_URL') || 'https://clubcrumbie.com/api/integrations/gmail/reply').trim();
   if (secret.length < 32 || !/^https:\/\/[^/]+\/api\/integrations\/gmail\/reply$/.test(endpoint)) {
     throw new Error('Set CRUMBIE_SYNC_URL and GMAIL_REPLY_SYNC_SECRET in Script Properties first.');
   }
