@@ -16,12 +16,12 @@ export default async function ContactUs() {
     <>
       <section className="page-hero custom-order-hero">
         <div className="shell">
-          <h1 className="page-title">Get in touch</h1>
+          <h1 className="page-title">{content?.fields?.pageTitle || "Get in touch"}</h1>
         </div>
       </section>
       <section className="section custom-order-section">
         <div className="shell enquiry-layout">
-          <CustomOrderForm enquiryTypes={enquiryTypes} />
+          <CustomOrderForm enquiryTypes={enquiryTypes} messagePrompt={content?.fields?.messagePrompt} />
         </div>
       </section>
     </>

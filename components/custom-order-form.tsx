@@ -11,7 +11,7 @@ const fieldLabels: Record<string, string> = {
   request: "Your message",
 };
 
-export default function CustomOrderForm({ enquiryTypes }: { enquiryTypes: string[] }) {
+export default function CustomOrderForm({ enquiryTypes, messagePrompt }: { enquiryTypes: string[]; messagePrompt?: string }) {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [enquiryType, setEnquiryType] = useState(enquiryTypes[0] ?? "");
   const [errorMessage, setErrorMessage] = useState("");
@@ -146,7 +146,7 @@ export default function CustomOrderForm({ enquiryTypes }: { enquiryTypes: string
       <div className="enquiry-field-group">
         <div className={`field${validationErrors.request ? " has-error" : ""}`}>
           <label htmlFor="request">Your message</label>
-          <textarea id="request" name="request" placeholder="Tell us how we can help. For custom orders, include the occasion, quantity and timing you have in mind." required minLength={10} maxLength={3000} aria-invalid={Boolean(validationErrors.request)} aria-describedby={validationErrors.request ? "request-error" : undefined} onChange={handleFieldChange} onBlur={handleFieldBlur} />
+          <textarea id="request" name="request" placeholder={messagePrompt || "Tell us how we can help. For custom orders, include the occasion, quantity and timing you have in mind."} required minLength={10} maxLength={3000} aria-invalid={Boolean(validationErrors.request)} aria-describedby={validationErrors.request ? "request-error" : undefined} onChange={handleFieldChange} onBlur={handleFieldBlur} />
         </div>
         {validationErrors.request && <p id="request-error" className="field-error" role="alert">{validationErrors.request}</p>}
       </div>

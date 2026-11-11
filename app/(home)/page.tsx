@@ -7,9 +7,13 @@ import whiteVerticalLogo from "@/brand/latest-logos/new-text-logo/white-vertical
 import HeroMedia from "@/components/hero-media";
 import ProductCookieImage from "@/components/product-cookie-image";
 import SectionReveal from "@/components/section-reveal";
+import { getRecord } from "@/lib/store";
 
 export default async function Home() {
   const products = await getProducts();
+  const content = await getRecord<{ fields?: Record<string, string> }>("content", "homepage").catch(() => null);
+  const f = content?.fields || {};
+  const catalogHeading = f.catalogHeading && f.catalogHeading !== "Crumbs for every craving" ? f.catalogHeading : null;
   return (
     <>
       <section className="hero">
@@ -21,12 +25,12 @@ export default async function Home() {
           </h1>
           <div className="actions">
             <Link className="btn btn-dark btn-arrow" href="/crumbs">
-              Explore crumbs
+              {f.heroPrimaryLabel || "Explore crumbs"}
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                 <path d="m7 4.5 5.5 5.5L7 15.5" />
               </svg>
             </Link>
-            <Link className="btn btn-light" href="/contact-us">Make an enquiry</Link>
+            <Link className="btn btn-light" href="/contact-us">{f.heroSecondaryLabel || "Make an enquiry"}</Link>
           </div>
         </div>
       </section>
@@ -34,20 +38,20 @@ export default async function Home() {
       <SectionReveal className="section how-it-works">
         <div className="shell">
           <div className="split-heading">
-            <div><h2>How it works</h2></div>
+            <div><h2>{f.howTitle || "How it works"}</h2></div>
           </div>
           <div className="steps">
             <div className="step">
-              <h3>Choose your box</h3>
-              <p>Pick a curated collection in a box of four, six or twelve.</p>
+              <h3>{f.stepOneTitle || "Choose your box"}</h3>
+              <p>{f.stepOneBody || "Pick a curated collection in a box of four, six or twelve."}</p>
             </div>
             <div className="step">
-              <h3>Select pickup</h3>
-              <p>Choose an available pickup date and time in Ivanhoe, Victoria.</p>
+              <h3>{f.stepTwoTitle || "Select pickup"}</h3>
+              <p>{f.stepTwoBody || "Choose an available pickup date and time in Ivanhoe, Victoria."}</p>
             </div>
             <div className="step">
-              <h3>Pay securely</h3>
-              <p>Complete payment and receive immediate confirmation.</p>
+              <h3>{f.stepThreeTitle || "Pay securely"}</h3>
+              <p>{f.stepThreeBody || "Complete payment and receive immediate confirmation."}</p>
             </div>
           </div>
           <div className="how-it-works-cta">
@@ -64,7 +68,7 @@ export default async function Home() {
       <SectionReveal className="section section-warm cookie-catalog home-product-catalog" itemSelector=".product-card">
         <div className="shell">
           <div className="split-heading">
-            <div><h2>Crumbs for<br />every craving</h2></div>
+            <div><h2>{catalogHeading || <>Crumbs for<br />every craving</>}</h2></div>
           </div>
           <div className={`product-grid product-grid-${Math.min(4, products.length)}`}>
             {products.map((product) => (
