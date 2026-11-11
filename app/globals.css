@@ -1374,6 +1374,7 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   font-weight: 400;
 }
 .admin-reference-dropzone {
+  position: relative;
   display: grid;
   min-height: 112px;
   place-items: center;
@@ -1404,6 +1405,8 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 }
 .admin-reference-dropzone input[type="file"] {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;
