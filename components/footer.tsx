@@ -3,14 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import logoText from "@/brand/latest-logos/new-text-logo/white-full-logo-text.png";
 import logoPieceLeft from "@/brand/latest-logos/new-text-logo/white-full-logo-image-left.png";
 import logoPieceRight from "@/brand/latest-logos/new-text-logo/white-full-logo-image-right.png";
 
 export default function Footer() {
   const pathname = usePathname();
-  const [logoPlaying, setLogoPlaying] = useState(false);
 
   function handleHomeClick() {
     if (pathname === "/") window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -22,11 +20,8 @@ export default function Footer() {
         <div>
           <Link
             href="/"
-            className={`footer-brand${logoPlaying ? " is-playing" : ""}`}
+            className="footer-brand"
             onClick={handleHomeClick}
-            onPointerEnter={() => { setLogoPlaying(true); }}
-            onFocus={() => { setLogoPlaying(true); }}
-            onAnimationEnd={() => setLogoPlaying(false)}
             aria-label="Club Crumbie home"
           >
             <span className="footer-logo" role="img" aria-label="Club Crumbie">
