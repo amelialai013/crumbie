@@ -4977,3 +4977,35 @@ html:has(.orb-intro:not(.is-leaving)) body {
   .cart-link:hover span,
   .mobile-cart-link:hover span { background: #f2eadf; }
 }
+
+.footer-socials {
+  display: flex;
+  gap: 12px;
+}
+.footer-grid .footer-socials a {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px #4a433a;
+  transition: color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.footer-socials svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.footer-grid .footer-socials a:hover {
+  box-shadow: inset 0 0 0 1px #c9ad94;
+}
+.footer-grid .footer-socials a:active {
+  transform: scale(.94);
+}
+@media(prefers-reduced-motion:reduce) {
+  .footer-grid .footer-socials a { transition: none; }
+}
