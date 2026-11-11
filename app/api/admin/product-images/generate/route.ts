@@ -82,7 +82,15 @@ export async function POST(request: Request) {
 			const publicBase = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
 			const previous = await Promise.all(previousImages.map(async (url: string) => {
 				if (!publicBase || !url.startsWith(`${publicBase}/crumbie/products/`)) throw new Error("Previous frames must be stored in the product image bucket.");
-				const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(15_000) });
+				let response: Response | undefined;
+				for (let attempt = 0; attempt < 3 && !response; attempt++) {
+					try {
+						response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(30_000) });
+					} catch (error) {
+						if (attempt === 2) throw new Error("Couldn't load the previous frame from storage. Please try again.", { cause: error });
+					}
+				}
+				if (!response) throw new Error("Previous frame unavailable.");
 				if (!response.ok || Number(response.headers.get("content-length")) > MAX_IMAGE_BYTES) throw new Error("Previous frame unavailable.");
 				const bytes = new Uint8Array(await response.arrayBuffer());
 				if (bytes.length > MAX_IMAGE_BYTES) throw new Error("Previous frame too large.");

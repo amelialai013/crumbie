@@ -1267,6 +1267,10 @@ export default function AdminDashboard() {
         for (let attempt = 0; attempt < 3 && !response; attempt++) {
           try {
             response = await fetch("/api/admin/product-images/generate", { method: "POST", body: formData });
+            if (response.status >= 500 && attempt < 2) {
+              response = undefined;
+              setGenerationStatus(`Connection lost. Retrying image ${step + 1} of ${framePlan.length}...`);
+            }
           } catch (error) {
             if (attempt === 2) throw error;
             setGenerationStatus(`Connection lost. Retrying image ${step + 1} of ${framePlan.length}...`);
