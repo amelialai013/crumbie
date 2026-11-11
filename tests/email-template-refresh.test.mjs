@@ -20,10 +20,14 @@ test('each new notification reads the latest saved template, including removed c
  const enquiry={id:'6d107334-81b4-4d02-8f62-e122125e0b41',name:'Test Customer',email:'test@example.com',phone:'0400000000',request:'Template verification',enquiryType:'general'};
  try {
   await sendEnquiryNotification(enquiry);
+  globalThis.templateTest.records["gmail-headers"] = { version: 2 };
   globalThis.templateTest.records['email templates'].fields={enquirySubject:'Updated {{customerName}}',enquiryBody:'A new enquiry has been submitted through the Club Crumbie enquiry form.\n\nName: {{customerName}}\nEmail: {{customerEmail}}\nPhone: {{customerPhone}}\nEnquiry type: {{enquiryType}}\n\nMessage:\n{{customerMessage}}\n\nClub Crumbie'};
   await sendEnquiryNotification(enquiry);
   const [old,current]=globalThis.templateTest.sent;
   assert.match(old.text,/Old wording/);
+  assert.match(old.subject,/\[Crumbie enquiry:/);
+  assert.doesNotMatch(current.subject,/\[Crumbie enquiry:/);
+  assert.ok(current.headers["X-Crumbie-Enquiry"]);
   assert.match(current.subject,/Updated Test Customer/);
   assert.match(current.text,/through the Club Crumbie enquiry form/);
   assert.match(current.text,/Message:\nTemplate verification/);
