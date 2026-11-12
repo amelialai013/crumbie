@@ -76,7 +76,14 @@ async function linkedSubject(id: string, subject: string) {
  return ready?.version === 2 ? subject : `${enquiryReference(id)} ${subject}`;
 }
 
-async function sendTextEmail(message: { to: string | string[]; subject: string; text: string; replyTo?: string; headers?: Record<string, string>; bcc?: string }) {
+const signatureText = "\n\n--\nClub Crumbie\nclubcrumbie.com · clubcrumbieadmin@gmail.com\nInstagram: instagram.com/clubcrumbie · TikTok: tiktok.com/@clubcrumbie · Facebook: facebook.com/clubcrumbie";
+const signatureHtml = `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'DM Sans',Helvetica,Arial,sans-serif;margin-top:24px;"><tr><td width="3" style="width:3px;background:#C9AD94;font-size:0;line-height:0;">&nbsp;</td><td style="padding:2px 0 2px 16px;"><div style="font-size:18px;line-height:24px;font-weight:500;letter-spacing:-0.8px;color:#1A140D;">Club Crumbie</div><div style="padding-top:6px;font-size:14px;line-height:22px;color:#3A332C;"><a href="https://clubcrumbie.com" style="color:#3A332C;text-decoration:none;">clubcrumbie.com</a> &middot; <a href="mailto:clubcrumbieadmin@gmail.com" style="color:#3A332C;text-decoration:none;">clubcrumbieadmin@gmail.com</a></div><div style="font-size:14px;line-height:22px;color:#3A332C;"><a href="https://instagram.com/clubcrumbie" style="color:#3A332C;text-decoration:none;">Instagram</a> &middot; <a href="https://tiktok.com/@clubcrumbie" style="color:#3A332C;text-decoration:none;">TikTok</a> &middot; <a href="https://facebook.com/clubcrumbie" style="color:#3A332C;text-decoration:none;">Facebook</a></div></td></tr></table>`;
+
+function escapeHtml(value: string) {
+	return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+async function sendTextEmail(message: { to: string | string[]; subject: string; text: string; replyTo?: string; headers?: Record<string, string>; bcc?: string; signature?: boolean }) {
 	const apiKey = process.env.RESEND_API_KEY?.trim();
 	const from = process.env.RESEND_FROM_EMAIL?.trim() || "Club Crumbie <hello@clubcrumbie.com>";
 	if (!apiKey) throw new Error("Resend is not configured");
@@ -85,7 +92,8 @@ async function sendTextEmail(message: { to: string | string[]; subject: string; 
 		from,
 		to: message.to,
 		subject: singleLine(message.subject),
-		text: message.text,
+		text: message.signature ? message.text + signatureText : message.text,
+		html: message.signature ? `<div style="white-space:pre-wrap;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#1A140D;">${escapeHtml(message.text)}</div>${signatureHtml}` : undefined,
 		replyTo: message.replyTo,
 		headers: message.headers,
 		bcc: message.bcc,
@@ -118,7 +126,7 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 }
 
 export async function sendEnquiryReply(reply: { id: string; to: string; subject: string; message: string }) {
-	await sendTextEmail({ to: reply.to, subject: await linkedSubject(reply.id, reply.subject), text: reply.message, replyTo: enquiryMailbox, bcc: enquiryMailbox, headers: { "X-Crumbie-Enquiry": threadToken(reply.id) } });
+	await sendTextEmail({ to: reply.to, subject: await linkedSubject(reply.id, reply.subject), text: reply.message, replyTo: enquiryMailbox, bcc: enquiryMailbox, signature: true, headers: { "X-Crumbie-Enquiry": threadToken(reply.id) } });
 }
 
 export async function sendOrderConfirmation(order: Order) {

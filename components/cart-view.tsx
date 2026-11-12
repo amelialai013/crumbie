@@ -25,6 +25,11 @@ export default function CartView({ productImages }: { productImages: Record<stri
     if (removeTimeoutRef.current !== null) window.clearTimeout(removeTimeoutRef.current);
   }, []);
 
+  useEffect(() => {
+    if (!emptyAppearing || lines.length > 0) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [emptyAppearing, lines.length]);
+
   function removeLine(key: string) {
     if (removeTimeoutRef.current !== null) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -44,7 +49,6 @@ export default function CartView({ productImages }: { productImages: Record<stri
       setRemovingLastItem(false);
       if (lines.length === 1) {
         setEmptyAppearing(true);
-        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       }
       removeTimeoutRef.current = null;
     }, motionDuration("panel", 460));
@@ -64,7 +68,6 @@ export default function CartView({ productImages }: { productImages: Record<stri
       clear();
       setRemovingLastItem(false);
       setEmptyAppearing(true);
-      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       removeTimeoutRef.current = null;
     }, motionDuration("panel", 460));
   }

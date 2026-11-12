@@ -5014,3 +5014,38 @@ html:has(.orb-intro:not(.is-leaving)) body {
 @media(prefers-reduced-motion:reduce) {
   .footer-grid .footer-socials a { transition: none; }
 }
+
+.product-photo-gallery {
+  margin-top: clamp(48px, 6vw, 88px);
+}
+.product-photo-gallery ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 24px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.product-photo-gallery li {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #1d1812;
+}
+.product-photo-gallery img {
+  object-fit: cover;
+}
+.product-photo-gallery li:only-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 10;
+}
+@media (max-width: 700px) {
+  .product-photo-gallery ul {
+    grid-template-columns: 1fr;
+  }
+}
+.admin-product-image-pending {
+  width: 56px;
+  height: 44px;
+  background: rgba(239,205,170,.12);
+}

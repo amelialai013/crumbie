@@ -32,6 +32,7 @@ export async function POST(request: Request) {
 	const slug = productSlugFromName(payload.name);
 	const existing = await getRecord<Product>("product", payload.id);
 	const images = [...(Array.isArray(payload.images) ? payload.images : existing?.images || [])];
+	const galleryImages = Array.isArray(payload.galleryImages) ? payload.galleryImages.filter((image): image is string => typeof image === "string") : existing?.galleryImages || [];
 	let uploadedImages = false;
 	try {
 		for (const entry of form.getAll("images")) {
@@ -41,12 +42,19 @@ export async function POST(request: Request) {
 				uploadedImages = true;
 			}
 		}
+		for (const entry of form.getAll("galleryFiles")) {
+			if (entry instanceof File && entry.size > 0) {
+				if (!entry.type.startsWith("image/") || entry.size > 10 * 1024 * 1024) return NextResponse.json({ error: "Images must be under 10MB" }, { status: 400 });
+				galleryImages.push(await uploadMedia(`products/${slug}/gallery/${Date.now()}-${galleryImages.length}-${entry.name}`, new Uint8Array(await entry.arrayBuffer()), entry.type));
+			}
+		}
 		const product: Product = {
 			...payload,
 			slug,
 			ingredients: payload.ingredients.trim() || defaultProductIngredients,
 			allergens: payload.allergens.trim() || defaultProductAllergens,
 			images,
+			galleryImages,
 			imageMode: uploadedImages || payload.imageMode === "gallery" ? "gallery" : existing?.imageMode,
 		};
 		await saveRecord("product", product);

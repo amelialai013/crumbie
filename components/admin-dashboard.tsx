@@ -551,6 +551,8 @@ export default function AdminDashboard() {
     price12: "",
   });
   const [productImages, setProductImages] = useState<string[]>([]);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [referenceImageFiles, setReferenceImageFiles] = useState<File[]>([]);
   const [referenceDropActive, setReferenceDropActive] = useState(false);
   const [imageDirection, setImageDirection] = useState("");
@@ -564,7 +566,7 @@ export default function AdminDashboard() {
   const [savedProduct, setSavedProduct] = useState<string | null>(null);
   const contentChanged = JSON.stringify(content) !== savedContent;
   const productChanged =
-    !editingProductId || JSON.stringify({ newProduct, productImages }) !== savedProduct;
+    !editingProductId || JSON.stringify({ newProduct, productImages, galleryImages, galleryFiles: galleryFiles.map((file) => file.name + file.size) }) !== savedProduct;
 
   function loadContent(next: Content) {
     setContent(next);
@@ -1097,6 +1099,7 @@ export default function AdminDashboard() {
       allergens: newProduct.allergens.trim() || defaultProductAllergens,
       images: productImages,
       imageMode: productImages.length > 0 ? "gallery" : undefined,
+      galleryImages,
       variants: [
         ...(hasPrice(newProduct.price4)
           ? [{ id: `${slug}-4`, label: "Box of 4", quantity: 4, price: Number(newProduct.price4) }]
@@ -1110,6 +1113,7 @@ export default function AdminDashboard() {
       ],
     };
     formData.set("product", JSON.stringify(product));
+    for (const file of await compressReferenceImages(galleryFiles)) formData.append("galleryFiles", file);
     const response = await fetch("/api/admin/products", {
       method: "POST",
       body: formData,
@@ -1162,7 +1166,9 @@ export default function AdminDashboard() {
     setProductFieldErrors({});
     setNewProduct(productForm);
     setProductImages(product.images);
-    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images }));
+    setGalleryImages(product.galleryImages || []);
+    setGalleryFiles([]);
+    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images, galleryImages: product.galleryImages || [], galleryFiles: [] }));
     setReferenceImageFiles([]);
     setImageDirection("");
     setGenerationStatus("");
@@ -1174,6 +1180,8 @@ export default function AdminDashboard() {
     setProductFieldErrors({});
     setNewProduct({ name: "", description: "", ingredients: defaultProductIngredients, allergens: defaultProductAllergens, price4: "", price6: "", price12: "" });
     setProductImages([]);
+    setGalleryImages([]);
+    setGalleryFiles([]);
     setReferenceImageFiles([]);
     setImageDirection("");
     setGenerationStatus("");
@@ -2595,6 +2603,50 @@ export default function AdminDashboard() {
                             >
                               Remove
                             </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </fieldset>
+                <fieldset className="admin-image-generator">
+                  <legend>Gallery photos</legend>
+                  <p>Photos shown in a gallery underneath the cookie on its product page.</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    aria-label="Add gallery photos"
+                    onChange={(event) => {
+                      const picked = Array.from(event.target.files || []).filter((file) => file.type.startsWith("image/"));
+                      setGalleryFiles((current) => [...current, ...picked]);
+                      event.target.value = "";
+                    }}
+                  />
+                  {(galleryImages.length > 0 || galleryFiles.length > 0) && (
+                    <ol className="admin-product-images">
+                      {galleryImages.map((image, index) => (
+                        <li key={image}>
+                          <Image src={image} alt="" width={56} height={44} unoptimized />
+                          <div>
+                            <strong>Gallery photo {index + 1}</strong>
+                            <span>{image.split("/").pop()}</span>
+                          </div>
+                          <div className="admin-product-image-actions">
+                            <button className="text-button" type="button" disabled={index === 0} onClick={() => setGalleryImages((current) => { const next = [...current]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next; })}>Up</button>
+                            <button className="text-button" type="button" onClick={() => setGalleryImages((current) => current.filter((_, i) => i !== index))}>Remove</button>
+                          </div>
+                        </li>
+                      ))}
+                      {galleryFiles.map((file, index) => (
+                        <li key={`${file.name}-${file.size}-${index}`}>
+                          <div className="admin-product-image-pending" aria-hidden="true" />
+                          <div>
+                            <strong>New photo (saved on publish)</strong>
+                            <span>{file.name}</span>
+                          </div>
+                          <div className="admin-product-image-actions">
+                            <button className="text-button" type="button" onClick={() => setGalleryFiles((current) => current.filter((_, i) => i !== index))}>Remove</button>
                           </div>
                         </li>
                       ))}
