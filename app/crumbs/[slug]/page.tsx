@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
-import Image from "next/image";
+import PhotoCarousel from "@/components/photo-carousel";
 import CookieExplorer from "@/components/cookie-explorer";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
@@ -77,14 +77,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </div>
       {product.galleryImages && product.galleryImages.length > 0 && (
         <div className="shell product-photo-gallery">
-          <h2 className="sr-only">{product.name} photos</h2>
-          <ul>
-            {product.galleryImages.map((image, index) => (
-              <li key={image}>
-                <Image src={image} alt={`${product.name} photo ${index + 1}`} fill sizes="(max-width: 700px) 100vw, 50vw" unoptimized={!image.includes("images.unsplash.com")} />
-              </li>
-            ))}
-          </ul>
+          <PhotoCarousel images={product.galleryImages} name={product.name} />
         </div>
       )}
       <div className="shell product-facts">
