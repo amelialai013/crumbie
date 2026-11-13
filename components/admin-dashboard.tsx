@@ -218,7 +218,7 @@ const contentModules: Record<string, ContentModule> = {
         label: "Secondary button label",
         maxLength: 40,
       },
-      { key: "howTitle", label: "Secondary heading", maxLength: 80 },
+      { key: "howTitle", label: "Secondary heading", maxLength: 40 },
       { key: "stepOneTitle", label: "Step 1 heading", maxLength: 60 },
       {
         key: "stepOneBody",

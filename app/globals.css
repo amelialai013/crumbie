@@ -718,6 +718,15 @@ input::-webkit-caps-lock-indicator {
   overflow: hidden;
   white-space: nowrap;
 }
+@media (max-width: 640px) {
+  .admin-editor .field textarea.admin-textarea-compact {
+    height: 72px;
+    min-height: 72px;
+    overflow-y: auto;
+    white-space: normal;
+    field-sizing: fixed;
+  }
+}
 textarea {
   scrollbar-width: thin;
   scrollbar-color: rgba(201, 173, 148, .7) transparent;
@@ -5606,6 +5615,9 @@ html:has(.orb-intro:not(.is-leaving)) body {
 }
 .admin-editor .field.admin-card-price.is-disabled .admin-card-price-input span {
   color: #7d7367;
+}
+.admin-editor .admin-card-pair .field {
+  padding-bottom: 24px;
 }
 .admin-card-pair {
   margin-bottom: 0;
