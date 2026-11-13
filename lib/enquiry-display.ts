@@ -4,7 +4,7 @@ export function enquiryMessageDisplay(message: string, outgoing: boolean) {
  let visible = text;
  // Only collapse trailing >-quoted history; preserve inline answers after quotes.
  const quoted = /^(?=[ \t]*>)/gm;
- for (const match of text.matchAll(quoted)) {
+ for (const match of Array.from(text.matchAll(quoted))) {
   const tail = text.slice(match.index);
   if (tail.split("\n").every(line => !line.trim() || /^[ \t]*>/.test(line))) {
    visible = text.slice(0, match.index).trimEnd();
