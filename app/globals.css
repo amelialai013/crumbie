@@ -5036,7 +5036,7 @@ html:has(.orb-intro:not(.is-leaving)) body {
 }
 .photo-carousel li {
   position: relative;
-  flex: 0 0 clamp(150px, 16vw, 210px);
+  flex: 1 0 clamp(150px, 16vw, 210px);
   aspect-ratio: 1;
   overflow: hidden;
   background: #1d1812;
@@ -5082,4 +5082,106 @@ html:has(.orb-intro:not(.is-leaving)) body {
   width: 56px;
   height: 44px;
   background: rgba(239,205,170,.12);
+}
+.photo-carousel-open {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.photo-carousel-open:focus-visible {
+  outline: 2px solid #c9ad94;
+  outline-offset: -2px;
+}
+.photo-lightbox {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(26, 20, 13, .96);
+  color: #efcdaa;
+  overflow: hidden;
+}
+.photo-lightbox:not([open]) {
+  display: none;
+}
+.photo-lightbox::backdrop {
+  background: rgba(26, 20, 13, .96);
+}
+.photo-lightbox-stage {
+  position: absolute;
+  inset: 72px 72px;
+}
+.photo-lightbox-stage img {
+  object-fit: contain;
+}
+.photo-lightbox-close,
+.photo-lightbox-nav {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #4a433a;
+  border-radius: 50%;
+  background: rgba(26, 20, 13, .7);
+  color: #efcdaa;
+  cursor: pointer;
+  transition: border-color .2s ease;
+}
+.photo-lightbox-close:hover,
+.photo-lightbox-nav:hover {
+  border-color: #c9ad94;
+}
+.photo-lightbox-close {
+  top: 16px;
+  right: 16px;
+}
+.photo-lightbox-nav {
+  top: 50%;
+  translate: 0 -50%;
+}
+.photo-lightbox-nav.is-prev {
+  left: 16px;
+}
+.photo-lightbox-nav.is-next {
+  right: 16px;
+}
+.photo-lightbox svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.photo-lightbox-count {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: .85rem;
+  letter-spacing: .04em;
+}
+@media (max-width: 700px) {
+  .photo-lightbox-stage {
+    inset: 64px 0;
+  }
+  .photo-lightbox-nav {
+    display: none;
+  }
+}
+
+.photo-carousel-controls[hidden] {
+  display: none;
 }

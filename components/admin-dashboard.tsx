@@ -109,6 +109,18 @@ async function compressReferenceImages(files: File[]): Promise<File[]> {
   return result;
 }
 
+const previewUrls = new WeakMap<File, string>();
+
+function PendingPhotoPreview({ file }: { file: File }) {
+  let url = previewUrls.get(file);
+  if (!url) {
+    url = URL.createObjectURL(file);
+    previewUrls.set(file, url);
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={url} alt="" width={56} height={44} />;
+}
+
 function isUnreplied(enquiry: Enquiry) {
   return Boolean(enquiry.id) && enquiry.status !== "replied";
 }
@@ -2640,7 +2652,7 @@ export default function AdminDashboard() {
                       ))}
                       {galleryFiles.map((file, index) => (
                         <li key={`${file.name}-${file.size}-${index}`}>
-                          <div className="admin-product-image-pending" aria-hidden="true" />
+                          <PendingPhotoPreview file={file} />
                           <div>
                             <strong>New photo (saved on publish)</strong>
                             <span>{file.name}</span>
