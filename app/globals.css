@@ -4187,6 +4187,11 @@ body {
   gap: 7px;
   margin: 24px 0 0 auto;
 }
+@media(max-width:900px) {
+  .cart-remove-all {
+    margin-top: 16px;
+  }
+}
 .cart-row {
   grid-template-columns: 160px minmax(0, 1fr) auto;
   gap: 28px;
@@ -4317,14 +4322,21 @@ body {
 @media(max-width:900px) {
   .cart-layout {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   .cart-summary {
     position: static;
+    padding-top: 8px;
+  }
+  .cart-summary-heading {
+    margin-bottom: 8px;
   }
 }
 @media(max-width:640px) {
   .cart-section {
+    min-height: 0;
     padding-top: 40px;
+    padding-bottom: 40px;
   }
   .cart-empty {
     min-height: 300px;
