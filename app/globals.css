@@ -5438,14 +5438,18 @@ html:has(.orb-intro:not(.is-leaving)) body {
   font-size: .92rem;
   line-height: 1.5;
   resize: none;
+  transition: border-color .25s ease, box-shadow .25s ease, background-color .25s ease;
 }
 .card-addon-messages textarea::placeholder {
   color: #efcdaa;
   opacity: .45;
 }
+.card-addon-messages textarea:focus,
 .card-addon-messages textarea:focus-visible {
-  outline: 2px solid #c9ad94;
-  outline-offset: 2px;
+  outline: 0;
+  border-color: #c9ad94;
+  background-color: rgba(239, 205, 170, .04);
+  box-shadow: 0 0 0 4px rgba(201, 173, 148, .14);
 }
 @media (prefers-reduced-motion: reduce) {
   .card-addon-reveal { transition: none; }
