@@ -15,13 +15,21 @@ export type CartLine = {
 	pickupDateId: string;
 	pickupDate: string;
 	pickupWindow: string;
+	cardMessages?: string[];
 };
+
+export type CardChoice = number | "all";
+
+export function cardCountFor(card: CardChoice, boxes: number) {
+	return card === "all" ? boxes : Math.min(boxes, Math.max(0, Math.floor(card)));
+}
 
 type CartValue = {
 	lines: CartLine[];
 	count: number;
 	total: number;
 	ready: boolean;
+	setLineCard: (key: string, messages: string[]) => void;
 	add: (line: Omit<CartLine, "key">) => void;
 	remove: (key: string) => void;
 	setQuantity: (key: string, quantity: number) => void;
@@ -57,7 +65,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 		queueMicrotask(() => {
 			try {
 				const stored: unknown = JSON.parse(localStorage.getItem("crumbie-cart") || "[]");
-				setLines(Array.isArray(stored) ? stored.filter(isCartLine) : []);
+				setLines(
+					Array.isArray(stored)
+						? stored.filter(isCartLine).map((line) => ({
+								...line,
+								cardMessages: Array.isArray(line.cardMessages)
+									? line.cardMessages.filter((m): m is string => typeof m === "string").slice(0, line.quantity)
+									: undefined,
+							}))
+						: [],
+				);
+				localStorage.removeItem("crumbie-cart-card");
+				localStorage.removeItem("crumbie-cart-card-messages");
 			} catch {
 				setLines([]);
 			}
@@ -66,7 +85,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	useEffect(() => {
-		if (ready) localStorage.setItem("crumbie-cart", JSON.stringify(lines));
+		if (!ready) return;
+		localStorage.setItem("crumbie-cart", JSON.stringify(lines));
 	}, [lines, ready]);
 
 	const value = useMemo<CartValue>(
@@ -75,13 +95,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 			count: lines.reduce((total, line) => total + line.quantity, 0),
 			total: lines.reduce((total, line) => total + line.quantity * line.unitPrice, 0),
 			ready,
+			setLineCard: (key, messages) =>
+				setLines((current) =>
+					current.map((line) => (line.key === key ? { ...line, cardMessages: messages.slice(0, line.quantity) } : line)),
+				),
 			add: (line) =>
 				setLines((current) => {
 					const key = `${line.variantId}:${line.pickupDateId}`;
 					const found = current.find((item) => item.key === key);
 					return found
 						? current.map((item) =>
-								item.key === key ? { ...item, quantity: Math.min(99, item.quantity + line.quantity) } : item,
+								item.key === key
+									? {
+											...item,
+											quantity: Math.min(99, item.quantity + line.quantity),
+											cardMessages: [...(item.cardMessages ?? []), ...(line.cardMessages ?? [])].slice(0, Math.min(99, item.quantity + line.quantity)),
+										}
+									: item,
 							)
 						: [...current, { ...line, key }];
 				}),
@@ -90,11 +120,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 				setLines((current) =>
 					current.map((line) =>
 						line.key === key
-							? { ...line, quantity: Number.isFinite(quantity) ? Math.min(99, Math.max(1, Math.floor(quantity))) : 1 }
+							? (() => {
+									const next = Number.isFinite(quantity) ? Math.min(99, Math.max(1, Math.floor(quantity))) : 1;
+									return { ...line, quantity: next, cardMessages: line.cardMessages?.slice(0, next) };
+								})()
 							: line,
 					),
 				),
-			clear: () => setLines([]),
+			clear: () => {
+				setLines([]);
+			},
 		}),
 		[lines, ready],
 	);

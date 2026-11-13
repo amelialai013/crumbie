@@ -11,9 +11,13 @@ import biscoffCookie from "@/assets/cookies/biscoff-white-chocolate-cookie/turnt
 import { useCart } from "@/components/cart-context";
 import QuantityControl from "@/components/quantity-control";
 import { productSlugFromName } from "@/lib/catalog";
+import type { CardOption } from "@/lib/card";
 
-export default function CartView({ productImages }: { productImages: Record<string, string> }) {
-  const { lines, total, ready, remove, setQuantity, clear } = useCart();
+export default function CartView({ productImages, card }: { productImages: Record<string, string>; card: CardOption }) {
+  const { lines, total: itemsTotal, ready, remove, setQuantity, clear, setLineCard } = useCart();
+  const cardCount = card.enabled ? lines.reduce((sum, line) => sum + (line.cardMessages?.length ?? 0), 0) : 0;
+  const withCard = cardCount > 0;
+  const total = itemsTotal + cardCount * card.price;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [removingKey, setRemovingKey] = useState<string | null>(null);
@@ -114,8 +118,10 @@ export default function CartView({ productImages }: { productImages: Record<stri
               <div className="cart-items">
                 {lines.map((line) => {
                   const canonicalProductSlug = productSlugFromName(line.productName);
+                  const lineCards = card.enabled ? line.cardMessages ?? [] : [];
                   return (
-              <div className={`cart-row${removingKey === line.key ? " is-removing" : ""}`} key={line.key}>
+              <div key={line.key}>
+              <div className={`cart-row${removingKey === line.key ? " is-removing" : ""}`}>
                 <Link className="cart-product-link" href={`/crumbs/${canonicalProductSlug}`} aria-label={`View ${line.productName}`}>
                   <RevealImage
                     className="cart-product-image"
@@ -154,6 +160,27 @@ export default function CartView({ productImages }: { productImages: Record<stri
                   </button>
                 </div>
               </div>
+              {lineCards.length > 0 && (
+                <div className="cart-card-line">
+                  <div className="cart-card-line-text">
+                    <strong>{card.label} <span className="cart-card-for">for {line.productName}</span></strong>
+                    <small>{lineCards.length} of {line.quantity} {line.quantity === 1 ? "box" : "boxes"} · ${card.price.toFixed(2)} each</small>
+                    <ol className="cart-card-messages">
+                      {lineCards.map((message, i) => (
+                        <li key={i}>
+                          <span>{lineCards.length === 1 ? "Message" : `Card ${i + 1}`}</span>
+                          {message.trim() ? <q>{message.trim()}</q> : <em>Blank card</em>}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                  <div className="cart-card-line-end">
+                    <span>${(card.price * lineCards.length).toFixed(2)}</span>
+                    <button className="text-button" onClick={() => setLineCard(line.key, [])} disabled={removingLastItem}>Remove</button>
+                  </div>
+                </div>
+              )}
+              </div>
                   );
                 })}
                 <button className="text-button cart-remove-all" onClick={removeAll} disabled={removingLastItem}>
@@ -164,6 +191,7 @@ export default function CartView({ productImages }: { productImages: Record<stri
               <aside className="summary cart-summary">
                 <p className="cart-summary-heading">Order total</p>
                 <h2>${total.toFixed(2)} <span>AUD</span></h2>
+                {withCard && <p className="cart-summary-card">Includes {cardCount} Club Crumbie {cardCount === 1 ? "Card" : "Cards"} · ${(card.price * cardCount).toFixed(2)}</p>}
                 <p>GST included. Pickup address provided in confirmation email.</p>
                 <button className="btn btn-dark" disabled={busy} onClick={checkout}>{busy ? "Starting secure checkout…" : "Checkout"}</button>
                 {error && <p className="field-error cart-checkout-error" role="alert">{error}</p>}

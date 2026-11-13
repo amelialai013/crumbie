@@ -60,14 +60,6 @@ export default function PhotoCarousel({ images, name }: { images: string[]; name
 
   return (
     <div className="photo-carousel" role="region" aria-roledescription="carousel" aria-label={`${name} photos`}>
-      <div className="photo-carousel-controls" hidden={edges.start && edges.end}>
-        <button type="button" disabled={edges.start} onClick={() => scrollByPage(-1)} aria-label="Previous photos">
-          <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg>
-        </button>
-        <button type="button" disabled={edges.end} onClick={() => scrollByPage(1)} aria-label="Next photos">
-          <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m6 3.5 4.5 4.5L6 12.5" /></svg>
-        </button>
-      </div>
       <ul ref={track} onScroll={updateEdges}>
         {images.map((image, index) => (
           <li key={image}>
@@ -77,6 +69,14 @@ export default function PhotoCarousel({ images, name }: { images: string[]; name
           </li>
         ))}
       </ul>
+      <div className="photo-carousel-controls" hidden={edges.start && edges.end}>
+        <button type="button" disabled={edges.start} onClick={() => scrollByPage(-1)} aria-label="Previous photos">
+          <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg>
+        </button>
+        <button type="button" disabled={edges.end} onClick={() => scrollByPage(1)} aria-label="Next photos">
+          <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m6 3.5 4.5 4.5L6 12.5" /></svg>
+        </button>
+      </div>
       <dialog
         ref={dialog}
         className="photo-lightbox"

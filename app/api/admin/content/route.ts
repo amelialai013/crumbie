@@ -18,7 +18,7 @@ const limits: Record<string, Record<string, number>> = {
 	"contact us": { pageTitle: 80, messagePrompt: 180, enquiryTypes: 1000 },
 	policy: { pageTitle: 80, pickupHeading: 80, pickupCopy: policyBodyMaxChars, deadlineHeading: 80, deadlineCopy: policyBodyMaxChars, paymentHeading: 80, paymentCopy: policyBodyMaxChars, cancellationHeading: 80, cancellationCopy: policyBodyMaxChars, allergenHeading: 80, allergenCopy: policyBodyMaxChars, enquiryHeading: 80, enquiryCopy: policyBodyMaxChars },
 	"email templates": { confirmationSubject: 140, confirmationBody: 3000, pickupReminderSubject: 140, pickupReminderBody: 3000, enquirySubject: 140, enquiryBody: 3000 },
-	settings: { pickupAddress: 240, notificationEmail: 200, businessName: 100 },
+	settings: { pickupAddress: 240, notificationEmail: 200, businessName: 100, cardEnabled: 5, cardPrice: 8, cardLabel: 60, cardDescription: 200, galleryTitle: 80, galleryBody: 300 },
 };
 
 function validModule(value: unknown): value is string {

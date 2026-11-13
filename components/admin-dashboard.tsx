@@ -32,6 +32,7 @@ type Order = {
   createdAt?: string;
   customer?: { name?: string; email?: string };
   paymentStatus?: string;
+  card?: { label?: string; price?: number; quantity?: number; messages?: string[]; products?: string[] } | null;
   lines?: Array<{
     productName?: string;
     variantLabel?: string;
@@ -447,6 +448,12 @@ Club Crumbie`,
       { key: "pickupAddress", label: "Pickup address", maxLength: 240 },
       { key: "notificationEmail", label: "Email address", maxLength: 200 },
       { key: "businessName", label: "Business name", maxLength: 100 },
+      { key: "galleryTitle", label: "Product photos heading", maxLength: 80 },
+      { key: "galleryBody", label: "Product photos copy", maxLength: 300, multiline: true, rows: 3 },
+      { key: "cardEnabled", label: "Card add-on enabled", maxLength: 5 },
+      { key: "cardPrice", label: "Card price (AUD)", maxLength: 8 },
+      { key: "cardLabel", label: "Card name", maxLength: 60 },
+      { key: "cardDescription", label: "Card description", maxLength: 200, multiline: true, rows: 3 },
     ],
   },
 };
@@ -1940,6 +1947,19 @@ export default function AdminDashboard() {
                           <span className="status">{line.status}</span>
                         </div>
                       ))}
+                      {order.card && (
+                        <div>
+                          {order.card.quantity ?? 1} × {order.card.label || "Club Crumbie Card"}
+                          {typeof order.card.price === "number" ? ` · $${order.card.price.toFixed(2)} each` : ""}
+                          {order.card.messages?.some(Boolean) && (
+                            <ol className="admin-card-messages">
+                              {order.card.messages.map((message, index) => (
+                                <li key={index}>{message || <em>blank</em>}{order.card?.products?.[index] ? ` (${order.card.products[index]})` : ""}</li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td data-label="Payment">
                       {order.paymentStatus
@@ -1974,6 +1994,7 @@ export default function AdminDashboard() {
                       <p key={`${order.id}-${index}`}>
                         {order.customer?.name} · {line.productName} ·{" "}
                         {line.pickupWindow}
+                        {order.card && index === 0 ? ` · + ${order.card.quantity ?? 1} × ${order.card.label || "Club Crumbie Card"}` : ""}
                       </p>
                     )),
                 )}
@@ -2976,7 +2997,29 @@ export default function AdminDashboard() {
                         field.key === section.bodyKey,
                     )),
                 )
+.filter((field) => !(tab === "settings" && field.key.startsWith("card")))
                 .map(renderContentField)}
+              {tab === "settings" && (
+                <fieldset className="admin-card-settings">
+                  <legend>Club Crumbie Card add-on</legend>
+                  <label className="admin-card-toggle">
+                    <input
+                      type="checkbox"
+                      checked={content.fields.cardEnabled !== "false"}
+                      onChange={(event) => setContent({ ...content, fields: { ...content.fields, cardEnabled: event.target.checked ? "true" : "false" } })}
+                    />
+                    Offer a card at checkout
+                  </label>
+                  {contentModules.settings.fields.filter((field) => field.key === "cardPrice" || field.key === "cardLabel" || field.key === "cardDescription").map((field) =>
+                    field.key === "cardPrice" ? (
+                      <div className="field" key={field.key}>
+                        <label htmlFor="content-cardPrice">{field.label}</label>
+                        <input id="content-cardPrice" inputMode="decimal" maxLength={field.maxLength} placeholder="3.00" value={content.fields.cardPrice ?? "3"} onChange={(event) => setContent({ ...content, fields: { ...content.fields, cardPrice: event.target.value.replace(/[^0-9.]/g, "") } })} />
+                      </div>
+                    ) : renderContentField(field),
+                  )}
+                </fieldset>
+              )}
               {tab === "contact us" && (() => {
                 const types = (content.fields.enquiryTypes ?? defaultEnquiryTypes.join("\n")).split("\n");
                 const setTypes = (next: string[]) =>

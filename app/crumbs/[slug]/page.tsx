@@ -7,7 +7,7 @@ import PhotoCarousel from "@/components/photo-carousel";
 import CookieExplorer from "@/components/cookie-explorer";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
-import { getProducts, getPickupDates } from "@/lib/catalog-store";
+import { getCardOption, getGalleryCopy, getProducts, getPickupDates } from "@/lib/catalog-store";
 
 const legacyProductSlugs: Record<string, string> = {
   "signature-box": "signature-crumbie",
@@ -32,7 +32,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // Availability must reflect admin changes and the current ordering cutoff.
   await connection();
   const { slug } = await params;
-  const [products, pickupDates] = await Promise.all([getProducts(), getPickupDates()]);
+  const [products, pickupDates, card, galleryCopy] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy()]);
   const product = products.find((item) => item.slug === slug);
   if (!product && legacyProductSlugs[slug]) {
     redirect(`/crumbs/${legacyProductSlugs[slug]}`);
@@ -72,11 +72,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </div>
             </div>
           </header>
-          <ProductOrder product={product} pickupDates={pickupDates} />
+          <ProductOrder product={product} pickupDates={pickupDates} card={card} />
         </div>
       </div>
       {product.galleryImages && product.galleryImages.length > 0 && (
         <div className="shell product-photo-gallery">
+          <div className="product-photo-gallery-copy">
+            <h2>{galleryCopy.title}</h2>
+            <p>{galleryCopy.body}</p>
+          </div>
           <PhotoCarousel images={product.galleryImages} name={product.name} />
         </div>
       )}
