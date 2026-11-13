@@ -40,5 +40,5 @@ export async function POST(req: Request) {
 	const sentAt = delivered?.sentAt || new Date().toISOString();
 	const updated = await appendEnquiryReply(id, { subject: delivered?.subject || subject, message, sentAt, ...(delivered ? { source: "gmail" as const, externalId: `gmail:${delivered.messageId}` } : {}) });
 	if (!updated) return NextResponse.json({ error: "Enquiry no longer exists." }, { status: 404 });
-	return NextResponse.json(updated);
+	return NextResponse.json({ ...updated, ...(delivered ? { gmailThreaded: true, gmailSubject: delivered.subject } : {}) });
 }
