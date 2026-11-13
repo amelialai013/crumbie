@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PremiumSelect from "./premium-select";
 
 const fieldLabels: Record<string, string> = {
@@ -16,6 +16,14 @@ export default function CustomOrderForm({ enquiryTypes, messagePrompt }: { enqui
   const [enquiryType, setEnquiryType] = useState(enquiryTypes[0] ?? "");
   const [errorMessage, setErrorMessage] = useState("");
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const successHeading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (status !== "done") return;
+    successHeading.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [status]);
 
   function clearValidationError(field: string) {
     setValidationErrors((current) => {
@@ -91,7 +99,7 @@ export default function CustomOrderForm({ enquiryTypes, messagePrompt }: { enqui
   if (status === "done") {
     return (
       <div className="enquiry-form enquiry-success">
-        <h2>Thank you.</h2>
+        <h2 ref={successHeading} tabIndex={-1}>Thank you.</h2>
         <p>Your message is in the oven, we’ll be in touch soon.<br />Can’t find our reply? Take a peek in your junk folder.</p>
         <div className="actions">
           <Link className="btn btn-dark btn-arrow" href="/crumbs">
