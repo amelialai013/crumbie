@@ -72,3 +72,20 @@ test('clean subject resolves from known reply headers and still validates custom
  assert.equal(globalThis.gmailRouteTest.appended[0].id,id);
  assert.equal((await POST(request({...payload,from:'other@example.com'}))).status,400);
 });
+
+test('same-second email timestamps register anchors despite datastore milliseconds; earlier seconds stay rejected',async()=>{
+ await call();
+ globalThis.gmailRouteTest.record.createdAt='2026-11-13T20:26:39.360Z';
+ const body={...valid,threadToken:threadToken(id),from:'hello@clubcrumbie.com',to:'clubcrumbieadmin@gmail.com',rfcMessageId:'<precision@example.com>',sentAt:'2026-11-13T20:26:39.000Z'};
+ const req=p=>new Request('https://example.test/api/integrations/gmail/reply',{method:'POST',headers:{authorization:`Bearer ${secret}`},body:JSON.stringify(p)});
+ const result=await POST(req(body));assert.equal(result.status,200);assert.equal((await result.json()).anchor,true);
+ assert.equal((await POST(req({...body,sentAt:'2026-11-13T20:26:38.000Z'}))).status,400);
+ assert.equal(globalThis.gmailRouteTest.appended.length,0);
+});
+test('same-second customer reply is accepted without allowing replies from an earlier second',async()=>{
+ await call();globalThis.gmailRouteTest.record.createdAt='2026-11-13T20:26:39.360Z';globalThis.gmailRouteTest.appended=[];
+ const req=sentAt=>new Request('https://example.test/api/integrations/gmail/reply',{method:'POST',headers:{authorization:`Bearer ${secret}`},body:JSON.stringify({...valid,from:'customer@example.com',to:'clubcrumbieadmin@gmail.com',sentAt})});
+ assert.equal((await POST(req('2026-11-13T20:26:39.000Z'))).status,200);
+ assert.equal((await POST(req('2026-11-13T20:26:38.000Z'))).status,400);
+ assert.equal(globalThis.gmailRouteTest.appended.length,1);
+});

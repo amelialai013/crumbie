@@ -52,12 +52,13 @@ export async function POST(req: Request) {
  const senders = emailAddresses(reply.from);
  const recipients = emailAddresses(reply.to + "," + (reply.cc || ""));
  const customer = enquiry.email?.trim().toLowerCase();
+ // Email Date headers have whole-second precision; compare creation time at that precision.
  // A signed original is a routing anchor, not a new conversation entry.
  if (signedId) {
   const configuredSender = emailAddresses(process.env.RESEND_FROM_EMAIL || "hello@clubcrumbie.com");
   if (senders.length !== 1 || !configuredSender.includes(senders[0]) ||
       (!recipients.includes(enquiryMailbox) && (!customer || !recipients.includes(customer))) ||
-      (enquiry.createdAt && Date.parse(reply.sentAt) < Date.parse(enquiry.createdAt)) ||
+      (enquiry.createdAt && Date.parse(reply.sentAt) < Math.floor(Date.parse(enquiry.createdAt) / 1000) * 1000) ||
       Date.parse(reply.sentAt) > Date.now() + 300000) {
    return NextResponse.json({ error: "Invalid thread anchor." }, { status: 400 });
   }
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
  }
  const outgoing = senders.length === 1 && senders[0] === enquiryMailbox && !!customer && recipients.includes(customer);
  const incoming = senders.length === 1 && senders[0] === customer && recipients.includes(enquiryMailbox);
- if ((!outgoing && !incoming) || (enquiry.createdAt && Date.parse(reply.sentAt) < Date.parse(enquiry.createdAt)) || Date.parse(reply.sentAt) > Date.now() + 300000) {
+ if ((!outgoing && !incoming) || (enquiry.createdAt && Date.parse(reply.sentAt) < Math.floor(Date.parse(enquiry.createdAt) / 1000) * 1000) || Date.parse(reply.sentAt) > Date.now() + 300000) {
   return NextResponse.json({ error: "Reply recipient or date does not match." }, { status: 400 });
  }
  for (const messageId of messageIds(reply.rfcMessageId || "")) {
