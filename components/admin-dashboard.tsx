@@ -5,6 +5,7 @@ import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { DatePicker } from "./date-picker";
 import PremiumSelect from "./premium-select";
+import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
@@ -43,6 +44,8 @@ type Order = {
   }>;
 };
 type Enquiry = {
+  gmailThreaded?: boolean;
+  gmailSubject?: string;
   id?: string;
   name?: string;
   email?: string;
@@ -660,6 +663,7 @@ export default function AdminDashboard() {
   const [replyingEnquiry, setReplyingEnquiry] = useState<Enquiry | null>(null);
   const [replySubject, setReplySubject] = useState(DEFAULT_REPLY_SUBJECT);
   const [replyMessage, setReplyMessage] = useState("");
+  const replyRequest = useRef<{ body: string; id: string } | null>(null);
   const [replyError, setReplyError] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
   const [updatingEnquiryId, setUpdatingEnquiryId] = useState<string | null>(null);
@@ -878,8 +882,9 @@ export default function AdminDashboard() {
   }
 
   function openEnquiryReply(enquiry: Enquiry) {
+    replyRequest.current = null;
     setReplyingEnquiry(enquiry);
-    setReplySubject(DEFAULT_REPLY_SUBJECT);
+    setReplySubject(enquiry.gmailSubject || DEFAULT_REPLY_SUBJECT);
     setReplyMessage(`Hi ${enquiry.name?.split(" ")[0] || "there"},\n\n\n\nThanks,\nClub Crumbie`);
     setReplyError("");
   }
@@ -899,10 +904,13 @@ export default function AdminDashboard() {
     }
     setSendingReply(true);
     setReplyError("");
+    const replyBody = JSON.stringify({ id: replyingEnquiry.id, subject: replySubject, message: replyMessage });
+    if (replyRequest.current?.body !== replyBody) replyRequest.current = { body: replyBody, id: crypto.randomUUID() };
     const response = await fetch("/api/admin/enquiries/reply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        requestId: replyRequest.current.id,
         id: replyingEnquiry.id,
         subject: replySubject,
         message: replyMessage,
@@ -1795,8 +1803,9 @@ export default function AdminDashboard() {
                 </p>
               )}
               <label className="field">
-                <span>Subject</span>
+                <span>{replyingEnquiry.gmailThreaded ? "Conversation subject (kept for Gmail threading)" : "Subject"}</span>
                 <input
+                  readOnly={replyingEnquiry.gmailThreaded}
                   value={replySubject}
                   maxLength={200}
                   onChange={(event) => setReplySubject(event.target.value)}
@@ -2349,7 +2358,8 @@ export default function AdminDashboard() {
                       <small>{formatDate(reply.sentAt)}</small>
                     </div>
                     {reply.subject && <span className="admin-enquiry-message-subject">{reply.subject}</span>}
-                    <p>{reply.message}</p>
+                    <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{enquiryMessageDisplay(reply.message, reply.direction !== "incoming")}</p>
+                    {enquiryMessageDisplay(reply.message, reply.direction !== "incoming") !== reply.message.replace(/\r\n/g, "\n") && <details><summary>Show full email</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{reply.message}</p></details>}
                   </li>
                 ))}
               </ol>

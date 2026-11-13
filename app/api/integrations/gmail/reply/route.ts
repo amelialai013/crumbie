@@ -64,6 +64,9 @@ export async function POST(req: Request) {
   for (const messageId of messageIds(reply.rfcMessageId || "")) {
    await setRecord("enquiry-message", messageKey(messageId), id);
   }
+  if (recipients.includes(enquiryMailbox)) {
+   await setRecord("gmail-anchor", id, { messageId: reply.messageId, subject: reply.subject });
+  }
   return NextResponse.json({ ok: true, anchor: true });
  }
  const outgoing = senders.length === 1 && senders[0] === enquiryMailbox && !!customer && recipients.includes(customer);

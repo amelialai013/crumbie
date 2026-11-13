@@ -1,4 +1,5 @@
 import "server-only";
+import { sendGmailReply } from "@/lib/gmail-sender";
 import { Resend } from "resend";
 import { enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 import { enquiryMailbox, enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
@@ -94,7 +95,7 @@ async function sendTextEmail(message: { to: string | string[]; subject: string; 
 		to: message.to,
 		subject: singleLine(message.subject),
 		text: message.signature ? message.text + signatureText : message.text,
-		html: message.signature ? `<div style="white-space:pre-wrap;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#1A140D;">${escapeHtml(message.text)}</div>${signatureHtml}` : undefined,
+		html: message.signature ? `<div style="white-space:pre-wrap;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#1A140D;">${escapeHtml(message.text).replace(/\r?\n/g, "<br />")}</div>${signatureHtml}` : undefined,
 		replyTo: message.replyTo,
 		headers: message.headers,
 		bcc: message.bcc,
@@ -126,7 +127,10 @@ export async function sendEnquiryNotification(enquiry: Enquiry) {
 	});
 }
 
-export async function sendEnquiryReply(reply: { id: string; to: string; subject: string; message: string }) {
+export async function sendEnquiryReply(reply: { id: string; to: string; subject: string; message: string; requestId: string }) {
+ const sender = await getRecord<{ url: string }>("integration", "gmail-sender");
+ if (sender?.url) return sendGmailReply(sender.url, { ...reply, threadToken: threadToken(reply.id), text: reply.message + signatureText,
+  html: `<div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;">${escapeHtml(reply.message).replace(/\r?\n/g, "<br />")}</div>${signatureHtml}` });
 	await sendTextEmail({ to: reply.to, subject: await linkedSubject(reply.id, reply.subject), text: reply.message, replyTo: enquiryMailbox, bcc: enquiryMailbox, signature: true, headers: { "X-Crumbie-Enquiry": threadToken(reply.id) } });
 }
 
