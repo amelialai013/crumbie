@@ -2830,6 +2830,7 @@ body {
   .enquiry-intro { min-height: 540px; border-right: 0; border-bottom: 1px solid var(--line); }
 }
 @media(max-width:640px) {
+  .enquiry-success-break { display: none; }
   .brand-mark { --logo-w: 48px; }
   .footer-logo { --logo-w: 205px; }
   .custom-order-hero { padding-block: 76px 60px; }

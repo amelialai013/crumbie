@@ -100,7 +100,7 @@ export default function CustomOrderForm({ enquiryTypes, messagePrompt }: { enqui
     return (
       <div className="enquiry-form enquiry-success">
         <h2 ref={successHeading} tabIndex={-1}>Thank you.</h2>
-        <p>Your message is in the oven, we’ll be in touch soon.<br />Can’t find our reply? Take a peek in your junk folder.</p>
+        <p>Your message is in the oven, we’ll be in touch soon.<br className="enquiry-success-break" />{" "}Can’t find our reply? Take a peek in your junk folder.</p>
         <div className="actions">
           <Link className="btn btn-dark btn-arrow" href="/crumbs">
             Explore crumbs
