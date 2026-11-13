@@ -448,12 +448,8 @@ Club Crumbie`,
       { key: "pickupAddress", label: "Pickup address", maxLength: 240 },
       { key: "notificationEmail", label: "Email address", maxLength: 200 },
       { key: "businessName", label: "Business name", maxLength: 100 },
-      { key: "galleryTitle", label: "Product photos heading", maxLength: 80 },
-      { key: "galleryBody", label: "Product photos copy", maxLength: 300, multiline: true, rows: 3 },
       { key: "cardEnabled", label: "Card add-on enabled", maxLength: 5 },
       { key: "cardPrice", label: "Card price (AUD)", maxLength: 8 },
-      { key: "cardLabel", label: "Card name", maxLength: 60 },
-      { key: "cardDescription", label: "Card description", maxLength: 200, multiline: true, rows: 3 },
     ],
   },
 };
@@ -499,6 +495,126 @@ function firstSaturdayOfNextMonth() {
   const month = String(firstOfNextMonth.getMonth() + 1).padStart(2, "0");
   const day = String(firstOfNextMonth.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function CardSettings({
+  begin,
+  finish,
+}: {
+  begin: (message: string) => void;
+  finish: (message?: string) => void;
+}) {
+  const [fields, setFields] = useState<Record<string, string> | null>(null);
+  const [saved, setSaved] = useState("");
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin/content?module=settings")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        const next = { ...(data?.fields ?? {}) };
+        next.cardPrice = Number.isFinite(Number(next.cardPrice)) && next.cardPrice?.trim() ? Number(next.cardPrice).toFixed(2) : "3.00";
+        setFields(next);
+        setSaved(JSON.stringify([next.cardEnabled, next.cardPrice, next.galleryTitle, next.galleryBody]));
+      })
+      .catch(() => setFields({}));
+  }, []);
+
+  if (!fields) return null;
+  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.galleryTitle, fields.galleryBody]) !== saved;
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setStatus("Saving...");
+    begin("Saving changes…");
+    const response = await fetch("/api/admin/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ module: "settings", fields }),
+    });
+    if (response.ok) {
+      setSaved(JSON.stringify([fields?.cardEnabled, fields?.cardPrice, fields?.galleryTitle, fields?.galleryBody]));
+      setStatus("");
+      finish("Changes successfully saved");
+      return;
+    }
+    finish();
+    setStatus((await response.json().catch(() => null))?.error || "Unable to save");
+  }
+
+  return (
+    <form className="enquiry-form admin-editor admin-card-settings" onSubmit={save}>
+      <div className="admin-editor-fields">
+        <div className="admin-card-pair">
+          <div className="field admin-card-toggle-field">
+            <label htmlFor="content-cardEnabled">Club Crumbie Card</label>
+            <label className="admin-card-toggle" htmlFor="content-cardEnabled">
+            <input
+              id="content-cardEnabled"
+              type="checkbox"
+              checked={fields.cardEnabled !== "false"}
+              onChange={(event) => setFields({ ...fields, cardEnabled: event.target.checked ? "true" : "false" })}
+            />
+            <span className="admin-card-check" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" /></svg>
+            </span>
+            <span>Offer a card at checkout</span>
+            </label>
+          </div>
+          <div className={`field admin-card-price${fields.cardEnabled === "false" ? " is-disabled" : ""}`}>
+            <label htmlFor="content-cardPrice">Card price (AUD)</label>
+            <div className="admin-card-price-input">
+              <span aria-hidden="true">$</span>
+              <input
+                id="content-cardPrice"
+                inputMode="decimal"
+                maxLength={8}
+                disabled={fields.cardEnabled === "false"}
+                value={fields.cardPrice ?? ""}
+                onChange={(event) => {
+                  const [whole, ...rest] = event.target.value.replace(/[^0-9.]/g, "").split(".");
+                  const cleaned = rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole;
+                  setFields({ ...fields, cardPrice: cleaned });
+                }}
+                onBlur={() => {
+                  const amount = Number(fields.cardPrice);
+                  setFields({ ...fields, cardPrice: Number.isFinite(amount) && fields.cardPrice?.trim() ? amount.toFixed(2) : "3.00" });
+                }}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="field">
+          <label htmlFor="content-galleryTitle">Product photos heading</label>
+          <input
+            id="content-galleryTitle"
+            maxLength={80}
+            value={fields.galleryTitle ?? ""}
+            onChange={(event) => setFields({ ...fields, galleryTitle: event.target.value })}
+          />
+          <small className="admin-editor-count">{(fields.galleryTitle ?? "").length} / 80</small>
+        </div>
+        <div className="field">
+          <label htmlFor="content-galleryBody">Product photos copy</label>
+          <textarea
+            id="content-galleryBody"
+            rows={4}
+            maxLength={300}
+            value={fields.galleryBody ?? ""}
+            onChange={(event) => setFields({ ...fields, galleryBody: event.target.value })}
+          />
+          <small className="admin-editor-count">{(fields.galleryBody ?? "").length} / 300</small>
+        </div>
+      </div>
+      <div className="admin-editor-actions">
+        <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
+          {status === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
+          {status === "Saving..." ? "Saving…" : "Save changes"}
+        </button>
+        {status && status !== "Saving..." && <span>{status}</span>}
+      </div>
+    </form>
+  );
 }
 
 export default function AdminDashboard() {
@@ -2788,6 +2904,7 @@ export default function AdminDashboard() {
               </tbody>
             </table>
             )}
+            <CardSettings begin={beginAdminAction} finish={finishAdminAction} />
           </>
         )}
         {tab === "pickup dates" && (
@@ -2999,27 +3116,6 @@ export default function AdminDashboard() {
                 )
 .filter((field) => !(tab === "settings" && field.key.startsWith("card")))
                 .map(renderContentField)}
-              {tab === "settings" && (
-                <fieldset className="admin-card-settings">
-                  <legend>Club Crumbie Card add-on</legend>
-                  <label className="admin-card-toggle">
-                    <input
-                      type="checkbox"
-                      checked={content.fields.cardEnabled !== "false"}
-                      onChange={(event) => setContent({ ...content, fields: { ...content.fields, cardEnabled: event.target.checked ? "true" : "false" } })}
-                    />
-                    Offer a card at checkout
-                  </label>
-                  {contentModules.settings.fields.filter((field) => field.key === "cardPrice" || field.key === "cardLabel" || field.key === "cardDescription").map((field) =>
-                    field.key === "cardPrice" ? (
-                      <div className="field" key={field.key}>
-                        <label htmlFor="content-cardPrice">{field.label}</label>
-                        <input id="content-cardPrice" inputMode="decimal" maxLength={field.maxLength} placeholder="3.00" value={content.fields.cardPrice ?? "3"} onChange={(event) => setContent({ ...content, fields: { ...content.fields, cardPrice: event.target.value.replace(/[^0-9.]/g, "") } })} />
-                      </div>
-                    ) : renderContentField(field),
-                  )}
-                </fieldset>
-              )}
               {tab === "contact us" && (() => {
                 const types = (content.fields.enquiryTypes ?? defaultEnquiryTypes.join("\n")).split("\n");
                 const setTypes = (next: string[]) =>

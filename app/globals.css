@@ -5499,25 +5499,124 @@ html:has(.orb-intro:not(.is-leaving)) body {
   margin: 12px 0 0;
 }
 .admin-card-settings {
+  margin: 64px 0 0;
+}
+.admin-card-settings-head {
+  margin-bottom: 28px;
+}
+.admin-card-settings-head h2 {
+  margin: 0 0 8px;
+  font-weight: 400;
+}
+.admin-card-settings-head p {
+  margin: 0;
+  opacity: .7;
+}
+.admin-card-pair {
   display: grid;
-  gap: 18px;
-  margin: 8px 0 0;
-  padding: 20px;
-  border: 1px solid var(--line);
+  grid-template-columns: 1fr 220px;
+  gap: 0;
 }
-.admin-card-settings legend {
-  padding: 0 8px;
+.admin-card-pair .field {
+  margin-bottom: 0;
 }
-.admin-card-toggle {
+.admin-editor .field .admin-card-toggle {
+  min-height: 24px;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
 }
-.admin-card-toggle input {
-  width: 18px;
-  height: 18px;
-  accent-color: #efcdaa;
+.admin-editor .field .admin-card-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.admin-card-check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #c9ad94;
+  border-radius: 50%;
+  transition: background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease);
+}
+.admin-card-check svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: #1a140d;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--motion-ease);
+}
+.admin-card-toggle input:checked + .admin-card-check {
+  background: #efcdaa;
+  border-color: #efcdaa;
+}
+.admin-card-toggle input:checked + .admin-card-check svg {
+  opacity: 1;
+}
+.admin-card-toggle input:focus-visible + .admin-card-check {
+  outline: 2px solid #efcdaa;
+  outline-offset: 3px;
+}
+.admin-editor .field .admin-card-toggle span {
+  color: #efcdaa;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+.admin-editor .admin-card-pair .field + .field {
+  margin-top: 0;
+  margin-left: -1px;
+}
+.admin-editor .field.admin-card-price.is-disabled {
+  background: #181410;
+}
+.admin-editor .field.admin-card-price.is-disabled label,
+.admin-editor .field.admin-card-price.is-disabled input {
+  color: #7d7367;
+  -webkit-text-fill-color: #7d7367;
+  transition: color .2s ease;
+}
+.admin-editor .field.admin-card-price input:disabled {
+  cursor: not-allowed;
+}
+.admin-card-price-input {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 24px;
+  line-height: 24px;
+}
+.admin-editor .field.admin-card-price .admin-card-price-input input {
+  height: 24px;
+  padding: 0;
+  line-height: 24px;
+}
+.admin-editor .field.admin-card-price.is-disabled .admin-card-price-input span {
+  color: #7d7367;
+}
+.admin-card-pair {
+  margin-bottom: 0;
+}
+.admin-editor .admin-card-pair + .field {
+  margin-top: -1px;
+}
+@media (max-width: 640px) {
+  .admin-card-pair {
+    grid-template-columns: 1fr;
+  }
+  .admin-editor .admin-card-pair .field + .field {
+    margin-left: 0;
+    margin-top: -1px;
+  }
 }
 
 .admin-card-messages {
