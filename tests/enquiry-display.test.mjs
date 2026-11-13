@@ -20,3 +20,11 @@ test('inline answers and quote-only emails are preserved',()=>{
  const inline='Hi\n> How many?\nTwelve, please.';assert.equal(display(inline,false),inline);
  assert.equal(display('> Just a quoted message',false),'> Just a quoted message');
 });
+
+test('linked logo URL is hidden only alongside the recognised outgoing signature',()=>{
+ const body='Replying from my laptop!\n<https://clubcrumbie.com>\n\nClub Crumbie\nclubcrumbieadmin@gmail.com\nclubcrumbie.com\nInstagram <https://instagram.com/clubcrumbie>';
+ assert.equal(display(body,true),'Replying from my laptop!');
+ const intentional='Please visit\n<https://clubcrumbie.com>';
+ assert.equal(display(intentional,true),intentional);
+ assert.equal(display(body,false),body);
+});

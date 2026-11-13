@@ -21,7 +21,11 @@ export function enquiryMessageDisplay(message: string, outgoing: boolean) {
  if (outgoing) {
   const signature = /\n(?:Club Crumbie\n)+clubcrumbieadmin@gmail\.com\nclubcrumbie\.com\nInstagram\b/;
   const match = signature.exec(visible);
-  if (match) visible = visible.slice(0, match.index).trimEnd();
+  if (match) {
+   visible = visible.slice(0, match.index).trimEnd();
+   // Gmail emits the linked logo as a standalone URL immediately before our signature.
+   visible = visible.replace(/\n[ \t]*<https:\/\/clubcrumbie\.com\/?>[ \t]*$/, "").trimEnd();
+  }
  }
  // A quote-only email still needs to be readable.
  return visible.trim() ? visible : text;
