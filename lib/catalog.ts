@@ -40,8 +40,14 @@ export const ROTATION_FRAME_PLANS: Record<number, readonly number[]> = {
 export function productSideProfile(product: Product) {
   return product.imageMode === "gallery" ? product.images[PRODUCT_SIDE_PROFILE_INDEX] : undefined;
 }
+export function productCarouselCover(product: Product) {
+  return product.heroMode === "carousel" ? product.heroImages?.[0] : undefined;
+}
 export function productCardImage(product: Product) {
-  return product.cardImage || productSideProfile(product);
+  return product.cardImage || productCarouselCover(product) || productSideProfile(product);
+}
+export function productCardIsPhoto(product: Product) {
+  return Boolean(product.cardImage || productCarouselCover(product));
 }
 export function productRotationImages(product: Product) {
   return product.images.length > 1 ? product.images.slice(PRODUCT_BIRDS_EYE_INDEX) : product.images;

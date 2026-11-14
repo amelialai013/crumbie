@@ -1,4 +1,4 @@
-import { productCardImage } from "@/lib/catalog";
+import { productCardImage, productCardIsPhoto } from "@/lib/catalog";
 import Link from "next/link";
 import Image from "next/image";
 import { getProducts } from "@/lib/catalog-store";
@@ -77,7 +77,7 @@ export default async function Home() {
                   <ProductCookieImage
                     eager
                     image={productCardImage(product)}
-                    photo={Boolean(product.cardImage)}
+                    photo={productCardIsPhoto(product)}
                     name={product.name}
                     variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
                   />

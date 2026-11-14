@@ -1,4 +1,4 @@
-import { productCardImage } from "@/lib/catalog";
+import { productCardImage, productCardIsPhoto } from "@/lib/catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
@@ -24,7 +24,7 @@ export default async function Crumbs() {
                   <ProductCookieImage
                     eager
                     image={productCardImage(product)}
-                    photo={Boolean(product.cardImage)}
+                    photo={productCardIsPhoto(product)}
                     name={product.name}
                     variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
                   />
