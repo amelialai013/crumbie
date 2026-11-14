@@ -5898,7 +5898,7 @@ html:has(.orb-intro:not(.is-leaving)) body {
 .explore-crumbs-link:hover svg {
   transform: translateX(4px);
 }
-@media (min-width: 900px) {
+@media (min-width: 600px) {
   .explore-crumbs {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;

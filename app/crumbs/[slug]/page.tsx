@@ -107,7 +107,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <Link className="btn btn-dark explore-crumbs-link" href="/crumbs">
             Explore crumbs
             <svg aria-hidden="true" viewBox="0 0 16 16">
-              <path d="M3 8h10M9 4l4 4-4 4" />
+              <path d="m6 3.5 4.5 4.5L6 12.5" />
             </svg>
           </Link>
         </div>
