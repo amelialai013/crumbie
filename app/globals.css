@@ -6333,3 +6333,19 @@ section:has(#product-modal-toggle:checked) .admin-product-form,
 .explore-crumbs {
   padding-block: clamp(36px, 5vw, 56px);
 }
+
+.product-detail-section {
+  padding-bottom: clamp(40px, 5vw, 64px);
+}
+
+textarea.card-addon-input {
+  display: block;
+  overflow: hidden;
+}
+@media (max-width: 600px) {
+  textarea.card-addon-input {
+    min-height: 72px;
+    box-sizing: border-box;
+    line-height: 1.5;
+  }
+}

@@ -196,10 +196,10 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
                   {Array.from({ length: cardCount }, (_, index) => (
                     <div className="card-addon-message" key={index}>
                       {cardCount > 1 && <label className="card-addon-message-title" htmlFor={`card-name-${index}`}>{`Card ${index + 1}`}</label>}
-                      <input
+                      <textarea
                         id={`card-name-${index}`}
                         className={`card-addon-input${showNameErrors && missingName(index) ? " has-error" : ""}`}
-                        type="text"
+                        rows={1}
                         maxLength={60}
                         autoComplete="off"
                         required
@@ -207,7 +207,8 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
                         aria-label={cardCount === 1 ? "Card recipient name" : `Card ${index + 1} recipient name`}
                         aria-invalid={showNameErrors && missingName(index)}
                         value={cardNames[index] ?? ""}
-                        onChange={(event) => updateName(index, event.target.value)}
+                        onChange={(event) => updateName(index, event.target.value.replace(/\n/g, " "))}
+                        onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault(); }}
                       />
                       {showNameErrors && missingName(index) && <small className="card-addon-error" role="alert">Please add a name for this card</small>}
                       <div className="card-addon-field">
