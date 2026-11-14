@@ -608,32 +608,30 @@ function firstSaturdayOfNextMonth() {
   return `${year}-${month}-${day}`;
 }
 
+function normalizeCardSettings(data: { fields?: Record<string, string> } | null) {
+  const next = { ...(data?.fields ?? {}) };
+  next.cardPrice = Number.isFinite(Number(next.cardPrice)) && next.cardPrice?.trim() ? Number(next.cardPrice).toFixed(2) : "3.00";
+  return next;
+}
+
 function CardSettings({
   begin,
   finish,
+  initial,
 }: {
   begin: (message: string) => void;
   finish: (message?: string) => void;
+  initial: Record<string, string>;
 }) {
-  const [fields, setFields] = useState<Record<string, string> | null>(null);
-  const [saved, setSaved] = useState("");
+  const [fields, setFields] = useState<Record<string, string> | null>(initial);
+  const [saved, setSaved] = useState(() =>
+    JSON.stringify([initial.cardEnabled, initial.cardPrice, initial.galleryTitle, initial.galleryBody, initial.galleryImages]),
+  );
   const [status, setStatus] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [galleryDragActive, setGalleryDragActive] = useState(false);
   const addGalleryFiles = (picked: File[]) =>
     setGalleryFiles((current) => [...current, ...picked.filter((file) => file.type.startsWith("image/"))]);
-
-  useEffect(() => {
-    fetch("/api/admin/content?module=settings")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        const next = { ...(data?.fields ?? {}) };
-        next.cardPrice = Number.isFinite(Number(next.cardPrice)) && next.cardPrice?.trim() ? Number(next.cardPrice).toFixed(2) : "3.00";
-        setFields(next);
-        setSaved(JSON.stringify([next.cardEnabled, next.cardPrice, next.galleryTitle, next.galleryBody, next.galleryImages]));
-      })
-      .catch(() => setFields({}));
-  }, []);
 
   if (!fields) return null;
   const galleryImages: string[] = (() => {
@@ -865,6 +863,7 @@ export default function AdminDashboard() {
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
   const [productsLoaded, setProductsLoaded] = useState(false);
+  const [cardSettings, setCardSettings] = useState<Record<string, string> | null>(null);
   const [productStatus, setProductStatus] = useState("");
   const [productFieldErrors, setProductFieldErrors] = useState<
     Record<string, string>
@@ -938,6 +937,10 @@ export default function AdminDashboard() {
     if (response.ok) {
       receiveDashboard(await response.json());
       setDashboardError("");
+      if (!cardSettings) {
+        const settings = await fetch("/api/admin/content?module=settings").catch(() => null);
+        setCardSettings(normalizeCardSettings(settings?.ok ? await settings.json().catch(() => null) : null));
+      }
     } else {
       setDashboardError("Your admin session has expired. Sign in again.");
     }
@@ -950,11 +953,13 @@ export default function AdminDashboard() {
         configResult,
         pickupDatesResult,
         productsResult,
+        cardSettingsResult,
       ] = await Promise.allSettled([
         fetch("/api/admin/dashboard"),
         fetch("/api/admin/config"),
         fetch("/api/admin/pickup-dates"),
         fetch("/api/admin/products"),
+        fetch("/api/admin/content?module=settings"),
       ]);
 
       if (
@@ -975,6 +980,13 @@ export default function AdminDashboard() {
       if (productsResult.status === "fulfilled" && productsResult.value.ok) {
         setManagedProducts(await productsResult.value.json());
       }
+      setCardSettings(
+        normalizeCardSettings(
+          cardSettingsResult.status === "fulfilled" && cardSettingsResult.value.ok
+            ? await cardSettingsResult.value.json().catch(() => null)
+            : null,
+        ),
+      );
       setProductsLoaded(true);
       setCheckingSession(false);
     }
@@ -3240,7 +3252,7 @@ export default function AdminDashboard() {
               </tbody>
             </table>
             )}
-            <CardSettings begin={beginAdminAction} finish={finishAdminAction} />
+            {cardSettings && <CardSettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />}
           </>
         )}
         {tab === "pickup dates" && (
