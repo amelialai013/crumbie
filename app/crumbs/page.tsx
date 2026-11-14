@@ -11,6 +11,7 @@ export default async function Crumbs() {
   const promo = await getPromo();
   const featured = promo ? products.find((product) => product.id === promo.productId) : undefined;
   const featuredImage = featured ? productCardImage(featured) : undefined;
+  const gridProducts = featured ? products.filter((product) => product.id !== featured.id) : products;
   return (
     <>
       <section className="page-hero">
@@ -26,7 +27,12 @@ export default async function Crumbs() {
                 {promo.label && <span className="promo-banner-label">{promo.label}</span>}
                 <h2>{promo.headline || featured.name}</h2>
                 {promo.blurb && <p>{promo.blurb}</p>}
-                <Link className="btn btn-dark" href={`/crumbs/${featured.slug}`}>{promo.button || "Order now"}</Link>
+                <Link className="btn btn-dark promo-banner-link" href={`/crumbs/${featured.slug}`}>
+                  {promo.button || "Order now"}
+                  <svg aria-hidden="true" viewBox="0 0 16 16">
+                    <path d="m6 3.5 4.5 4.5L6 12.5" />
+                  </svg>
+                </Link>
               </div>
               {featuredImage && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -38,8 +44,8 @@ export default async function Crumbs() {
       )}
       <section className="section section-warm cookie-catalog crumbs-catalog">
         <div className="shell">
-          <div className={`product-grid product-grid-${Math.min(4, products.length)}`}>
-            {products.map((product) => (
+          <div className={`product-grid product-grid-${Math.min(4, gridProducts.length)}`}>
+            {gridProducts.map((product) => (
               <Link className="product-card" href={`/crumbs/${product.slug}`} key={product.id}>
                 <div className="relative product-card-render">
                   <ProductCookieImage
