@@ -511,6 +511,9 @@ function CardSettings({
   const [saved, setSaved] = useState("");
   const [status, setStatus] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryDragActive, setGalleryDragActive] = useState(false);
+  const addGalleryFiles = (picked: File[]) =>
+    setGalleryFiles((current) => [...current, ...picked.filter((file) => file.type.startsWith("image/"))]);
 
   useEffect(() => {
     fetch("/api/admin/content?module=settings")
@@ -633,20 +636,49 @@ function CardSettings({
           />
           <small className="admin-editor-count">{(fields.galleryBody ?? "").length} / 300</small>
         </div>
-        <fieldset className="admin-image-generator">
-          <legend>Gallery photos</legend>
-          <p>Photos shown in a gallery underneath the cookie on every product page.</p>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            aria-label="Add gallery photos"
-            onChange={(event) => {
-              const picked = Array.from(event.target.files || []).filter((file) => file.type.startsWith("image/"));
-              setGalleryFiles((current) => [...current, ...picked]);
-              event.target.value = "";
+        <div className="field admin-gallery-field">
+          <label htmlFor="content-galleryPhotos">Gallery photos</label>
+          <p>Photos shown in a gallery underneath the order information on every product page.</p>
+          <label
+            className={`admin-reference-dropzone admin-gallery-dropzone${galleryDragActive ? " is-active" : ""}`}
+            htmlFor="content-galleryPhotos"
+            tabIndex={0}
+            onDragEnter={(event) => {
+              event.preventDefault();
+              setGalleryDragActive(true);
             }}
-          />
+            onDragOver={(event) => event.preventDefault()}
+            onDragLeave={(event) => {
+              if (event.currentTarget === event.target) setGalleryDragActive(false);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              setGalleryDragActive(false);
+              addGalleryFiles(Array.from(event.dataTransfer.files));
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                document.getElementById("content-galleryPhotos")?.click();
+              }
+            }}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
+            </svg>
+            <span>Click to upload photos</span>
+            <small>or drag and drop · JPG, PNG or WebP</small>
+            <input
+              id="content-galleryPhotos"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                addGalleryFiles(Array.from(event.target.files || []));
+                event.target.value = "";
+              }}
+            />
+          </label>
           {(galleryImages.length > 0 || galleryFiles.length > 0) && (
             <ol className="admin-product-images">
               {galleryImages.map((image, index) => (
@@ -703,7 +735,7 @@ function CardSettings({
               ))}
             </ol>
           )}
-        </fieldset>
+        </div>
       </div>
       <div className="admin-editor-actions">
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
@@ -788,6 +820,12 @@ export default function AdminDashboard() {
   const [productImages, setProductImages] = useState<string[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [heroMode, setHeroMode] = useState<"cookie" | "carousel">("cookie");
+  const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [heroFiles, setHeroFiles] = useState<File[]>([]);
+  const [heroDragActive, setHeroDragActive] = useState(false);
+  const addHeroFiles = (picked: File[]) =>
+    setHeroFiles((current) => [...current, ...picked.filter((file) => file.type.startsWith("image/"))]);
   const [referenceImageFiles, setReferenceImageFiles] = useState<File[]>([]);
   const [referenceDropActive, setReferenceDropActive] = useState(false);
   const [imageDirection, setImageDirection] = useState("");
@@ -801,7 +839,7 @@ export default function AdminDashboard() {
   const [savedProduct, setSavedProduct] = useState<string | null>(null);
   const contentChanged = JSON.stringify(content) !== savedContent;
   const productChanged =
-    !editingProductId || JSON.stringify({ newProduct, productImages, galleryImages, galleryFiles: galleryFiles.map((file) => file.name + file.size) }) !== savedProduct;
+    !editingProductId || JSON.stringify({ newProduct, productImages, galleryImages, galleryFiles: galleryFiles.map((file) => file.name + file.size), heroMode, heroImages, heroFiles: heroFiles.map((file) => file.name + file.size) }) !== savedProduct;
 
   function loadContent(next: Content) {
     setContent(next);
@@ -1339,6 +1377,8 @@ export default function AdminDashboard() {
       images: productImages,
       imageMode: productImages.length > 0 ? "gallery" : undefined,
       galleryImages,
+      heroMode: heroMode === "carousel" && (heroImages.length > 0 || heroFiles.length > 0) ? "carousel" : undefined,
+      heroImages,
       variants: [
         ...(hasPrice(newProduct.price4)
           ? [{ id: `${slug}-4`, label: "Box of 4", quantity: 4, price: Number(newProduct.price4) }]
@@ -1353,6 +1393,7 @@ export default function AdminDashboard() {
     };
     formData.set("product", JSON.stringify(product));
     for (const file of await compressReferenceImages(galleryFiles)) formData.append("galleryFiles", file);
+    for (const file of await compressReferenceImages(heroFiles)) formData.append("heroFiles", file);
     const response = await fetch("/api/admin/products", {
       method: "POST",
       body: formData,
@@ -1407,7 +1448,10 @@ export default function AdminDashboard() {
     setProductImages(product.images);
     setGalleryImages(product.galleryImages || []);
     setGalleryFiles([]);
-    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images, galleryImages: product.galleryImages || [], galleryFiles: [] }));
+    setHeroMode(product.heroMode === "carousel" ? "carousel" : "cookie");
+    setHeroImages(product.heroImages || []);
+    setHeroFiles([]);
+    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images, galleryImages: product.galleryImages || [], galleryFiles: [], heroMode: product.heroMode === "carousel" ? "carousel" : "cookie", heroImages: product.heroImages || [], heroFiles: [] }));
     setReferenceImageFiles([]);
     setImageDirection("");
     setGenerationStatus("");
@@ -1421,6 +1465,9 @@ export default function AdminDashboard() {
     setProductImages([]);
     setGalleryImages([]);
     setGalleryFiles([]);
+    setHeroMode("cookie");
+    setHeroImages([]);
+    setHeroFiles([]);
     setReferenceImageFiles([]);
     setImageDirection("");
     setGenerationStatus("");
@@ -2725,6 +2772,122 @@ export default function AdminDashboard() {
                 </div>
                 <fieldset className="admin-image-generator">
                   <legend>Product imagery</legend>
+                  <div className="admin-hero-toggle" role="radiogroup" aria-label="Product page display">
+                    {([["cookie", "3D cookie"], ["carousel", "Photo carousel"]] as const).map(([mode, label]) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        role="radio"
+                        aria-checked={heroMode === mode}
+                        className={heroMode === mode ? "is-active" : undefined}
+                        onClick={() => setHeroMode(mode)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {heroMode === "carousel" && (
+                    <div className="admin-hero-carousel-panel">
+                      <p>Show your own photos as a carousel on this product page instead of the 3D cookie.</p>
+                      <label
+                        className={`admin-reference-dropzone admin-gallery-dropzone${heroDragActive ? " is-active" : ""}`}
+                        htmlFor="product-hero-photos"
+                        tabIndex={0}
+                        onDragEnter={(event) => {
+                          event.preventDefault();
+                          setHeroDragActive(true);
+                        }}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDragLeave={(event) => {
+                          if (event.currentTarget === event.target) setHeroDragActive(false);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          setHeroDragActive(false);
+                          addHeroFiles(Array.from(event.dataTransfer.files));
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            document.getElementById("product-hero-photos")?.click();
+                          }
+                        }}
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
+                        </svg>
+                        <span>Click to upload photos</span>
+                        <small>or drag and drop · JPG, PNG or WebP · 10MB each</small>
+                        <input
+                          id="product-hero-photos"
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(event) => {
+                            addHeroFiles(Array.from(event.target.files || []));
+                            event.target.value = "";
+                          }}
+                        />
+                      </label>
+                      {(heroImages.length > 0 || heroFiles.length > 0) && (
+                        <ol className="admin-product-images">
+                          {heroImages.map((image, index) => (
+                            <li key={image}>
+                              <Image src={image} alt="" width={56} height={44} unoptimized />
+                              <div>
+                                <strong>{index === 0 ? "First photo" : `Photo ${index + 1}`}</strong>
+                                <span>{image.split("/").pop()}</span>
+                              </div>
+                              <div className="admin-product-image-actions">
+                                <button
+                                  className="text-button"
+                                  type="button"
+                                  disabled={index === 0}
+                                  onClick={() => {
+                                    const next = [...heroImages];
+                                    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                                    setHeroImages(next);
+                                  }}
+                                >
+                                  Up
+                                </button>
+                                <button
+                                  className="text-button"
+                                  type="button"
+                                  disabled={index === heroImages.length - 1}
+                                  onClick={() => {
+                                    const next = [...heroImages];
+                                    [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                                    setHeroImages(next);
+                                  }}
+                                >
+                                  Down
+                                </button>
+                                <button className="text-button" type="button" onClick={() => setHeroImages(heroImages.filter((_, i) => i !== index))}>
+                                  Remove
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                          {heroFiles.map((file, index) => (
+                            <li key={`${file.name}-${file.size}-${index}`}>
+                              <PendingPhotoPreview file={file} />
+                              <div>
+                                <strong>New photo (saved on save)</strong>
+                                <span>{file.name}</span>
+                              </div>
+                              <div className="admin-product-image-actions">
+                                <button className="text-button" type="button" onClick={() => setHeroFiles((current) => current.filter((_, i) => i !== index))}>
+                                  Remove
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  )}
+                  {heroMode === "cookie" && (<>
                   <p>
                     Add up to five reference photos and generate the complete
                     storefront image set. OpenAI automatically creates a
@@ -2886,6 +3049,7 @@ export default function AdminDashboard() {
                       ))}
                     </ol>
                   )}
+                  </>)}
                 </fieldset>
                 </div>
               </div>

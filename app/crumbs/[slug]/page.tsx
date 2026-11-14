@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import PhotoCarousel from "@/components/photo-carousel";
 import CookieExplorer from "@/components/cookie-explorer";
+import HeroCarousel from "@/components/hero-carousel";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
 import { getCardOption, getGalleryCopy, getGalleryImages, getProducts, getPickupDates } from "@/lib/catalog-store";
@@ -50,7 +51,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <span aria-current="page">{product.name}</span>
       </nav>
       <div className="shell product-detail-layout">
-        {product.imageMode !== "gallery" && (product.id === "product-signature" || product.id === "product-seasonal") ? (
+        {product.heroMode === "carousel" && (product.heroImages?.length ?? 0) > 0 ? (
+          <HeroCarousel key={product.slug} images={product.heroImages ?? []} name={product.name} />
+        ) : product.imageMode !== "gallery" && (product.id === "product-signature" || product.id === "product-seasonal") ? (
           <CookieExplorer
             key={product.slug}
             name={product.name}
