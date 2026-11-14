@@ -829,6 +829,8 @@ function PromoSettings({
     promoButton: source.promoButton ?? "Order now",
     promoCardLabel: source.promoCardLabel ?? "",
     promoCardDescription: source.promoCardDescription ?? "",
+    exploreTitle: source.exploreTitle ?? "",
+    exploreSubtext: source.exploreSubtext ?? "",
   });
   const [values, setValues] = useState(() => pick(initial));
   const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
@@ -926,6 +928,21 @@ function PromoSettings({
             </div>
           </>
         )}
+        <h3 className="admin-promo-heading">Product page banner</h3>
+        <div className="enquiry-form admin-editor">
+          <div className="admin-editor-fields">
+            <div className="field">
+              <label htmlFor="explore-title">Title</label>
+              <input id="explore-title" maxLength={60} placeholder="Find your next favourite crumb" value={values.exploreTitle} onChange={(event) => set("exploreTitle", event.target.value)} />
+              <small className="admin-editor-count">{values.exploreTitle.length} / 60</small>
+            </div>
+            <div className="field">
+              <label htmlFor="explore-subtext">Subtext</label>
+              <input id="explore-subtext" maxLength={160} placeholder="Fresh batches, baked to order and ready for pickup. Browse every flavour." value={values.exploreSubtext} onChange={(event) => set("exploreSubtext", event.target.value)} />
+              <small className="admin-editor-count">{values.exploreSubtext.length} / 160</small>
+            </div>
+          </div>
+        </div>
       </div>
       <div className="admin-promo-actions">
         <button className={`btn btn-dark${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>

@@ -6316,3 +6316,20 @@ section:has(#product-modal-toggle:checked) .admin-product-form,
 @media (max-width: 800px) {
   .promo-banner-link { justify-self: stretch; margin-top: 10px; }
 }
+
+.explore-crumbs-copy {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+.explore-crumbs-copy p {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--accent);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.explore-crumbs {
+  padding-block: clamp(36px, 5vw, 56px);
+}

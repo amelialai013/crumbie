@@ -9,7 +9,7 @@ import HeroCarousel from "@/components/hero-carousel";
 import { cardForProduct } from "@/lib/card";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
-import { getCardOption, getGalleryCopy, getGalleryImages, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
+import { getCardOption, getGalleryCopy, getExploreCopy, getGalleryImages, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
 
 const legacyProductSlugs: Record<string, string> = {
   "signature-box": "signature-crumbie",
@@ -34,7 +34,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // Availability must reflect admin changes and the current ordering cutoff.
   await connection();
   const { slug } = await params;
-  const [products, pickupDates, defaultCard, galleryCopy, sharedGallery, promo] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages(), getPromo()]);
+  const [products, pickupDates, defaultCard, galleryCopy, sharedGallery, promo, exploreCopy] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages(), getPromo(), getExploreCopy()]);
   const product = products.find((item) => item.slug === slug);
   if (!product && legacyProductSlugs[slug]) {
     redirect(`/crumbs/${legacyProductSlugs[slug]}`);
@@ -103,7 +103,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </div>
       <div className="shell">
         <div className="explore-crumbs">
-          <h2>Find your next favourite crumb</h2>
+          <div className="explore-crumbs-copy">
+            <h2>{exploreCopy.title}</h2>
+            {exploreCopy.subtext && <p>{exploreCopy.subtext}</p>}
+          </div>
           <Link className="btn btn-dark explore-crumbs-link" href="/crumbs">
             Explore crumbs
             <svg aria-hidden="true" viewBox="0 0 16 16">

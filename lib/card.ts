@@ -61,3 +61,11 @@ export function cardForProduct(card: CardOption, promo: Promo | null, productId:
 	if (!promo || promo.productId !== productId) return card;
 	return { ...card, label: promo.cardLabel || card.label, description: promo.cardDescription || card.description };
 }
+
+// Closing banner at the bottom of each product page.
+export function exploreCopyFrom(fields: Record<string, string> | undefined) {
+	return {
+		title: fields?.exploreTitle?.trim() || "Find your next favourite crumb",
+		subtext: fields?.exploreSubtext?.trim() ?? "Fresh batches, baked to order and ready for pickup. Browse every flavour.",
+	};
+}
