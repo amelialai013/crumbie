@@ -5,7 +5,7 @@ import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { DatePicker } from "./date-picker";
 import PremiumSelect from "./premium-select";
-import { enquiryFullEmailDisplay, enquiryMessageDisplay } from "@/lib/enquiry-display";
+import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
@@ -2359,7 +2359,7 @@ export default function AdminDashboard() {
                     </div>
                     {reply.subject && <span className="admin-enquiry-message-subject">{reply.subject}</span>}
                     <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{enquiryMessageDisplay(reply.message, reply.direction !== "incoming")}</p>
-                    {enquiryMessageDisplay(reply.message, reply.direction !== "incoming") !== reply.message.replace(/\r\n/g, "\n") && <details><summary>Show full email</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{enquiryFullEmailDisplay(reply.message)}</p></details>}
+                    {enquiryMessageDisplay(reply.message, reply.direction !== "incoming") !== reply.message.replace(/\r\n/g, "\n") && <details><summary>Show full email</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{reply.message}</p></details>}
                   </li>
                 ))}
               </ol>
