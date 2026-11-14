@@ -7,7 +7,7 @@ import PhotoCarousel from "@/components/photo-carousel";
 import CookieExplorer from "@/components/cookie-explorer";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
-import { getCardOption, getGalleryCopy, getProducts, getPickupDates } from "@/lib/catalog-store";
+import { getCardOption, getGalleryCopy, getGalleryImages, getProducts, getPickupDates } from "@/lib/catalog-store";
 
 const legacyProductSlugs: Record<string, string> = {
   "signature-box": "signature-crumbie",
@@ -32,12 +32,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // Availability must reflect admin changes and the current ordering cutoff.
   await connection();
   const { slug } = await params;
-  const [products, pickupDates, card, galleryCopy] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy()]);
+  const [products, pickupDates, card, galleryCopy, sharedGallery] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages()]);
   const product = products.find((item) => item.slug === slug);
   if (!product && legacyProductSlugs[slug]) {
     redirect(`/crumbs/${legacyProductSlugs[slug]}`);
   }
   if (!product) notFound();
+  const galleryImages = sharedGallery.length > 0 ? sharedGallery : product.galleryImages || [];
 
   return (
     <section className="section section-warm product-detail-section">
@@ -75,13 +76,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <ProductOrder product={product} pickupDates={pickupDates} card={card} />
         </div>
       </div>
-      {product.galleryImages && product.galleryImages.length > 0 && (
+      {galleryImages.length > 0 && (
         <div className="shell product-photo-gallery">
           <div className="product-photo-gallery-copy">
             <h2>{galleryCopy.title}</h2>
             <p>{galleryCopy.body}</p>
           </div>
-          <PhotoCarousel images={product.galleryImages} name={product.name} />
+          <PhotoCarousel images={galleryImages} name={product.name} />
         </div>
       )}
       <div className="shell product-facts">
@@ -94,6 +95,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <p>{product.allergens}</p>
           <p>{sharedKitchenWarning}</p>
         </section>
+      </div>
+      <div className="shell">
+        <div className="explore-crumbs">
+          <h2>Find your next favourite crumb</h2>
+          <Link className="btn btn-dark explore-crumbs-link" href="/crumbs">
+            Explore crumbs
+            <svg aria-hidden="true" viewBox="0 0 16 16">
+              <path d="M3 8h10M9 4l4 4-4 4" />
+            </svg>
+          </Link>
+        </div>
       </div>
     </section>
   );

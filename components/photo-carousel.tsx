@@ -36,7 +36,16 @@ export default function PhotoCarousel({ images, name }: { images: string[]; name
     const el = track.current;
     if (!el) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: reduce ? "auto" : "smooth" });
+    const max = el.scrollWidth - el.clientWidth;
+    const first = el.firstElementChild as HTMLElement | null;
+    const itemWidth = first ? first.offsetWidth + (parseFloat(getComputedStyle(el).columnGap) || 0) : el.clientWidth;
+    const page = Math.max(1, Math.floor(el.clientWidth / itemWidth)) * itemWidth;
+    // Land exactly on an item edge, never past the first or last image; wrap around at either end.
+    let target = Math.round((el.scrollLeft + direction * page) / itemWidth) * itemWidth;
+    if (direction === 1 && el.scrollLeft >= max - 1) target = 0;
+    else if (direction === -1 && el.scrollLeft <= 1) target = max;
+    else target = Math.min(max, Math.max(0, target));
+    el.scrollTo({ left: target, behavior: reduce ? "auto" : "smooth" });
   }
 
   const step = useCallback(
@@ -70,10 +79,10 @@ export default function PhotoCarousel({ images, name }: { images: string[]; name
         ))}
       </ul>
       <div className="photo-carousel-controls" hidden={edges.start && edges.end}>
-        <button type="button" disabled={edges.start} onClick={() => scrollByPage(-1)} aria-label="Previous photos">
+        <button type="button" onClick={() => scrollByPage(-1)} aria-label="Previous photos">
           <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg>
         </button>
-        <button type="button" disabled={edges.end} onClick={() => scrollByPage(1)} aria-label="Next photos">
+        <button type="button" onClick={() => scrollByPage(1)} aria-label="Next photos">
           <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m6 3.5 4.5 4.5L6 12.5" /></svg>
         </button>
       </div>

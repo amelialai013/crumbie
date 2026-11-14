@@ -510,6 +510,7 @@ function CardSettings({
   const [fields, setFields] = useState<Record<string, string> | null>(null);
   const [saved, setSaved] = useState("");
   const [status, setStatus] = useState("");
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
 
   useEffect(() => {
     fetch("/api/admin/content?module=settings")
@@ -518,25 +519,49 @@ function CardSettings({
         const next = { ...(data?.fields ?? {}) };
         next.cardPrice = Number.isFinite(Number(next.cardPrice)) && next.cardPrice?.trim() ? Number(next.cardPrice).toFixed(2) : "3.00";
         setFields(next);
-        setSaved(JSON.stringify([next.cardEnabled, next.cardPrice, next.galleryTitle, next.galleryBody]));
+        setSaved(JSON.stringify([next.cardEnabled, next.cardPrice, next.galleryTitle, next.galleryBody, next.galleryImages]));
       })
       .catch(() => setFields({}));
   }, []);
 
   if (!fields) return null;
-  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.galleryTitle, fields.galleryBody]) !== saved;
+  const galleryImages: string[] = (() => {
+    try {
+      const parsed = JSON.parse(fields.galleryImages || "[]");
+      return Array.isArray(parsed) ? parsed.filter((image): image is string => typeof image === "string") : [];
+    } catch {
+      return [];
+    }
+  })();
+  const setGalleryImages = (next: string[]) => setFields({ ...fields, galleryImages: JSON.stringify(next) });
+  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.galleryTitle, fields.galleryBody, fields.galleryImages]) !== saved || galleryFiles.length > 0;
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
     setStatus("Saving...");
     begin("Saving changes…");
+    let nextFields = fields!;
+    if (galleryFiles.length > 0) {
+      const upload = new FormData();
+      for (const file of await compressReferenceImages(galleryFiles)) upload.append("files", file);
+      const uploaded = await fetch("/api/admin/gallery", { method: "POST", body: upload });
+      const result = await uploaded.json().catch(() => null);
+      if (!uploaded.ok) {
+        finish();
+        setStatus(result?.error || "Unable to upload photos");
+        return;
+      }
+      nextFields = { ...nextFields, galleryImages: JSON.stringify([...galleryImages, ...(result?.urls ?? [])]) };
+    }
     const response = await fetch("/api/admin/content", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ module: "settings", fields }),
+      body: JSON.stringify({ module: "settings", fields: nextFields }),
     });
     if (response.ok) {
-      setSaved(JSON.stringify([fields?.cardEnabled, fields?.cardPrice, fields?.galleryTitle, fields?.galleryBody]));
+      setFields(nextFields);
+      setGalleryFiles([]);
+      setSaved(JSON.stringify([nextFields.cardEnabled, nextFields.cardPrice, nextFields.galleryTitle, nextFields.galleryBody, nextFields.galleryImages]));
       setStatus("");
       finish("Changes successfully saved");
       return;
@@ -608,6 +633,77 @@ function CardSettings({
           />
           <small className="admin-editor-count">{(fields.galleryBody ?? "").length} / 300</small>
         </div>
+        <fieldset className="admin-image-generator">
+          <legend>Gallery photos</legend>
+          <p>Photos shown in a gallery underneath the cookie on every product page.</p>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            aria-label="Add gallery photos"
+            onChange={(event) => {
+              const picked = Array.from(event.target.files || []).filter((file) => file.type.startsWith("image/"));
+              setGalleryFiles((current) => [...current, ...picked]);
+              event.target.value = "";
+            }}
+          />
+          {(galleryImages.length > 0 || galleryFiles.length > 0) && (
+            <ol className="admin-product-images">
+              {galleryImages.map((image, index) => (
+                <li key={image}>
+                  <Image src={image} alt="" width={56} height={44} unoptimized />
+                  <div>
+                    <strong>Gallery photo {index + 1}</strong>
+                    <span>{image.split("/").pop()}</span>
+                  </div>
+                  <div className="admin-product-image-actions">
+                    <button
+                      className="text-button"
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => {
+                        const next = [...galleryImages];
+                        [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                        setGalleryImages(next);
+                      }}
+                    >
+                      Up
+                    </button>
+                    <button
+                      className="text-button"
+                      type="button"
+                      disabled={index === galleryImages.length - 1}
+                      onClick={() => {
+                        const next = [...galleryImages];
+                        [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                        setGalleryImages(next);
+                      }}
+                    >
+                      Down
+                    </button>
+                    <button className="text-button" type="button" onClick={() => setGalleryImages(galleryImages.filter((_, i) => i !== index))}>
+                      Remove
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {galleryFiles.map((file, index) => (
+                <li key={`${file.name}-${file.size}-${index}`}>
+                  <PendingPhotoPreview file={file} />
+                  <div>
+                    <strong>New photo (saved on save)</strong>
+                    <span>{file.name}</span>
+                  </div>
+                  <div className="admin-product-image-actions">
+                    <button className="text-button" type="button" onClick={() => setGalleryFiles((current) => current.filter((_, i) => i !== index))}>
+                      Remove
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </fieldset>
       </div>
       <div className="admin-editor-actions">
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
@@ -2141,6 +2237,16 @@ export default function AdminDashboard() {
             });
           return (
           <>
+          <p className="admin-sync-note" role="note">
+            <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="8" r="6.25" />
+              <path d="M8 4.75V8l2.1 1.4" />
+            </svg>
+            <span>
+              Replies sync from Gmail every five minutes. For the latest, treat the{" "}
+              <strong>clubcrumbieadmin@gmail.com</strong> inbox as the source of truth.
+            </span>
+          </p>
           <div className="admin-enquiry-filters">
             <div className="admin-enquiry-filter">
               <span id="enquiry-type-filter-label">Type</span>
@@ -2180,6 +2286,19 @@ export default function AdminDashboard() {
                 onChange={setEnquirySort}
               />
             </div>
+            {(enquiryTypeFilter !== "all" || enquiryStatusFilter !== "all" || enquirySort !== "newest") && (
+              <button
+                type="button"
+                className="admin-filter-reset"
+                onClick={() => {
+                  setEnquiryTypeFilter("all");
+                  setEnquiryStatusFilter("all");
+                  setEnquirySort("newest");
+                }}
+              >
+                Reset filters
+              </button>
+            )}
           </div>
           <table className="table admin-stack-table admin-enquiries-table">
             <thead>
@@ -2359,7 +2478,7 @@ export default function AdminDashboard() {
                     </div>
                     {reply.subject && <span className="admin-enquiry-message-subject">{reply.subject}</span>}
                     <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{enquiryMessageDisplay(reply.message, reply.direction !== "incoming")}</p>
-                    {enquiryMessageDisplay(reply.message, reply.direction !== "incoming") !== reply.message.replace(/\r\n/g, "\n") && <details><summary>Show full email</summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{reply.message}</p></details>}
+                    {enquiryMessageDisplay(reply.message, reply.direction !== "incoming") !== reply.message.replace(/\r\n/g, "\n") && <details className="admin-email-details"><summary>Show full email<svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m4 6 4 4 4-4" /></svg></summary><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{reply.message}</p></details>}
                   </li>
                 ))}
               </ol>
@@ -2762,50 +2881,6 @@ export default function AdminDashboard() {
                             >
                               Remove
                             </button>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  )}
-                </fieldset>
-                <fieldset className="admin-image-generator">
-                  <legend>Gallery photos</legend>
-                  <p>Photos shown in a gallery underneath the cookie on its product page.</p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    aria-label="Add gallery photos"
-                    onChange={(event) => {
-                      const picked = Array.from(event.target.files || []).filter((file) => file.type.startsWith("image/"));
-                      setGalleryFiles((current) => [...current, ...picked]);
-                      event.target.value = "";
-                    }}
-                  />
-                  {(galleryImages.length > 0 || galleryFiles.length > 0) && (
-                    <ol className="admin-product-images">
-                      {galleryImages.map((image, index) => (
-                        <li key={image}>
-                          <Image src={image} alt="" width={56} height={44} unoptimized />
-                          <div>
-                            <strong>Gallery photo {index + 1}</strong>
-                            <span>{image.split("/").pop()}</span>
-                          </div>
-                          <div className="admin-product-image-actions">
-                            <button className="text-button" type="button" disabled={index === 0} onClick={() => setGalleryImages((current) => { const next = [...current]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next; })}>Up</button>
-                            <button className="text-button" type="button" onClick={() => setGalleryImages((current) => current.filter((_, i) => i !== index))}>Remove</button>
-                          </div>
-                        </li>
-                      ))}
-                      {galleryFiles.map((file, index) => (
-                        <li key={`${file.name}-${file.size}-${index}`}>
-                          <PendingPhotoPreview file={file} />
-                          <div>
-                            <strong>New photo (saved on publish)</strong>
-                            <span>{file.name}</span>
-                          </div>
-                          <div className="admin-product-image-actions">
-                            <button className="text-button" type="button" onClick={() => setGalleryFiles((current) => current.filter((_, i) => i !== index))}>Remove</button>
                           </div>
                         </li>
                       ))}

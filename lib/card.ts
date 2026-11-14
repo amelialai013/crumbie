@@ -29,3 +29,13 @@ export function galleryCopyFrom(fields: Record<string, string> | undefined) {
 		body: fields?.galleryBody?.trim() || defaultGalleryCopy.body,
 	};
 }
+
+// Shared product-page gallery: a JSON array of image URLs stored in the settings module.
+export function galleryImagesFrom(fields: Record<string, string> | undefined): string[] {
+	try {
+		const parsed = JSON.parse(fields?.galleryImages || "[]");
+		return Array.isArray(parsed) ? parsed.filter((image): image is string => typeof image === "string" && image.length > 0) : [];
+	} catch {
+		return [];
+	}
+}
