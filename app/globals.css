@@ -2032,6 +2032,11 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
 }
 .admin-product-form-actions {
   padding: 12px 28px;
+  height: auto;
+  min-height: 0;
+  max-height: 80px;
+  align-self: stretch;
+  flex: 0 0 auto;
 }
 .admin-product-form .admin-product-form-actions > .btn {
   min-height: 0;
