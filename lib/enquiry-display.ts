@@ -26,9 +26,21 @@ export function enquiryMessageDisplay(message: string, outgoing: boolean) {
    visible = visible.slice(0, match.index).trimEnd();
    // The logo can appear as an image URL followed by its link, or just the link.
    visible = visible.replace(/\n[ \t]*<https:\/\/clubcrumbie\.com\/?>[ \t]*$/i, "").trimEnd();
-   visible = visible.replace(/\n[ \t]*\[https:\/\/clubcrumbie\.com\/email\/club-crumbie-logo-1-276\.png\][ \t]*$/i, "").trimEnd();
+   visible = visible.replace(/\n[ \t]*\[https:\/\/clubcrumbie\.com\/email\/club-crumbie-logo-1-276\.png\](?:[ \t]*<https:\/\/clubcrumbie\.com\/?>)?[ \t]*$/i, "").trimEnd();
   }
  }
  // A quote-only email still needs to be readable.
  return visible.trim() ? visible : text;
+}
+
+// Make the expanded email readable even when a client exports signature links as text.
+export function enquiryFullEmailDisplay(message: string) {
+ return message
+  .replace(/\r\n?/g, "\n")
+  .replace(/^[ \t]*\[https:\/\/clubcrumbie\.com\/email\/club-crumbie-logo-1-276\.png\](?:[ \t\n]*<https:\/\/clubcrumbie\.com\/?>)?[ \t]*\n/gim, "")
+  .replace(/(clubcrumbieadmin@gmail\.com)[ \t]*<mailto:clubcrumbieadmin@gmail\.com>/gi, "$1")
+  .replace(/(clubcrumbie\.com)[ \t]*<https:\/\/clubcrumbie\.com\/?>/gi, "$1")
+  .replace(/(Instagram)[ \t]*<https:\/\/instagram\.com\/clubcrumbie\/?>/gi, "$1")
+  .replace(/(TikTok)[ \t]*<https:\/\/tiktok\.com\/@clubcrumbie\/?>/gi, "$1")
+  .replace(/(Facebook)[ \t]*<https:\/\/facebook\.com\/clubcrumbie\/?>/gi, "$1");
 }
