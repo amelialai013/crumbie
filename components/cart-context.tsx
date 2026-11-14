@@ -16,6 +16,7 @@ export type CartLine = {
 	pickupDate: string;
 	pickupWindow: string;
 	cardMessages?: string[];
+	cardNames?: string[];
 };
 
 export type CardChoice = number | "all";
@@ -29,7 +30,7 @@ type CartValue = {
 	count: number;
 	total: number;
 	ready: boolean;
-	setLineCard: (key: string, messages: string[]) => void;
+	setLineCard: (key: string, messages: string[], names?: string[]) => void;
 	add: (line: Omit<CartLine, "key">) => void;
 	remove: (key: string) => void;
 	setQuantity: (key: string, quantity: number) => void;
@@ -72,6 +73,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 								cardMessages: Array.isArray(line.cardMessages)
 									? line.cardMessages.filter((m): m is string => typeof m === "string").slice(0, line.quantity)
 									: undefined,
+								cardNames: Array.isArray(line.cardNames)
+									? line.cardNames.filter((n): n is string => typeof n === "string").slice(0, line.quantity)
+									: undefined,
 							}))
 						: [],
 				);
@@ -95,9 +99,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 			count: lines.reduce((total, line) => total + line.quantity, 0),
 			total: lines.reduce((total, line) => total + line.quantity * line.unitPrice, 0),
 			ready,
-			setLineCard: (key, messages) =>
+			setLineCard: (key, messages, names = []) =>
 				setLines((current) =>
-					current.map((line) => (line.key === key ? { ...line, cardMessages: messages.slice(0, line.quantity) } : line)),
+					current.map((line) => (line.key === key ? { ...line, cardMessages: messages.slice(0, line.quantity), cardNames: names.slice(0, line.quantity) } : line)),
 				),
 			add: (line) =>
 				setLines((current) => {
@@ -110,6 +114,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 											...item,
 											quantity: Math.min(99, item.quantity + line.quantity),
 											cardMessages: [...(item.cardMessages ?? []), ...(line.cardMessages ?? [])].slice(0, Math.min(99, item.quantity + line.quantity)),
+											cardNames: [...(item.cardNames ?? []), ...(line.cardNames ?? [])].slice(0, Math.min(99, item.quantity + line.quantity)),
 										}
 									: item,
 							)
@@ -122,7 +127,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 						line.key === key
 							? (() => {
 									const next = Number.isFinite(quantity) ? Math.min(99, Math.max(1, Math.floor(quantity))) : 1;
-									return { ...line, quantity: next, cardMessages: line.cardMessages?.slice(0, next) };
+									return { ...line, quantity: next, cardMessages: line.cardMessages?.slice(0, next), cardNames: line.cardNames?.slice(0, next) };
 								})()
 							: line,
 					),

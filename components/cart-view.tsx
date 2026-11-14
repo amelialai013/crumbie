@@ -163,12 +163,12 @@ export default function CartView({ productImages, card }: { productImages: Recor
               {lineCards.length > 0 && (
                 <div className="cart-card-line">
                   <div className="cart-card-line-text">
-                    <strong>{card.label} <span className="cart-card-for">for {line.productName}</span></strong>
+                    <strong>{card.label}</strong>
                     <small>{lineCards.length} of {line.quantity} {line.quantity === 1 ? "box" : "boxes"} · ${card.price.toFixed(2)} each</small>
                     <ol className="cart-card-messages">
                       {lineCards.map((message, i) => (
                         <li key={i}>
-                          <span>{lineCards.length === 1 ? "Message" : `Card ${i + 1}`}</span>
+                          <span>{line.cardNames?.[i]?.trim() ? `To ${line.cardNames[i].trim()}` : lineCards.length === 1 ? "Message" : `Card ${i + 1}`}</span>
                           {message.trim() ? <q>{message.trim()}</q> : <em>Blank card</em>}
                         </li>
                       ))}
@@ -176,7 +176,7 @@ export default function CartView({ productImages, card }: { productImages: Recor
                   </div>
                   <div className="cart-card-line-end">
                     <span>${(card.price * lineCards.length).toFixed(2)}</span>
-                    <button className="text-button" onClick={() => setLineCard(line.key, [])} disabled={removingLastItem}>Remove</button>
+                    <button className="text-button" onClick={() => setLineCard(line.key, [], [])} disabled={removingLastItem}>Remove</button>
                   </div>
                 </div>
               )}

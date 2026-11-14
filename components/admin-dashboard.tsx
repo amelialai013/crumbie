@@ -34,7 +34,7 @@ type Order = {
   createdAt?: string;
   customer?: { name?: string; email?: string };
   paymentStatus?: string;
-  card?: { label?: string; price?: number; quantity?: number; messages?: string[]; products?: string[] } | null;
+  card?: { label?: string; price?: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null;
   lines?: Array<{
     productName?: string;
     variantLabel?: string;
@@ -2305,10 +2305,10 @@ export default function AdminDashboard() {
                         <div>
                           {order.card.quantity ?? 1} × {order.card.label || "Club Crumbie Card"}
                           {typeof order.card.price === "number" ? ` · $${order.card.price.toFixed(2)} each` : ""}
-                          {order.card.messages?.some(Boolean) && (
+                          {(order.card.names?.some(Boolean) || order.card.messages?.some(Boolean)) && (
                             <ol className="admin-card-messages">
-                              {order.card.messages.map((message, index) => (
-                                <li key={index}>{message || <em>blank</em>}{order.card?.products?.[index] ? ` (${order.card.products[index]})` : ""}</li>
+                              {(order.card.messages ?? []).map((message, index) => (
+                                <li key={index}>{order.card?.names?.[index] ? <strong>{order.card.names[index]}: </strong> : null}{message || <em>blank</em>}{order.card?.products?.[index] ? ` (${order.card.products[index]})` : ""}</li>
                               ))}
                             </ol>
                           )}

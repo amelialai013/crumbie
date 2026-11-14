@@ -19,7 +19,7 @@ type Order = {
 	id: string;
 	customer: { name: string; email: string };
 	lines: Array<Record<string, unknown>>;
-	card?: { label: string; price: number; quantity?: number; messages?: string[]; products?: string[] } | null;
+	card?: { label: string; price: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null;
 	currency: string | null;
 	amountTotal: number | null;
 };
@@ -152,6 +152,6 @@ export async function sendOrderConfirmation(order: Order) {
 	await sendTextEmail({
 		to: order.customer.email,
 		subject: renderTemplate(templates.confirmationSubject || defaultTemplates.confirmationSubject, values),
-		text: renderTemplate(withPickupAddress(templates.confirmationBody || defaultTemplates.confirmationBody), values) + (order.card ? `\n\nIncluded in your order: ${order.card.quantity ?? 1} × ${order.card.label} ($${order.card.price.toFixed(2)} each)${order.card.messages?.some(Boolean) ? "\n" + order.card.messages.map((m, i) => `Card ${i + 1}${order.card?.products?.[i] ? ` (${order.card.products[i]})` : ""}: ${m || "(blank)"}`).join("\n") : ""}` : ""),
+		text: renderTemplate(withPickupAddress(templates.confirmationBody || defaultTemplates.confirmationBody), values) + (order.card ? `\n\nIncluded in your order: ${order.card.quantity ?? 1} × ${order.card.label} ($${order.card.price.toFixed(2)} each)${(order.card.names?.some(Boolean) || order.card.messages?.some(Boolean)) ? "\n" + (order.card.messages ?? []).map((m, i) => `Card ${i + 1}${order.card?.names?.[i] ? ` to ${order.card.names[i]}` : ""}${order.card?.products?.[i] ? ` (${order.card.products[i]})` : ""}: ${m || "(blank)"}`).join("\n") : ""}` : ""),
 	});
 }

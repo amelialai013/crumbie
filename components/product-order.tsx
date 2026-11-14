@@ -16,6 +16,8 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
   const { add } = useCart();
   const [cardSelected, setCard] = useState<CardChoice>(0);
   const [cardMessages, setCardMessages] = useState<string[]>([]);
+  const [cardNames, setCardNames] = useState<string[]>([]);
+  const [showNameErrors, setShowNameErrors] = useState(false);
   const available = pickupDates
     .filter((date) => !isDateClosed(date) && !product.soldOutDates?.includes(date.id))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -33,6 +35,12 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
     next[index] = value;
     setCardMessages(next);
   };
+  const updateName = (index: number, value: string) => {
+    const next = Array.from({ length: Math.max(cardNames.length, index + 1) }, (_, i) => cardNames[i] ?? "");
+    next[index] = value;
+    setCardNames(next);
+  };
+  const missingName = (index: number) => !(cardNames[index] ?? "").trim();
   const mode = cardCount === 0 ? "none" : cardCount >= boxes ? "all" : "some";
   const formatPrice = (value: number) => (Number.isInteger(value) ? String(value) : value.toFixed(2));
   const soldOut = product.soldOut || available.length === 0;
@@ -63,6 +71,12 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
   function submit() {
     const date = pickupDates.find((item) => item.id === dateId);
     if (!date) return;
+    if (Array.from({ length: cardCount }, (_, i) => i).some(missingName)) {
+      setShowNameErrors(true);
+      const first = Array.from({ length: cardCount }, (_, i) => i).find(missingName);
+      document.getElementById(`card-name-${first}`)?.focus();
+      return;
+    }
     const addedQuantity = quantity;
     add({
       productId: product.id,
@@ -77,9 +91,12 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
       pickupDate: date.date,
       pickupWindow: date.window,
       cardMessages: Array.from({ length: cardCount }, (_, i) => (cardMessages[i] ?? "").trim()),
+      cardNames: Array.from({ length: cardCount }, (_, i) => (cardNames[i] ?? "").trim()),
     });
     setCard(0);
     setCardMessages([]);
+    setCardNames([]);
+    setShowNameErrors(false);
     setConfirmationClosing(false);
     setConfirmation({ quantity: addedQuantity, variant: selectedVariant.label });
   }
@@ -178,16 +195,33 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
                 <div className="card-addon-messages">
                   {Array.from({ length: cardCount }, (_, index) => (
                     <div className="card-addon-message" key={index}>
-                      <label htmlFor={`card-message-${index}`}>{cardCount === 1 ? "Message" : `Card ${index + 1}`}</label>
-                      <textarea
-                        id={`card-message-${index}`}
-                        rows={3}
-                        maxLength={140}
-                        placeholder="Write a little something to go on your card (leave blank for a blank card)"
-                        value={cardMessages[index] ?? ""}
-                        onChange={(event) => updateMessage(index, event.target.value)}
+                      {cardCount > 1 && <label className="card-addon-message-title" htmlFor={`card-name-${index}`}>{`Card ${index + 1}`}</label>}
+                      <input
+                        id={`card-name-${index}`}
+                        className={`card-addon-input${showNameErrors && missingName(index) ? " has-error" : ""}`}
+                        type="text"
+                        maxLength={60}
+                        autoComplete="off"
+                        required
+                        placeholder="Name (this will appear on the outside of the box)"
+                        aria-label={cardCount === 1 ? "Card recipient name" : `Card ${index + 1} recipient name`}
+                        aria-invalid={showNameErrors && missingName(index)}
+                        value={cardNames[index] ?? ""}
+                        onChange={(event) => updateName(index, event.target.value)}
                       />
-                      <small>{(cardMessages[index] ?? "").length}/140</small>
+                      {showNameErrors && missingName(index) && <small className="card-addon-error" role="alert">Please add a name for this card</small>}
+                      <div className="card-addon-field">
+                        <textarea
+                          id={`card-message-${index}`}
+                          rows={5}
+                          maxLength={300}
+                          aria-label={cardCount === 1 ? "Card message" : `Card ${index + 1} message`}
+                          placeholder="Write a little something to go on your card (leave blank for a blank card)"
+                          value={cardMessages[index] ?? ""}
+                          onChange={(event) => updateMessage(index, event.target.value)}
+                        />
+                        <small className="card-addon-count">{(cardMessages[index] ?? "").length}/300</small>
+                      </div>
                     </div>
                   ))}
                 </div>

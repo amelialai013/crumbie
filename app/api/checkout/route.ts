@@ -10,7 +10,8 @@ const lineSchema = z.object({
 	variantId: z.string(),
 	quantity: z.number().int().min(1).max(99),
 	pickupDateId: z.string(),
-	cardMessages: z.array(z.string().max(140)).max(99).optional(),
+	cardMessages: z.array(z.string().max(300)).max(99).optional(),
+	cardNames: z.array(z.string().max(60)).max(99).optional(),
 });
 const schema = z.object({ lines: z.array(lineSchema).min(1).max(30) });
 
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
 	// Price comes from settings, never from the client; a card requested after it was disabled is dropped.
 	const clean = [];
 	const cardMessages: string[] = [];
+	const cardNames: string[] = [];
 	const cardProducts: string[] = [];
 	for (const line of parsed.data.lines) {
 		const product = products.find((item) => item.id === line.productId);
@@ -57,7 +59,13 @@ export async function POST(req: Request) {
 		}
 
 		if (cardOption.enabled) {
-			for (const message of (line.cardMessages ?? []).slice(0, line.quantity)) {
+			const lineMessages = (line.cardMessages ?? []).slice(0, line.quantity);
+			for (const [index, message] of lineMessages.entries()) {
+				const name = (line.cardNames?.[index] ?? "").trim();
+				if (!name) {
+					return NextResponse.json({ error: `${product.name}: please add a name for each Club Crumbie Card.` }, { status: 400 });
+				}
+				cardNames.push(name);
 				cardMessages.push(message.trim());
 				cardProducts.push(`${product.name} — ${variant.label}`);
 			}
@@ -77,7 +85,7 @@ export async function POST(req: Request) {
 	}
 
 	// Each line's cards are capped at its own box count, so a stale cart can't buy more cards than boxes.
-	const card = cardMessages.length > 0 ? { label: cardOption.label, price: cardOption.price, quantity: cardMessages.length, messages: cardMessages, products: cardProducts } : null;
+	const card = cardMessages.length > 0 ? { label: cardOption.label, price: cardOption.price, quantity: cardMessages.length, names: cardNames, messages: cardMessages, products: cardProducts } : null;
 
 	if (!process.env.STRIPE_SECRET_KEY) {
 		return NextResponse.json({ error: "Online checkout is temporarily unavailable. Please try again later." }, { status: 503 });
