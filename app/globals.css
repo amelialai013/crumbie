@@ -4750,13 +4750,13 @@ textarea { resize: none; }
   flex-shrink: 0;
 }
 .admin-status-dot.is-new {
-  background: #e5484d;
+  background: #46a758;
 }
 .admin-status-dot.is-pending {
   background: #f5c542;
 }
 .admin-status-dot.is-replied {
-  background: #46a758;
+  background: #8b8680;
 }
 .admin-enquiry-filters {
   display: flex;

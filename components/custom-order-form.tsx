@@ -22,7 +22,7 @@ export default function CustomOrderForm({ enquiryTypes, messagePrompt }: { enqui
   useEffect(() => {
     if (status !== "done") return;
     successHeading.current?.focus({ preventScroll: true });
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, left: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }, [status]);
 
   function clearValidationError(field: string) {
