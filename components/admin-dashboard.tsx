@@ -7,6 +7,7 @@ import { DatePicker } from "./date-picker";
 import PremiumSelect from "./premium-select";
 import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
+import AdminSwitch from "@/components/admin-switch";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
@@ -2772,23 +2773,14 @@ export default function AdminDashboard() {
                 </div>
                 <fieldset className="admin-image-generator">
                   <legend>Product imagery</legend>
-                  <div className="admin-hero-toggle" role="radiogroup" aria-label="Product page display">
-                    {([["cookie", "3D cookie"], ["carousel", "Photo carousel"]] as const).map(([mode, label]) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        role="radio"
-                        aria-checked={heroMode === mode}
-                        className={heroMode === mode ? "is-active" : undefined}
-                        onClick={() => setHeroMode(mode)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+                  <AdminSwitch
+                    checked={heroMode === "carousel"}
+                    onChange={(checked) => setHeroMode(checked ? "carousel" : "cookie")}
+                    label="Use a photo carousel instead of the 3D cookie"
+                  />
                   {heroMode === "carousel" && (
                     <div className="admin-hero-carousel-panel">
-                      <p>Show your own photos as a carousel on this product page instead of the 3D cookie.</p>
+                      <p>Upload photos to show as a swipeable carousel on this product page in place of the 3D cookie. The first photo appears first, and you can reorder or remove photos below.</p>
                       <label
                         className={`admin-reference-dropzone admin-gallery-dropzone${heroDragActive ? " is-active" : ""}`}
                         htmlFor="product-hero-photos"
@@ -2897,7 +2889,7 @@ export default function AdminDashboard() {
                     the current product imagery.
                   </p>
                   <label
-                    className={`admin-reference-dropzone${referenceDropActive ? " is-active" : ""}`}
+                    className={`admin-reference-dropzone admin-gallery-dropzone${referenceDropActive ? " is-active" : ""}`}
                     htmlFor="product-image-references"
                     tabIndex={0}
                     onDragEnter={(event) => {
@@ -2922,8 +2914,11 @@ export default function AdminDashboard() {
                       }
                     }}
                   >
-                    <span>Drop reference photos here</span>
-                    <small>or browse files · up to 5 images · 10MB each</small>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
+                    </svg>
+                    <span>Click to upload photos</span>
+                    <small>or drag and drop · up to 5 images · 10MB each</small>
                     <input
                       id="product-image-references"
                       type="file"
