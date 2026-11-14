@@ -1822,7 +1822,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!data && (checkingSession || signingIn))
+  if (checkingSession || (!data && signingIn))
     return (
       <div className="admin-auth admin-auth-loading" role="status" aria-live="polite">
         <span className="admin-auth-spinner" aria-hidden="true" />
