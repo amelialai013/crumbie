@@ -2,6 +2,7 @@ import { productCardImage, productCardIsPhoto } from "@/lib/catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
+import PromoBanner from "@/components/promo-banner";
 import { getProducts, getPromo } from "@/lib/catalog-store";
 
 export const metadata: Metadata = { title: "Crumbs" };
@@ -10,7 +11,6 @@ export default async function Crumbs() {
   const products = await getProducts();
   const promo = await getPromo();
   const featured = promo ? products.find((product) => product.id === promo.productId) : undefined;
-  const featuredImage = featured ? productCardImage(featured) : undefined;
   const gridProducts = featured ? products.filter((product) => product.id !== featured.id) : products;
   return (
     <>
@@ -22,23 +22,7 @@ export default async function Crumbs() {
       {featured && promo && (
         <section className="promo-banner-section">
           <div className="shell">
-            <div className="promo-banner">
-              <div className="promo-banner-copy">
-                {promo.label && <span className="promo-banner-label">{promo.label}</span>}
-                <h2>{promo.headline || featured.name}</h2>
-                {promo.blurb && <p>{promo.blurb}</p>}
-                <Link className="btn btn-dark promo-banner-link" href={`/crumbs/${featured.slug}`}>
-                  {promo.button || "Order now"}
-                  <svg aria-hidden="true" viewBox="0 0 16 16">
-                    <path d="m6 3.5 4.5 4.5L6 12.5" />
-                  </svg>
-                </Link>
-              </div>
-              {featuredImage && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img className="promo-banner-image" src={featuredImage} alt={featured.name} />
-              )}
-            </div>
+            <PromoBanner promo={promo} product={featured} />
           </div>
         </section>
       )}

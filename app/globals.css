@@ -6362,3 +6362,5 @@ textarea.card-addon-input {
   .promo-banner-image { order: -1; }
   .promo-banner-label { left: 16px; }
 }
+
+.home-promo-banner { margin-bottom: clamp(32px, 4vw, 48px); }

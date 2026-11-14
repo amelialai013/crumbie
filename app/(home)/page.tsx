@@ -1,7 +1,8 @@
 import { productCardImage, productCardIsPhoto } from "@/lib/catalog";
 import Link from "next/link";
 import Image from "next/image";
-import { getProducts } from "@/lib/catalog-store";
+import PromoBanner from "@/components/promo-banner";
+import { getProducts, getPromo } from "@/lib/catalog-store";
 import whiteLogo from "@/brand/latest-logos/new-text-logo/text-white.png";
 import whiteVerticalLogo from "@/brand/latest-logos/new-text-logo/white-vertical-logo.png";
 import HeroMedia from "@/components/hero-media";
@@ -10,7 +11,9 @@ import SectionReveal from "@/components/section-reveal";
 import { getRecord } from "@/lib/store";
 
 export default async function Home() {
-  const products = await getProducts();
+  const [allProducts, promo] = await Promise.all([getProducts(), getPromo()]);
+  const featured = promo ? allProducts.find((product) => product.id === promo.productId) : undefined;
+  const products = featured ? allProducts.filter((product) => product.id !== featured.id) : allProducts;
   const content = await getRecord<{ fields?: Record<string, string> }>("content", "homepage").catch(() => null);
   const f = content?.fields || {};
   const catalogHeading = f.catalogHeading && f.catalogHeading !== "Crumbs for every craving" ? f.catalogHeading : null;
@@ -70,6 +73,11 @@ export default async function Home() {
           <div className="split-heading">
             <div><h2>{catalogHeading || <>Crumbs for<br />every craving</>}</h2></div>
           </div>
+          {featured && promo && (
+            <div className="home-promo-banner">
+              <PromoBanner promo={promo} product={featured} />
+            </div>
+          )}
           <div className={`product-grid product-grid-${Math.min(4, products.length)}`}>
             {products.map((product) => (
               <Link className="product-card" href={`/crumbs/${product.slug}`} key={product.id}>
