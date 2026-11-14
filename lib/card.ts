@@ -39,3 +39,17 @@ export function galleryImagesFrom(fields: Record<string, string> | undefined): s
 		return [];
 	}
 }
+
+export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string };
+
+// Crumbs-page promo banner, stored in the "settings" content module.
+export function promoFrom(fields: Record<string, string> | undefined): Promo | null {
+	if (fields?.promoEnabled !== "true" || !fields.promoProductId) return null;
+	return {
+		productId: fields.promoProductId,
+		label: fields.promoLabel?.trim() ?? "Limited season",
+		headline: fields.promoHeadline?.trim() ?? "",
+		blurb: fields.promoBlurb?.trim() ?? "",
+		button: fields.promoButton?.trim() || "Order now",
+	};
+}

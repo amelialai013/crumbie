@@ -1,6 +1,6 @@
 import "server-only";
 import { products as catalogProducts, pickupDates as catalogPickupDates, productSlugFromName, type PickupDate, type Product } from "@/lib/catalog";
-import { cardOptionFrom, galleryCopyFrom, galleryImagesFrom, type CardOption } from "@/lib/card";
+import { cardOptionFrom, galleryCopyFrom, galleryImagesFrom, promoFrom, type CardOption } from "@/lib/card";
 import { getRecord, listRecords } from "@/lib/store";
 
 type ProductRecord = Product & { removed?: boolean };
@@ -50,4 +50,9 @@ export async function getGalleryCopy() {
 export async function getGalleryImages() {
   const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
   return galleryImagesFrom(settings?.fields);
+}
+
+export async function getPromo() {
+  const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
+  return promoFrom(settings?.fields);
 }

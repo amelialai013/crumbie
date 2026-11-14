@@ -8,6 +8,7 @@ import PremiumSelect from "./premium-select";
 import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
 import AdminSwitch from "@/components/admin-switch";
+import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
@@ -167,48 +168,48 @@ function PhotoReorderList({
             setDragged(null);
           }}
         >
+          <button
+            className="admin-drag-handle"
+            type="button"
+            draggable
+            aria-label={`Reorder ${label(index)}. Use arrow keys to move.`}
+            disabled={images.length <= 1}
+            onDragStart={(event) => {
+              const row = event.currentTarget.closest("li");
+              if (row) event.dataTransfer.setDragImage(row, 24, row.offsetHeight / 2);
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", String(index));
+              setDragged(index);
+            }}
+            onDragEnd={() => setDragged(null)}
+            onKeyDown={(event) => {
+              const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+              if (!offset) return;
+              event.preventDefault();
+              const target = index + offset;
+              if (target < 0 || target >= images.length) return;
+              const list = event.currentTarget.closest("ol");
+              move(index, target);
+              requestAnimationFrame(() =>
+                list?.querySelectorAll<HTMLButtonElement>(".admin-drag-handle")[target]?.focus(),
+              );
+            }}
+          >
+            <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="6" cy="4" r="1.1" />
+              <circle cx="10" cy="4" r="1.1" />
+              <circle cx="6" cy="8" r="1.1" />
+              <circle cx="10" cy="8" r="1.1" />
+              <circle cx="6" cy="12" r="1.1" />
+              <circle cx="10" cy="12" r="1.1" />
+            </svg>
+          </button>
           <Image src={image} alt="" width={56} height={44} unoptimized />
           <div>
             <strong>{label(index)}</strong>
             <span>{image.split("/").pop()}</span>
           </div>
           <div className="admin-product-image-actions">
-            <button
-              className="admin-drag-handle"
-              type="button"
-              draggable
-              aria-label={`Reorder ${label(index)}. Use arrow keys to move.`}
-              disabled={images.length <= 1}
-              onDragStart={(event) => {
-                const row = event.currentTarget.closest("li");
-                if (row) event.dataTransfer.setDragImage(row, 24, row.offsetHeight / 2);
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", String(index));
-                setDragged(index);
-              }}
-              onDragEnd={() => setDragged(null)}
-              onKeyDown={(event) => {
-                const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-                if (!offset) return;
-                event.preventDefault();
-                const target = index + offset;
-                if (target < 0 || target >= images.length) return;
-                const list = event.currentTarget.closest("ol");
-                move(index, target);
-                requestAnimationFrame(() =>
-                  list?.querySelectorAll<HTMLButtonElement>(".admin-drag-handle")[target]?.focus(),
-                );
-              }}
-            >
-              <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="6" cy="4" r="1.1" />
-                <circle cx="10" cy="4" r="1.1" />
-                <circle cx="6" cy="8" r="1.1" />
-                <circle cx="10" cy="8" r="1.1" />
-                <circle cx="6" cy="12" r="1.1" />
-                <circle cx="10" cy="12" r="1.1" />
-              </svg>
-            </button>
             <button className="text-button" type="button" onClick={() => onImagesChange(images.filter((_, i) => i !== index))}>
               Remove
             </button>
@@ -217,6 +218,7 @@ function PhotoReorderList({
       ))}
       {files.map((file, index) => (
         <li key={`${file.name}-${file.size}-${index}`}>
+          <div aria-hidden="true" />
           <PendingPhotoPreview file={file} />
           <div>
             <strong>New photo (saved on save)</strong>
@@ -800,6 +802,116 @@ function CardSettings({
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
           {status === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
           {status === "Saving..." ? "Saving…" : "Save changes"}
+        </button>
+        {status && status !== "Saving..." && <span>{status}</span>}
+      </div>
+    </form>
+  );
+}
+
+function PromoSettings({
+  products,
+  initial,
+  begin,
+  finish,
+}: {
+  products: Product[];
+  initial: Record<string, string>;
+  begin: (message: string) => void;
+  finish: (message?: string) => void;
+}) {
+  const pick = (source: Record<string, string>) => ({
+    promoEnabled: source.promoEnabled === "true" ? "true" : "false",
+    promoProductId: source.promoProductId ?? "",
+    promoLabel: source.promoLabel ?? "Limited season",
+    promoHeadline: source.promoHeadline ?? "",
+    promoBlurb: source.promoBlurb ?? "",
+    promoButton: source.promoButton ?? "Order now",
+  });
+  const [values, setValues] = useState(() => pick(initial));
+  const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
+  const [status, setStatus] = useState("");
+  const enabled = values.promoEnabled === "true";
+  const changed = JSON.stringify(values) !== saved;
+  const set = (key: keyof typeof values, value: string) => setValues((current) => ({ ...current, [key]: value }));
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setStatus("Saving...");
+    begin("Saving promo…");
+    const next = { ...values, promoProductId: values.promoProductId || products[0]?.id || "" };
+    const current = await fetch("/api/admin/content?module=settings").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const response = await fetch("/api/admin/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ module: "settings", fields: { ...(current?.fields ?? {}), ...next } }),
+    });
+    if (response.ok) {
+      setValues(next);
+      setSaved(JSON.stringify(next));
+      setStatus("");
+      finish("Promo saved");
+      return;
+    }
+    finish();
+    setStatus((await response.json().catch(() => null))?.error || "Unable to save");
+  }
+
+  return (
+    <form className="admin-promo-settings" onSubmit={save}>
+      <div className="admin-promo-fields">
+        <span className="admin-promo-eyebrow">Admin → Settings</span>
+        <h3 className="admin-promo-heading">Homepage promo</h3>
+        <label className={`${switchStyles.root} admin-promo-row`}>
+          <span>
+            <strong>Show promo banner</strong>
+            <small>Appears above the Crumbs grid</small>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={enabled}
+            onChange={(event) =>
+              setValues((current) => ({ ...current, promoEnabled: event.target.checked ? "true" : "false", promoProductId: current.promoProductId || products[0]?.id || "" }))
+            }
+          />
+          <span className={switchStyles.track} aria-hidden="true" />
+        </label>
+        {enabled && (
+          <>
+            <div className="field">
+              <label id="promo-product-label">Hero product</label>
+              <PremiumSelect
+                labelId="promo-product-label"
+                value={values.promoProductId}
+                options={products.map((product) => ({ value: product.id, label: product.name }))}
+                placeholder="Choose a product"
+                onChange={(value) => set("promoProductId", value)}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="promo-label">Label</label>
+              <input id="promo-label" maxLength={40} value={values.promoLabel} onChange={(event) => set("promoLabel", event.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="promo-headline">Headline</label>
+              <input id="promo-headline" maxLength={60} placeholder="Defaults to the product name" value={values.promoHeadline} onChange={(event) => set("promoHeadline", event.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="promo-blurb">Short description</label>
+              <input id="promo-blurb" maxLength={120} value={values.promoBlurb} onChange={(event) => set("promoBlurb", event.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="promo-button">Button label</label>
+              <input id="promo-button" maxLength={24} value={values.promoButton} onChange={(event) => set("promoButton", event.target.value)} />
+            </div>
+          </>
+        )}
+      </div>
+      <div className="admin-promo-actions">
+        <button className={`btn btn-dark${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
+          {status === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
+          {status === "Saving..." ? "Saving…" : "Save promo"}
         </button>
         {status && status !== "Saving..." && <span>{status}</span>}
       </div>
@@ -3252,6 +3364,7 @@ export default function AdminDashboard() {
               </tbody>
             </table>
             )}
+            {cardSettings && managedProducts.length > 0 && <PromoSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} />}
             {cardSettings && <CardSettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />}
           </>
         )}
