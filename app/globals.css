@@ -6103,3 +6103,24 @@ html:has(.orb-intro:not(.is-leaving)) body {
 .admin-product-form .admin-product-form-actions {
   margin-top: auto;
 }
+
+/* Explicit grid rows: the footer row is content-sized and can never absorb leftover space in any browser. */
+.admin-product-form {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-content: stretch;
+}
+.admin-product-form > .admin-modal-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+.admin-product-form > .admin-product-form-actions {
+  align-self: end;
+  height: auto;
+  min-height: 0;
+  max-height: 80px;
+  margin: 0;
+}
+section:has(#product-modal-toggle:checked) .admin-product-form {
+  display: grid;
+}
