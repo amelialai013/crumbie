@@ -6,9 +6,10 @@ import { connection } from "next/server";
 import PhotoCarousel from "@/components/photo-carousel";
 import CookieExplorer from "@/components/cookie-explorer";
 import HeroCarousel from "@/components/hero-carousel";
+import { cardForProduct } from "@/lib/card";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
-import { getCardOption, getGalleryCopy, getGalleryImages, getProducts, getPickupDates } from "@/lib/catalog-store";
+import { getCardOption, getGalleryCopy, getGalleryImages, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
 
 const legacyProductSlugs: Record<string, string> = {
   "signature-box": "signature-crumbie",
@@ -33,12 +34,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // Availability must reflect admin changes and the current ordering cutoff.
   await connection();
   const { slug } = await params;
-  const [products, pickupDates, card, galleryCopy, sharedGallery] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages()]);
+  const [products, pickupDates, defaultCard, galleryCopy, sharedGallery, promo] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages(), getPromo()]);
   const product = products.find((item) => item.slug === slug);
   if (!product && legacyProductSlugs[slug]) {
     redirect(`/crumbs/${legacyProductSlugs[slug]}`);
   }
   if (!product) notFound();
+  const card = cardForProduct(defaultCard, promo, product.id);
   const galleryImages = sharedGallery.length > 0 ? sharedGallery : product.galleryImages || [];
 
   return (

@@ -13,10 +13,12 @@ import QuantityControl from "@/components/quantity-control";
 import { productSlugFromName } from "@/lib/catalog";
 import type { CardOption } from "@/lib/card";
 
-export default function CartView({ productImages, card }: { productImages: Record<string, string>; card: CardOption }) {
+export default function CartView({ productImages, card, heroCard }: { productImages: Record<string, string>; card: CardOption; heroCard: { productId: string; label: string } | null }) {
   const { lines, total: itemsTotal, ready, remove, setQuantity, clear, setLineCard } = useCart();
   const cardCount = card.enabled ? lines.reduce((sum, line) => sum + (line.cardMessages?.length ?? 0), 0) : 0;
   const withCard = cardCount > 0;
+  const cardLines = lines.filter((line) => (line.cardMessages?.length ?? 0) > 0);
+  const summaryCardLabel = heroCard?.label && cardLines.length > 0 && cardLines.every((line) => line.productId === heroCard.productId) ? heroCard.label : card.label;
   const total = itemsTotal + cardCount * card.price;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -163,7 +165,7 @@ export default function CartView({ productImages, card }: { productImages: Recor
               {lineCards.length > 0 && (
                 <div className="cart-card-line">
                   <div className="cart-card-line-text">
-                    <strong>{card.label}</strong>
+                    <strong>{line.productId === heroCard?.productId && heroCard.label ? heroCard.label : card.label}</strong>
                     <small>{lineCards.length} of {line.quantity} {line.quantity === 1 ? "box" : "boxes"} · ${card.price.toFixed(2)} each</small>
                     <ol className="cart-card-messages">
                       {lineCards.map((message, i) => (
@@ -191,7 +193,7 @@ export default function CartView({ productImages, card }: { productImages: Recor
               <aside className="summary cart-summary">
                 <p className="cart-summary-heading">Order total</p>
                 <h2>${total.toFixed(2)} <span>AUD</span></h2>
-                {withCard && <p className="cart-summary-card">Includes {cardCount} Club Crumbie {cardCount === 1 ? "Card" : "Cards"} · ${(card.price * cardCount).toFixed(2)}</p>}
+                {withCard && <p className="cart-summary-card">Includes {cardCount} × {summaryCardLabel} · ${(card.price * cardCount).toFixed(2)}</p>}
                 <p>GST included. Pickup address provided in confirmation email.</p>
                 <button className="btn btn-dark" disabled={busy} onClick={checkout}>{busy ? "Starting secure checkout…" : "Checkout"}</button>
                 {error && <p className="field-error cart-checkout-error" role="alert">{error}</p>}

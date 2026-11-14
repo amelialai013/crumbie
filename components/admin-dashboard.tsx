@@ -827,6 +827,8 @@ function PromoSettings({
     promoHeadline: source.promoHeadline ?? "",
     promoBlurb: source.promoBlurb ?? "",
     promoButton: source.promoButton ?? "Order now",
+    promoCardLabel: source.promoCardLabel ?? "",
+    promoCardDescription: source.promoCardDescription ?? "",
   });
   const [values, setValues] = useState(() => pick(initial));
   const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
@@ -860,7 +862,6 @@ function PromoSettings({
   return (
     <form className="admin-promo-settings" onSubmit={save}>
       <div className="admin-promo-fields">
-        <span className="admin-promo-eyebrow">Admin → Settings</span>
         <h3 className="admin-promo-heading">Homepage promo</h3>
         <label className={`${switchStyles.root} admin-promo-row`}>
           <span>
@@ -879,31 +880,49 @@ function PromoSettings({
         </label>
         {enabled && (
           <>
-            <div className="field">
-              <label id="promo-product-label">Hero product</label>
-              <PremiumSelect
-                labelId="promo-product-label"
-                value={values.promoProductId}
-                options={products.map((product) => ({ value: product.id, label: product.name }))}
-                placeholder="Choose a product"
-                onChange={(value) => set("promoProductId", value)}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="promo-label">Label</label>
-              <input id="promo-label" maxLength={40} value={values.promoLabel} onChange={(event) => set("promoLabel", event.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="promo-headline">Headline</label>
-              <input id="promo-headline" maxLength={60} placeholder="Defaults to the product name" value={values.promoHeadline} onChange={(event) => set("promoHeadline", event.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="promo-blurb">Short description</label>
-              <input id="promo-blurb" maxLength={120} value={values.promoBlurb} onChange={(event) => set("promoBlurb", event.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="promo-button">Button label</label>
-              <input id="promo-button" maxLength={24} value={values.promoButton} onChange={(event) => set("promoButton", event.target.value)} />
+            <div className="enquiry-form admin-editor">
+              <div className="admin-editor-fields">
+                <div className="field">
+                  <label id="promo-product-label">Hero product</label>
+                  <PremiumSelect
+                    labelId="promo-product-label"
+                    value={values.promoProductId}
+                    options={products.map((product) => ({ value: product.id, label: product.name }))}
+                    placeholder="Choose a product"
+                    onChange={(value) => set("promoProductId", value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-label">Label</label>
+                  <input id="promo-label" maxLength={40} value={values.promoLabel} onChange={(event) => set("promoLabel", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoLabel.length} / 40</small>
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-headline">Headline</label>
+                  <input id="promo-headline" maxLength={60} placeholder="Defaults to the product name" value={values.promoHeadline} onChange={(event) => set("promoHeadline", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoHeadline.length} / 60</small>
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-blurb">Short description</label>
+                  <input id="promo-blurb" maxLength={120} value={values.promoBlurb} onChange={(event) => set("promoBlurb", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoBlurb.length} / 120</small>
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-button">Button label</label>
+                  <input id="promo-button" maxLength={24} value={values.promoButton} onChange={(event) => set("promoButton", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoButton.length} / 24</small>
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-card-label">Card name (hero product only)</label>
+                  <input id="promo-card-label" maxLength={60} placeholder="Defaults to Club Crumbie Card" value={values.promoCardLabel} onChange={(event) => set("promoCardLabel", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoCardLabel.length} / 60</small>
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-card-description">Card description (hero product only)</label>
+                  <input id="promo-card-description" maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoCardDescription.length} / 200</small>
+                </div>
+              </div>
             </div>
           </>
         )}

@@ -40,7 +40,7 @@ export function galleryImagesFrom(fields: Record<string, string> | undefined): s
 	}
 }
 
-export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string };
+export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string; cardLabel: string; cardDescription: string };
 
 // Crumbs-page promo banner, stored in the "settings" content module.
 export function promoFrom(fields: Record<string, string> | undefined): Promo | null {
@@ -51,5 +51,13 @@ export function promoFrom(fields: Record<string, string> | undefined): Promo | n
 		headline: fields.promoHeadline?.trim() ?? "",
 		blurb: fields.promoBlurb?.trim() ?? "",
 		button: fields.promoButton?.trim() || "Order now",
+		cardLabel: fields.promoCardLabel?.trim() ?? "",
+		cardDescription: fields.promoCardDescription?.trim() ?? "",
 	};
+}
+
+// The hero product can rename its card (e.g. "Christmas Crumbie Card"); other products keep the default.
+export function cardForProduct(card: CardOption, promo: Promo | null, productId: string): CardOption {
+	if (!promo || promo.productId !== productId) return card;
+	return { ...card, label: promo.cardLabel || card.label, description: promo.cardDescription || card.description };
 }

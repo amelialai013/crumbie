@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { z } from "zod";
 import { isDateClosed } from "@/lib/catalog";
-import { getCardOption, getProducts, getPickupDates } from "@/lib/catalog-store";
+import { getCardOption, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
 import { setRecord } from "@/lib/store";
 
 const lineSchema = z.object({
@@ -35,7 +35,7 @@ const integrationIdentifier = (() => {
 })();
 
 export async function POST(req: Request) {
-	const [products, pickupDates, cardOption] = await Promise.all([getProducts(), getPickupDates(), getCardOption()]);
+	const [products, pickupDates, cardOption, promo] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getPromo()]);
 	const parsed = schema.safeParse(await req.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: "Your cart is invalid." }, { status: 400 });
 
@@ -44,6 +44,7 @@ export async function POST(req: Request) {
 	const cardMessages: string[] = [];
 	const cardNames: string[] = [];
 	const cardProducts: string[] = [];
+	const cardProductIds = new Set<string>();
 	for (const line of parsed.data.lines) {
 		const product = products.find((item) => item.id === line.productId);
 		const variant = product?.variants.find((item) => item.id === line.variantId);
@@ -67,6 +68,7 @@ export async function POST(req: Request) {
 				}
 				cardNames.push(name);
 				cardMessages.push(message.trim());
+				cardProductIds.add(product.id);
 				cardProducts.push(`${product.name} — ${variant.label}`);
 			}
 		}
@@ -85,7 +87,7 @@ export async function POST(req: Request) {
 	}
 
 	// Each line's cards are capped at its own box count, so a stale cart can't buy more cards than boxes.
-	const card = cardMessages.length > 0 ? { label: cardOption.label, price: cardOption.price, quantity: cardMessages.length, names: cardNames, messages: cardMessages, products: cardProducts } : null;
+	const card = cardMessages.length > 0 ? { label: promo?.cardLabel && cardProductIds.size === 1 && cardProductIds.has(promo.productId) ? promo.cardLabel : cardOption.label, price: cardOption.price, quantity: cardMessages.length, names: cardNames, messages: cardMessages, products: cardProducts } : null;
 
 	if (!process.env.STRIPE_SECRET_KEY) {
 		return NextResponse.json({ error: "Online checkout is temporarily unavailable. Please try again later." }, { status: 503 });
