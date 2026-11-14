@@ -6089,3 +6089,17 @@ html:has(.orb-intro:not(.is-leaving)) body {
   filter: none;
   border-radius: 12px;
 }
+
+/* Fixed-height product modal: the body scrolls and the footer always sits at the bottom, regardless of how the browser sizes auto-height flex columns. */
+.admin-product-form {
+  height: min(820px, calc(100vh - 48px));
+  height: min(820px, calc(100dvh - 48px));
+  max-height: none;
+}
+.admin-product-form .admin-modal-body {
+  flex: 1 1 0;
+  max-height: none;
+}
+.admin-product-form .admin-product-form-actions {
+  margin-top: auto;
+}
