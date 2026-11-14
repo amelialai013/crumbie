@@ -19,12 +19,14 @@ export function enquiryMessageDisplay(message: string, outgoing: boolean) {
  const outlook = /^From:[^\n]+\n(?:Sent|Date):[^\n]+\nTo:[^\n]+\n(?:Cc:[^\n]*\n)?Subject:[^\n]+/im.exec(visible);
  if (outlook) visible = visible.slice(0, outlook.index).trimEnd();
  if (outgoing) {
-  const signature = /\n(?:Club Crumbie\n)+clubcrumbieadmin@gmail\.com\nclubcrumbie\.com\nInstagram\b/;
+  // Some mail clients append the link destination directly after its label.
+  const signature = /\n(?:[ \t]*Club Crumbie[ \t]*\n)+[ \t]*clubcrumbieadmin@gmail\.com(?:[ \t]*<mailto:clubcrumbieadmin@gmail\.com>)?[ \t]*\n[ \t]*clubcrumbie\.com(?:[ \t]*<https:\/\/clubcrumbie\.com\/?>)?[ \t]*\n[ \t]*Instagram\b/i;
   const match = signature.exec(visible);
   if (match) {
    visible = visible.slice(0, match.index).trimEnd();
-   // Gmail emits the linked logo as a standalone URL immediately before our signature.
-   visible = visible.replace(/\n[ \t]*<https:\/\/clubcrumbie\.com\/?>[ \t]*$/, "").trimEnd();
+   // The logo can appear as an image URL followed by its link, or just the link.
+   visible = visible.replace(/\n[ \t]*<https:\/\/clubcrumbie\.com\/?>[ \t]*$/i, "").trimEnd();
+   visible = visible.replace(/\n[ \t]*\[https:\/\/clubcrumbie\.com\/email\/club-crumbie-logo-1-276\.png\][ \t]*$/i, "").trimEnd();
   }
  }
  // A quote-only email still needs to be readable.
