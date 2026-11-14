@@ -112,9 +112,6 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
 
   return (
     <div className="product-order">
-      <div className="product-order-heading">
-        <h2>Order your box</h2>
-      </div>
       <div className="product-order-fields">
         <div className="field">
           <span className="field-label" id="variant-label">Size</span>

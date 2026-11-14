@@ -6356,3 +6356,9 @@ textarea.card-addon-input {
     line-height: 1.5;
   }
 }
+
+@media (min-width: 801px) {
+  .promo-banner { grid-template-columns: 1.15fr 1fr; }
+  .promo-banner-image { order: -1; }
+  .promo-banner-label { left: 16px; }
+}
