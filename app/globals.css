@@ -6124,3 +6124,10 @@ html:has(.orb-intro:not(.is-leaving)) body {
 section:has(#product-modal-toggle:checked) .admin-product-form {
   display: grid;
 }
+
+/* Programmatic scrolling (focus/scrollIntoView) must not shift the modal shell */
+section:has(#product-modal-toggle:checked) .admin-product-form,
+.admin-product-form {
+  overflow: hidden;
+  overflow: clip;
+}
