@@ -34,6 +34,7 @@ export async function POST(request: Request) {
 	const images = [...(Array.isArray(payload.images) ? payload.images : existing?.images || [])];
 	const galleryImages = Array.isArray(payload.galleryImages) ? payload.galleryImages.filter((image): image is string => typeof image === "string") : existing?.galleryImages || [];
 	const heroImages = Array.isArray(payload.heroImages) ? payload.heroImages.filter((image): image is string => typeof image === "string") : existing?.heroImages || [];
+	let cardImage = typeof payload.cardImage === "string" ? payload.cardImage : undefined;
 	let uploadedImages = false;
 	try {
 		for (const entry of form.getAll("images")) {
@@ -55,6 +56,11 @@ export async function POST(request: Request) {
 				heroImages.push(await uploadMedia(`products/${slug}/carousel/${Date.now()}-${heroImages.length}-${entry.name}`, new Uint8Array(await entry.arrayBuffer()), entry.type));
 			}
 		}
+		const cardFile = form.get("cardFile");
+		if (cardFile instanceof File && cardFile.size > 0) {
+			if (!cardFile.type.startsWith("image/") || cardFile.size > 10 * 1024 * 1024) return NextResponse.json({ error: "Images must be under 10MB" }, { status: 400 });
+			cardImage = await uploadMedia(`products/${slug}/card/${Date.now()}-${cardFile.name}`, new Uint8Array(await cardFile.arrayBuffer()), cardFile.type);
+		}
 		const product: Product = {
 			...payload,
 			slug,
@@ -63,6 +69,7 @@ export async function POST(request: Request) {
 			images,
 			galleryImages,
 			heroImages,
+			cardImage,
 			heroMode: payload.heroMode === "carousel" ? "carousel" : undefined,
 			imageMode: uploadedImages || payload.imageMode === "gallery" ? "gallery" : existing?.imageMode,
 		};

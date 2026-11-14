@@ -1,4 +1,4 @@
-import { productSideProfile } from "@/lib/catalog";
+import { productCardImage } from "@/lib/catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
@@ -23,7 +23,8 @@ export default async function Crumbs() {
                 <div className="relative product-card-render">
                   <ProductCookieImage
                     eager
-                    image={productSideProfile(product)}
+                    image={productCardImage(product)}
+                    photo={Boolean(product.cardImage)}
                     name={product.name}
                     variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
                   />

@@ -1,4 +1,4 @@
-import { productSideProfile } from "@/lib/catalog";
+import { productCardImage } from "@/lib/catalog";
 import Link from "next/link";
 import Image from "next/image";
 import { getProducts } from "@/lib/catalog-store";
@@ -76,7 +76,8 @@ export default async function Home() {
                 <div className="relative product-card-render">
                   <ProductCookieImage
                     eager
-                    image={productSideProfile(product)}
+                    image={productCardImage(product)}
+                    photo={Boolean(product.cardImage)}
                     name={product.name}
                     variant={product.id === "product-seasonal" ? "biscoff" : "signature"}
                   />

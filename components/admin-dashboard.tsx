@@ -126,6 +126,113 @@ function PendingPhotoPreview({ file }: { file: File }) {
   return <img src={url} alt="" width={56} height={44} />;
 }
 
+function PhotoReorderList({
+  images,
+  files,
+  label,
+  onImagesChange,
+  onFilesChange,
+}: {
+  images: string[];
+  files: File[];
+  label: (index: number) => string;
+  onImagesChange: (images: string[]) => void;
+  onFilesChange: (files: File[]) => void;
+}) {
+  const [dragged, setDragged] = useState<number | null>(null);
+
+  function move(from: number, to: number) {
+    const next = [...images];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    onImagesChange(next);
+  }
+
+  return (
+    <ol className="admin-product-images">
+      {images.map((image, index) => (
+        <li
+          key={image}
+          className={dragged === index ? "is-dragging" : undefined}
+          onDragOver={(event) => {
+            if (dragged === null) return;
+            event.preventDefault();
+            if (dragged !== index) {
+              move(dragged, index);
+              setDragged(index);
+            }
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragged(null);
+          }}
+        >
+          <Image src={image} alt="" width={56} height={44} unoptimized />
+          <div>
+            <strong>{label(index)}</strong>
+            <span>{image.split("/").pop()}</span>
+          </div>
+          <div className="admin-product-image-actions">
+            <button
+              className="admin-drag-handle"
+              type="button"
+              draggable
+              aria-label={`Reorder ${label(index)}. Use arrow keys to move.`}
+              disabled={images.length <= 1}
+              onDragStart={(event) => {
+                const row = event.currentTarget.closest("li");
+                if (row) event.dataTransfer.setDragImage(row, 24, row.offsetHeight / 2);
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", String(index));
+                setDragged(index);
+              }}
+              onDragEnd={() => setDragged(null)}
+              onKeyDown={(event) => {
+                const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+                if (!offset) return;
+                event.preventDefault();
+                const target = index + offset;
+                if (target < 0 || target >= images.length) return;
+                const list = event.currentTarget.closest("ol");
+                move(index, target);
+                requestAnimationFrame(() =>
+                  list?.querySelectorAll<HTMLButtonElement>(".admin-drag-handle")[target]?.focus(),
+                );
+              }}
+            >
+              <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="6" cy="4" r="1.1" />
+                <circle cx="10" cy="4" r="1.1" />
+                <circle cx="6" cy="8" r="1.1" />
+                <circle cx="10" cy="8" r="1.1" />
+                <circle cx="6" cy="12" r="1.1" />
+                <circle cx="10" cy="12" r="1.1" />
+              </svg>
+            </button>
+            <button className="text-button" type="button" onClick={() => onImagesChange(images.filter((_, i) => i !== index))}>
+              Remove
+            </button>
+          </div>
+        </li>
+      ))}
+      {files.map((file, index) => (
+        <li key={`${file.name}-${file.size}-${index}`}>
+          <PendingPhotoPreview file={file} />
+          <div>
+            <strong>New photo (saved on save)</strong>
+            <span>{file.name}</span>
+          </div>
+          <div className="admin-product-image-actions">
+            <button className="text-button" type="button" onClick={() => onFilesChange(files.filter((_, i) => i !== index))}>
+              Remove
+            </button>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function isUnreplied(enquiry: Enquiry) {
   return Boolean(enquiry.id) && enquiry.status !== "replied";
 }
@@ -681,60 +788,13 @@ function CardSettings({
             />
           </label>
           {(galleryImages.length > 0 || galleryFiles.length > 0) && (
-            <ol className="admin-product-images">
-              {galleryImages.map((image, index) => (
-                <li key={image}>
-                  <Image src={image} alt="" width={56} height={44} unoptimized />
-                  <div>
-                    <strong>Gallery photo {index + 1}</strong>
-                    <span>{image.split("/").pop()}</span>
-                  </div>
-                  <div className="admin-product-image-actions">
-                    <button
-                      className="text-button"
-                      type="button"
-                      disabled={index === 0}
-                      onClick={() => {
-                        const next = [...galleryImages];
-                        [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                        setGalleryImages(next);
-                      }}
-                    >
-                      Up
-                    </button>
-                    <button
-                      className="text-button"
-                      type="button"
-                      disabled={index === galleryImages.length - 1}
-                      onClick={() => {
-                        const next = [...galleryImages];
-                        [next[index], next[index + 1]] = [next[index + 1], next[index]];
-                        setGalleryImages(next);
-                      }}
-                    >
-                      Down
-                    </button>
-                    <button className="text-button" type="button" onClick={() => setGalleryImages(galleryImages.filter((_, i) => i !== index))}>
-                      Remove
-                    </button>
-                  </div>
-                </li>
-              ))}
-              {galleryFiles.map((file, index) => (
-                <li key={`${file.name}-${file.size}-${index}`}>
-                  <PendingPhotoPreview file={file} />
-                  <div>
-                    <strong>New photo (saved on save)</strong>
-                    <span>{file.name}</span>
-                  </div>
-                  <div className="admin-product-image-actions">
-                    <button className="text-button" type="button" onClick={() => setGalleryFiles((current) => current.filter((_, i) => i !== index))}>
-                      Remove
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ol>
+            <PhotoReorderList
+              images={galleryImages}
+              files={galleryFiles}
+              label={(index) => `Gallery photo ${index + 1}`}
+              onImagesChange={setGalleryImages}
+              onFilesChange={setGalleryFiles}
+            />
           )}
         </div>
       </div>
@@ -825,6 +885,13 @@ export default function AdminDashboard() {
   const [heroImages, setHeroImages] = useState<string[]>([]);
   const [heroFiles, setHeroFiles] = useState<File[]>([]);
   const [heroDragActive, setHeroDragActive] = useState(false);
+  const [cardImage, setCardImage] = useState("");
+  const [cardFile, setCardFile] = useState<File | null>(null);
+  const [cardDragActive, setCardDragActive] = useState(false);
+  const addCardFile = (picked: File[]) => {
+    const file = picked.find((item) => item.type.startsWith("image/"));
+    if (file) setCardFile(file);
+  };
   const addHeroFiles = (picked: File[]) =>
     setHeroFiles((current) => [...current, ...picked.filter((file) => file.type.startsWith("image/"))]);
   const [referenceImageFiles, setReferenceImageFiles] = useState<File[]>([]);
@@ -840,7 +907,7 @@ export default function AdminDashboard() {
   const [savedProduct, setSavedProduct] = useState<string | null>(null);
   const contentChanged = JSON.stringify(content) !== savedContent;
   const productChanged =
-    !editingProductId || JSON.stringify({ newProduct, productImages, galleryImages, galleryFiles: galleryFiles.map((file) => file.name + file.size), heroMode, heroImages, heroFiles: heroFiles.map((file) => file.name + file.size) }) !== savedProduct;
+    !editingProductId || JSON.stringify({ newProduct, productImages, galleryImages, galleryFiles: galleryFiles.map((file) => file.name + file.size), heroMode, heroImages, heroFiles: heroFiles.map((file) => file.name + file.size), cardImage, cardFile: cardFile ? cardFile.name + cardFile.size : "" }) !== savedProduct;
 
   function loadContent(next: Content) {
     setContent(next);
@@ -1380,6 +1447,7 @@ export default function AdminDashboard() {
       galleryImages,
       heroMode: heroMode === "carousel" && (heroImages.length > 0 || heroFiles.length > 0) ? "carousel" : undefined,
       heroImages,
+      cardImage: cardImage || undefined,
       variants: [
         ...(hasPrice(newProduct.price4)
           ? [{ id: `${slug}-4`, label: "Box of 4", quantity: 4, price: Number(newProduct.price4) }]
@@ -1395,6 +1463,7 @@ export default function AdminDashboard() {
     formData.set("product", JSON.stringify(product));
     for (const file of await compressReferenceImages(galleryFiles)) formData.append("galleryFiles", file);
     for (const file of await compressReferenceImages(heroFiles)) formData.append("heroFiles", file);
+    if (cardFile) formData.append("cardFile", (await compressReferenceImages([cardFile]))[0]);
     const response = await fetch("/api/admin/products", {
       method: "POST",
       body: formData,
@@ -1452,7 +1521,9 @@ export default function AdminDashboard() {
     setHeroMode(product.heroMode === "carousel" ? "carousel" : "cookie");
     setHeroImages(product.heroImages || []);
     setHeroFiles([]);
-    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images, galleryImages: product.galleryImages || [], galleryFiles: [], heroMode: product.heroMode === "carousel" ? "carousel" : "cookie", heroImages: product.heroImages || [], heroFiles: [] }));
+    setCardImage(product.cardImage || "");
+    setCardFile(null);
+    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images, galleryImages: product.galleryImages || [], galleryFiles: [], heroMode: product.heroMode === "carousel" ? "carousel" : "cookie", heroImages: product.heroImages || [], heroFiles: [], cardImage: product.cardImage || "", cardFile: "" }));
     setReferenceImageFiles([]);
     setImageDirection("");
     setGenerationStatus("");
@@ -1469,6 +1540,8 @@ export default function AdminDashboard() {
     setHeroMode("cookie");
     setHeroImages([]);
     setHeroFiles([]);
+    setCardImage("");
+    setCardFile(null);
     setReferenceImageFiles([]);
     setImageDirection("");
     setGenerationStatus("");
@@ -2822,61 +2895,80 @@ export default function AdminDashboard() {
                         />
                       </label>
                       {(heroImages.length > 0 || heroFiles.length > 0) && (
-                        <ol className="admin-product-images">
-                          {heroImages.map((image, index) => (
-                            <li key={image}>
-                              <Image src={image} alt="" width={56} height={44} unoptimized />
-                              <div>
-                                <strong>{index === 0 ? "First photo" : `Photo ${index + 1}`}</strong>
-                                <span>{image.split("/").pop()}</span>
-                              </div>
-                              <div className="admin-product-image-actions">
-                                <button
-                                  className="text-button"
-                                  type="button"
-                                  disabled={index === 0}
-                                  onClick={() => {
-                                    const next = [...heroImages];
-                                    [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                                    setHeroImages(next);
-                                  }}
-                                >
-                                  Up
-                                </button>
-                                <button
-                                  className="text-button"
-                                  type="button"
-                                  disabled={index === heroImages.length - 1}
-                                  onClick={() => {
-                                    const next = [...heroImages];
-                                    [next[index], next[index + 1]] = [next[index + 1], next[index]];
-                                    setHeroImages(next);
-                                  }}
-                                >
-                                  Down
-                                </button>
-                                <button className="text-button" type="button" onClick={() => setHeroImages(heroImages.filter((_, i) => i !== index))}>
-                                  Remove
-                                </button>
-                              </div>
-                            </li>
-                          ))}
-                          {heroFiles.map((file, index) => (
-                            <li key={`${file.name}-${file.size}-${index}`}>
-                              <PendingPhotoPreview file={file} />
-                              <div>
-                                <strong>New photo (saved on save)</strong>
-                                <span>{file.name}</span>
-                              </div>
-                              <div className="admin-product-image-actions">
-                                <button className="text-button" type="button" onClick={() => setHeroFiles((current) => current.filter((_, i) => i !== index))}>
-                                  Remove
-                                </button>
-                              </div>
-                            </li>
-                          ))}
-                        </ol>
+                        <PhotoReorderList
+                          images={heroImages}
+                          files={heroFiles}
+                          label={(index) => (index === 0 ? "First photo" : `Photo ${index + 1}`)}
+                          onImagesChange={setHeroImages}
+                          onFilesChange={setHeroFiles}
+                        />
                       )}
+                      <div className="admin-card-image-field">
+                        <strong>Crumbs page image</strong>
+                        <p>Optional. Shown only on the Crumbs page and homepage card, never on this product page. Leave empty to use the default cookie.</p>
+                        <label
+                          className={`admin-reference-dropzone admin-gallery-dropzone${cardDragActive ? " is-active" : ""}`}
+                          htmlFor="product-card-photo"
+                          tabIndex={0}
+                          onDragEnter={(event) => {
+                            event.preventDefault();
+                            setCardDragActive(true);
+                          }}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDragLeave={(event) => {
+                            if (event.currentTarget === event.target) setCardDragActive(false);
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            setCardDragActive(false);
+                            addCardFile(Array.from(event.dataTransfer.files));
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              document.getElementById("product-card-photo")?.click();
+                            }
+                          }}
+                        >
+                          <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
+                          </svg>
+                          <span>Click to upload a photo</span>
+                          <small>or drag and drop · JPG, PNG or WebP · 10MB</small>
+                          <input
+                            id="product-card-photo"
+                            type="file"
+                            accept="image/*"
+                            onChange={(event) => {
+                              addCardFile(Array.from(event.target.files || []));
+                              event.target.value = "";
+                            }}
+                          />
+                        </label>
+                        {(cardImage || cardFile) && (
+                          <ol className="admin-product-images">
+                            <li>
+                              {cardFile ? <PendingPhotoPreview file={cardFile} /> : <Image src={cardImage} alt="" width={56} height={44} unoptimized />}
+                              <div>
+                                <strong>{cardFile ? "New photo (saved on save)" : "Crumbs page image"}</strong>
+                                <span>{cardFile ? cardFile.name : cardImage.split("/").pop()}</span>
+                              </div>
+                              <div className="admin-product-image-actions">
+                                <button
+                                  className="text-button"
+                                  type="button"
+                                  onClick={() => {
+                                    setCardFile(null);
+                                    if (!cardFile) setCardImage("");
+                                  }}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </li>
+                          </ol>
+                        )}
+                      </div>
                     </div>
                   )}
                   {heroMode === "cookie" && (<>

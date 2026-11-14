@@ -1,5 +1,5 @@
 export type PickupDate = { id: string; date: string; window: string; soldOut?: boolean };
-export type Product = { id:string; slug:string; name:string; description:string; ingredients:string; allergens:string; images:string[]; galleryImages?:string[]; imageMode?: "gallery"; heroMode?: "carousel"; heroImages?: string[]; variants:{id:string;label:string;quantity:number;price:number}[]; soldOut?:boolean; soldOutDates?:string[] };
+export type Product = { id:string; slug:string; name:string; description:string; ingredients:string; allergens:string; images:string[]; galleryImages?:string[]; imageMode?: "gallery"; heroMode?: "carousel"; heroImages?: string[]; cardImage?: string; variants:{id:string;label:string;quantity:number;price:number}[]; soldOut?:boolean; soldOutDates?:string[] };
 export function productSlugFromName(name: string) {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -39,6 +39,9 @@ export const ROTATION_FRAME_PLANS: Record<number, readonly number[]> = {
 };
 export function productSideProfile(product: Product) {
   return product.imageMode === "gallery" ? product.images[PRODUCT_SIDE_PROFILE_INDEX] : undefined;
+}
+export function productCardImage(product: Product) {
+  return product.cardImage || productSideProfile(product);
 }
 export function productRotationImages(product: Product) {
   return product.images.length > 1 ? product.images.slice(PRODUCT_BIRDS_EYE_INDEX) : product.images;
