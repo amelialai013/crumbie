@@ -6216,3 +6216,6 @@ section:has(#product-modal-toggle:checked) .admin-product-form,
 .card-addon-options .card-addon-reveal.is-open .card-addon-step { padding-top: 4px; }
 .card-addon-messages { gap: 16px; }
 .card-addon-message, .card-addon-message:first-child { padding: 0; }
+.cart-row .cart-row-actions { align-self: stretch; justify-content: space-between; }
+.cart-row .cart-row-actions .field { margin-bottom: 0; }
+.cart-card-line .cart-card-line-end { align-self: stretch; align-content: space-between; }
