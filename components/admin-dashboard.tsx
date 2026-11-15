@@ -10,6 +10,7 @@ import { formatPickupDate } from "@/lib/format-date";
 import AdminSwitch from "@/components/admin-switch";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
+import { defaultCardOption } from "@/lib/card";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
@@ -627,7 +628,7 @@ function CardSettings({
 }) {
   const [fields, setFields] = useState<Record<string, string> | null>(initial);
   const [saved, setSaved] = useState(() =>
-    JSON.stringify([initial.cardEnabled, initial.cardPrice, initial.galleryTitle, initial.galleryBody, initial.galleryImages, initial.exploreTitle, initial.exploreSubtext]),
+    JSON.stringify([initial.cardEnabled, initial.cardPrice, initial.cardLabel, initial.cardDescription, initial.cardNamePlaceholder, initial.cardMessagePlaceholder, initial.galleryTitle, initial.galleryBody, initial.galleryImages, initial.exploreTitle, initial.exploreSubtext]),
   );
   const [status, setStatus] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
@@ -645,7 +646,7 @@ function CardSettings({
     }
   })();
   const setGalleryImages = (next: string[]) => setFields({ ...fields, galleryImages: JSON.stringify(next) });
-  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.galleryTitle, fields.galleryBody, fields.galleryImages, fields.exploreTitle, fields.exploreSubtext]) !== saved || galleryFiles.length > 0;
+  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.cardLabel, fields.cardDescription, fields.cardNamePlaceholder, fields.cardMessagePlaceholder, fields.galleryTitle, fields.galleryBody, fields.galleryImages, fields.exploreTitle, fields.exploreSubtext]) !== saved || galleryFiles.length > 0;
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -673,7 +674,7 @@ function CardSettings({
     if (response.ok) {
       setFields(nextFields);
       setGalleryFiles([]);
-      setSaved(JSON.stringify([nextFields.cardEnabled, nextFields.cardPrice, nextFields.galleryTitle, nextFields.galleryBody, nextFields.galleryImages, nextFields.exploreTitle, nextFields.exploreSubtext]));
+      setSaved(JSON.stringify([nextFields.cardEnabled, nextFields.cardPrice, nextFields.cardLabel, nextFields.cardDescription, nextFields.cardNamePlaceholder, nextFields.cardMessagePlaceholder, nextFields.galleryTitle, nextFields.galleryBody, nextFields.galleryImages, nextFields.exploreTitle, nextFields.exploreSubtext]));
       setStatus("");
       finish("Changes successfully saved");
       return;
@@ -723,6 +724,56 @@ function CardSettings({
               />
             </div>
           </div>
+        </div>
+        <div className="field">
+          <label htmlFor="content-cardLabel">Card title</label>
+          <input
+            id="content-cardLabel"
+            maxLength={60}
+            placeholder="Card title"
+            value={fields.cardLabel ?? ""}
+            onChange={(event) => setFields({ ...fields, cardLabel: event.target.value })}
+          />
+          <small className="admin-editor-count">{(fields.cardLabel ?? "").length} / 60</small>
+        </div>
+        <div className="field">
+          <label htmlFor="content-cardDescription">Card description</label>
+          <textarea
+            id="content-cardDescription"
+            className="admin-textarea-lines"
+            style={{ "--lines": 3 } as React.CSSProperties}
+            maxLength={200}
+            placeholder="Leave blank to hide the description"
+            value={fields.cardDescription ?? defaultCardOption.description}
+            onChange={(event) => setFields({ ...fields, cardDescription: event.target.value })}
+          />
+          <small className="admin-editor-count">{(fields.cardDescription ?? defaultCardOption.description).length} / 200</small>
+        </div>
+        <div className="field">
+          <label htmlFor="content-cardNamePlaceholder">Name field placeholder</label>
+          <textarea
+            id="content-cardNamePlaceholder"
+            className="admin-textarea-lines"
+            style={{ "--lines": 2 } as React.CSSProperties}
+            maxLength={120}
+            placeholder="Leave blank to show no placeholder text"
+            value={fields.cardNamePlaceholder ?? defaultCardOption.namePlaceholder}
+            onChange={(event) => setFields({ ...fields, cardNamePlaceholder: event.target.value.replace(/\n/g, " ") })}
+          />
+          <small className="admin-editor-count">{(fields.cardNamePlaceholder ?? defaultCardOption.namePlaceholder).length} / 120</small>
+        </div>
+        <div className="field">
+          <label htmlFor="content-cardMessagePlaceholder">Card message placeholder</label>
+          <textarea
+            id="content-cardMessagePlaceholder"
+            className="admin-textarea-lines"
+            style={{ "--lines": 2 } as React.CSSProperties}
+            maxLength={160}
+            placeholder="Leave blank to show no placeholder text"
+            value={fields.cardMessagePlaceholder ?? defaultCardOption.messagePlaceholder}
+            onChange={(event) => setFields({ ...fields, cardMessagePlaceholder: event.target.value.replace(/\n/g, " ") })}
+          />
+          <small className="admin-editor-count">{(fields.cardMessagePlaceholder ?? defaultCardOption.messagePlaceholder).length} / 160</small>
         </div>
         <div className="field">
           <label htmlFor="content-galleryTitle">Product photos heading</label>
@@ -908,7 +959,7 @@ function PromoSettings({
                 </div>
                 <div className="field">
                   <label htmlFor="promo-label">Label</label>
-                  <input id="promo-label" maxLength={40} value={values.promoLabel} onChange={(event) => set("promoLabel", event.target.value)} />
+                  <input id="promo-label" maxLength={40} placeholder="Leave blank to hide the label" value={values.promoLabel} onChange={(event) => set("promoLabel", event.target.value)} />
                   <small className="admin-editor-count">{values.promoLabel.length} / 40</small>
                 </div>
                 <div className="field">

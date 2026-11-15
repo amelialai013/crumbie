@@ -1,10 +1,12 @@
-export type CardOption = { enabled: boolean; price: number; label: string; description: string };
+export type CardOption = { enabled: boolean; price: number; label: string; description: string; namePlaceholder: string; messagePlaceholder: string };
 
 export const defaultCardOption: CardOption = {
 	enabled: true,
 	price: 3,
 	label: "Club Crumbie Card",
 	description: "Add a card to go inside your Club Crumbie box, so you can leave someone special with a surprise crumb.",
+	namePlaceholder: "Full name (the box recipient or your own, shown on the outside of the box)",
+	messagePlaceholder: "Write a little something to go on your card (leave blank for a blank card)",
 };
 
 // Card settings live in the "settings" content module as strings.
@@ -14,7 +16,10 @@ export function cardOptionFrom(fields: Record<string, string> | undefined): Card
 		enabled: fields?.cardEnabled !== "false",
 		price: fields?.cardPrice?.trim() && Number.isFinite(price) && price >= 0 ? Math.round(price * 100) / 100 : defaultCardOption.price,
 		label: fields?.cardLabel?.trim() || defaultCardOption.label,
-		description: fields?.cardDescription?.trim() || defaultCardOption.description,
+		// Unset uses the default; a saved blank hides the description.
+		namePlaceholder: fields?.cardNamePlaceholder === undefined ? defaultCardOption.namePlaceholder : fields.cardNamePlaceholder.trim(),
+		messagePlaceholder: fields?.cardMessagePlaceholder === undefined ? defaultCardOption.messagePlaceholder : fields.cardMessagePlaceholder.trim(),
+		description: fields?.cardDescription === undefined ? defaultCardOption.description : fields.cardDescription.trim(),
 	};
 }
 

@@ -40,6 +40,28 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
     next[index] = value;
     setCardNames(next);
   };
+  useEffect(() => {
+    const fit = () => {
+      document.querySelectorAll<HTMLTextAreaElement>("textarea.card-addon-input").forEach((el) => {
+        el.style.height = "auto";
+        let needed = el.scrollHeight;
+        if (el.placeholder) {
+          // Always reserve room for the wrapped placeholder so the field keeps one height while typing.
+          const style = getComputedStyle(el);
+          const mirror = document.createElement("div");
+          mirror.textContent = el.placeholder;
+          mirror.style.cssText = `position:absolute;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word;box-sizing:border-box;width:${el.clientWidth}px;padding:${style.padding};font:${style.font};line-height:${style.lineHeight};letter-spacing:${style.letterSpacing}`;
+          el.parentElement?.appendChild(mirror);
+          needed = Math.max(needed, mirror.offsetHeight);
+          mirror.remove();
+        }
+        el.style.height = `${needed + el.offsetHeight - el.clientHeight}px`;
+      });
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [cardNames, cardCount]);
   const missingName = (index: number) => !(cardNames[index] ?? "").trim();
   const mode = cardCount === 0 ? "none" : cardCount >= boxes ? "all" : "some";
   const formatPrice = (value: number) => (Number.isInteger(value) ? String(value) : value.toFixed(2));
@@ -152,7 +174,7 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
           >
             <span className="card-addon-text">
               <strong>{card.label}</strong>
-              <small>{card.description}</small>
+              {card.description && <small>{card.description}</small>}
             </span>
             <span className="card-addon-meta">
               <em>{cardCount > 0 ? `+$${formatPrice(cardCount * card.price)}` : `+$${formatPrice(card.price)} each`}</em>
@@ -200,7 +222,7 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
                         maxLength={60}
                         autoComplete="off"
                         required
-                        placeholder="Name (this will appear on the outside of the box)"
+                        placeholder={card.namePlaceholder}
                         aria-label={cardCount === 1 ? "Card recipient name" : `Card ${index + 1} recipient name`}
                         aria-invalid={showNameErrors && missingName(index)}
                         value={cardNames[index] ?? ""}
@@ -214,7 +236,7 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
                           rows={5}
                           maxLength={300}
                           aria-label={cardCount === 1 ? "Card message" : `Card ${index + 1} message`}
-                          placeholder="Write a little something to go on your card (leave blank for a blank card)"
+                          placeholder={card.messagePlaceholder}
                           value={cardMessages[index] ?? ""}
                           onChange={(event) => updateMessage(index, event.target.value)}
                         />
