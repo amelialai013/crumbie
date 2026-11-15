@@ -791,8 +791,8 @@ textarea::-webkit-scrollbar-thumb {
   flex-shrink: 0;
 }
 .admin-policy-editor-section {
-  margin-top: 56px;
-  padding-top: 24px;
+  margin-top: 16px;
+  padding-top: 8px;
 }
 .admin-policy-editor-section-heading {
   display: flex;
@@ -5633,7 +5633,8 @@ html:has(.orb-intro:not(.is-leaving)) body {
   transform: translateY(-3px);
 }
 .admin-card-settings {
-  margin: 64px 0 0;
+  margin: 0;
+  padding: 0;
 }
 .admin-card-settings-head {
   margin-bottom: 28px;
@@ -6269,7 +6270,7 @@ section:has(#product-modal-toggle:checked) .admin-product-form,
   .promo-banner-copy h2 { font-size: 1.9rem; }
   .promo-banner-link { justify-self: stretch; margin-top: 10px; }
 }
-.admin-promo-settings { width: 100%; margin-top: 40px; margin-bottom: 28px; padding: 24px; border: 1px solid #4a433a; border-radius: 20px; }
+.admin-promo-settings { width: 100%; }
 .admin-promo-fields { display: grid; gap: 16px; }
 .admin-promo-eyebrow { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: #c9ad94; opacity: .75; }
 .admin-promo-heading { margin: 0; font-size: 1.15rem; font-weight: 600; }
@@ -6364,3 +6365,104 @@ textarea.card-addon-input {
 }
 
 .home-promo-banner { margin-bottom: clamp(32px, 4vw, 48px); }
+
+.admin-accordion {
+  width: 100%;
+  margin-top: 16px;
+  border: 1px solid #4a433a;
+  border-radius: 20px;
+  overflow: clip;
+}
+.admin-accordion:first-of-type {
+  margin-top: 40px;
+}
+.admin-accordion:last-of-type {
+  margin-bottom: 28px;
+}
+.admin-accordion summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+  cursor: pointer;
+  list-style: none;
+}
+.admin-accordion summary::-webkit-details-marker {
+  display: none;
+}
+.admin-accordion summary:focus-visible {
+  outline: 2px solid #c9ad94;
+  outline-offset: -2px;
+  border-radius: 20px;
+}
+.admin-accordion summary h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.admin-accordion summary svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .25s ease;
+}
+.admin-accordion[open] summary svg {
+  transform: rotate(180deg);
+}
+.admin-accordion-body {
+  padding: 0 24px 24px;
+}
+
+.admin-promo-settings .admin-editor .field,
+.admin-explore-fields .field {
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  column-gap: 12px;
+}
+.admin-promo-settings .admin-editor .field > input,
+.admin-promo-settings .admin-editor .field > textarea,
+.admin-promo-settings .admin-editor .field > .premium-select,
+.admin-explore-fields .field > input,
+.admin-explore-fields .field > textarea {
+  grid-column: 1 / -1;
+}
+.admin-promo-settings .admin-editor .field > .admin-editor-count,
+.admin-explore-fields .field > .admin-editor-count {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+}
+.admin-promo-settings .admin-editor .field textarea.admin-textarea-lines,
+.admin-explore-fields .field textarea.admin-textarea-lines {
+  min-height: 0;
+  height: calc(var(--lines) * 1.6em);
+  overflow-y: auto;
+}
+.admin-explore-fields { margin-bottom: 20px; }
+.admin-explore-fields .field { margin-bottom: 0; }
+.admin-card-settings .admin-promo-heading { margin: 40px 0 24px; }
+
+.admin-editor .field:has(> .admin-editor-count) {
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  column-gap: 12px;
+}
+.admin-editor .field:has(> .admin-editor-count) > input,
+.admin-editor .field:has(> .admin-editor-count) > textarea {
+  grid-column: 1 / -1;
+}
+.admin-editor .field:has(> .admin-editor-count) > .admin-editor-count {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+}
+.admin-editor .field textarea.admin-textarea-lines {
+  min-height: 0;
+  height: calc(var(--lines) * 1.6em);
+  overflow-y: auto;
+}

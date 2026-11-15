@@ -627,7 +627,7 @@ function CardSettings({
 }) {
   const [fields, setFields] = useState<Record<string, string> | null>(initial);
   const [saved, setSaved] = useState(() =>
-    JSON.stringify([initial.cardEnabled, initial.cardPrice, initial.galleryTitle, initial.galleryBody, initial.galleryImages]),
+    JSON.stringify([initial.cardEnabled, initial.cardPrice, initial.galleryTitle, initial.galleryBody, initial.galleryImages, initial.exploreTitle, initial.exploreSubtext]),
   );
   const [status, setStatus] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
@@ -645,7 +645,7 @@ function CardSettings({
     }
   })();
   const setGalleryImages = (next: string[]) => setFields({ ...fields, galleryImages: JSON.stringify(next) });
-  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.galleryTitle, fields.galleryBody, fields.galleryImages]) !== saved || galleryFiles.length > 0;
+  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.galleryTitle, fields.galleryBody, fields.galleryImages, fields.exploreTitle, fields.exploreSubtext]) !== saved || galleryFiles.length > 0;
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -664,15 +664,16 @@ function CardSettings({
       }
       nextFields = { ...nextFields, galleryImages: JSON.stringify([...galleryImages, ...(result?.urls ?? [])]) };
     }
+    const latest = await fetch("/api/admin/content?module=settings").then((r) => (r.ok ? r.json() : null)).catch(() => null);
     const response = await fetch("/api/admin/content", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ module: "settings", fields: nextFields }),
+      body: JSON.stringify({ module: "settings", fields: { ...(latest?.fields ?? {}), ...nextFields } }),
     });
     if (response.ok) {
       setFields(nextFields);
       setGalleryFiles([]);
-      setSaved(JSON.stringify([nextFields.cardEnabled, nextFields.cardPrice, nextFields.galleryTitle, nextFields.galleryBody, nextFields.galleryImages]));
+      setSaved(JSON.stringify([nextFields.cardEnabled, nextFields.cardPrice, nextFields.galleryTitle, nextFields.galleryBody, nextFields.galleryImages, nextFields.exploreTitle, nextFields.exploreSubtext]));
       setStatus("");
       finish("Changes successfully saved");
       return;
@@ -737,7 +738,8 @@ function CardSettings({
           <label htmlFor="content-galleryBody">Product photos copy</label>
           <textarea
             id="content-galleryBody"
-            rows={4}
+            className="admin-textarea-lines"
+            style={{ "--lines": 4 } as React.CSSProperties}
             maxLength={300}
             value={fields.galleryBody ?? ""}
             onChange={(event) => setFields({ ...fields, galleryBody: event.target.value })}
@@ -797,6 +799,19 @@ function CardSettings({
             />
           )}
         </div>
+        <h3 className="admin-promo-heading">Product page banner</h3>
+        <div className="admin-explore-fields">
+            <div className="field">
+              <label htmlFor="explore-title">Title</label>
+              <input id="explore-title" maxLength={60} placeholder="Find your next favourite crumb" value={(fields.exploreTitle ?? "")} onChange={(event) => setFields({ ...fields, exploreTitle: event.target.value })} />
+              <small className="admin-editor-count">{(fields.exploreTitle ?? "").length} / 60</small>
+            </div>
+            <div className="field">
+              <label htmlFor="explore-subtext">Subtext</label>
+              <textarea id="explore-subtext" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={160} placeholder="Fresh batches, baked to order and ready for pickup. Browse every flavour." value={(fields.exploreSubtext ?? "")} onChange={(event) => setFields({ ...fields, exploreSubtext: event.target.value })} />
+              <small className="admin-editor-count">{(fields.exploreSubtext ?? "").length} / 160</small>
+            </div>
+        </div>
       </div>
       <div className="admin-editor-actions">
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
@@ -829,8 +844,6 @@ function PromoSettings({
     promoButton: source.promoButton ?? "Order now",
     promoCardLabel: source.promoCardLabel ?? "",
     promoCardDescription: source.promoCardDescription ?? "",
-    exploreTitle: source.exploreTitle ?? "",
-    exploreSubtext: source.exploreSubtext ?? "",
   });
   const [values, setValues] = useState(() => pick(initial));
   const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
@@ -864,11 +877,10 @@ function PromoSettings({
   return (
     <form className="admin-promo-settings" onSubmit={save}>
       <div className="admin-promo-fields">
-        <h3 className="admin-promo-heading">Homepage promo</h3>
         <label className={`${switchStyles.root} admin-promo-row`}>
           <span>
-            <strong>Show promo banner</strong>
-            <small>Appears above the Crumbs grid</small>
+            <strong>Hero a product</strong>
+            <small>Appears above all other products on Homepage and Crumbs listing</small>
           </span>
           <input
             type="checkbox"
@@ -885,7 +897,7 @@ function PromoSettings({
             <div className="enquiry-form admin-editor">
               <div className="admin-editor-fields">
                 <div className="field">
-                  <label id="promo-product-label">Hero product</label>
+                  <label id="promo-product-label">Product</label>
                   <PremiumSelect
                     labelId="promo-product-label"
                     value={values.promoProductId}
@@ -906,7 +918,7 @@ function PromoSettings({
                 </div>
                 <div className="field">
                   <label htmlFor="promo-blurb">Short description</label>
-                  <input id="promo-blurb" maxLength={120} value={values.promoBlurb} onChange={(event) => set("promoBlurb", event.target.value)} />
+                  <textarea id="promo-blurb" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={120} placeholder="Leave blank to hide the description" value={values.promoBlurb} onChange={(event) => set("promoBlurb", event.target.value)} />
                   <small className="admin-editor-count">{values.promoBlurb.length} / 120</small>
                 </div>
                 <div className="field">
@@ -921,37 +933,34 @@ function PromoSettings({
                 </div>
                 <div className="field">
                   <label htmlFor="promo-card-description">Card description (hero product only)</label>
-                  <input id="promo-card-description" maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
+                  <textarea id="promo-card-description" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
                   <small className="admin-editor-count">{values.promoCardDescription.length} / 200</small>
                 </div>
               </div>
             </div>
           </>
         )}
-        <h3 className="admin-promo-heading">Product page banner</h3>
-        <div className="enquiry-form admin-editor">
-          <div className="admin-editor-fields">
-            <div className="field">
-              <label htmlFor="explore-title">Title</label>
-              <input id="explore-title" maxLength={60} placeholder="Find your next favourite crumb" value={values.exploreTitle} onChange={(event) => set("exploreTitle", event.target.value)} />
-              <small className="admin-editor-count">{values.exploreTitle.length} / 60</small>
-            </div>
-            <div className="field">
-              <label htmlFor="explore-subtext">Subtext</label>
-              <input id="explore-subtext" maxLength={160} placeholder="Fresh batches, baked to order and ready for pickup. Browse every flavour." value={values.exploreSubtext} onChange={(event) => set("exploreSubtext", event.target.value)} />
-              <small className="admin-editor-count">{values.exploreSubtext.length} / 160</small>
-            </div>
-          </div>
-        </div>
       </div>
       <div className="admin-promo-actions">
-        <button className={`btn btn-dark${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
+        <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
           {status === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
-          {status === "Saving..." ? "Saving…" : "Save promo"}
+          {status === "Saving..." ? "Saving…" : "Save changes"}
         </button>
         {status && status !== "Saving..." && <span>{status}</span>}
       </div>
     </form>
+  );
+}
+
+function AdminAccordion({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details className="admin-accordion">
+      <summary>
+        <h3>{title}</h3>
+        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m4 6 4 4 4-4" /></svg>
+      </summary>
+      <div className="admin-accordion-body">{children}</div>
+    </details>
   );
 }
 
@@ -1863,7 +1872,8 @@ export default function AdminDashboard() {
           <textarea
             id={id}
             rows={field.rows ?? 5}
-            className={field.rows ? "admin-textarea-compact" : field.body ? "admin-textarea-body" : undefined}
+            className={field.rows ? "admin-textarea-compact" : field.body || field.maxLength > 400 ? "admin-textarea-body" : "admin-textarea-lines"}
+            style={!field.rows && !field.body && field.maxLength <= 400 ? ({ "--lines": Math.max(2, Math.ceil(field.maxLength / 75)) } as React.CSSProperties) : undefined}
             maxLength={field.maxLength}
             value={value}
             onChange={(event) =>
@@ -3322,7 +3332,7 @@ export default function AdminDashboard() {
                     : productStatus === "Publishing..."
                       ? "Publishing…"
                       : editingProductId
-                        ? "Save product"
+                        ? "Save changes"
                         : "Publish product"}
                 </button>
                 {productStatus &&
@@ -3400,8 +3410,16 @@ export default function AdminDashboard() {
               </tbody>
             </table>
             )}
-            {cardSettings && managedProducts.length > 0 && <PromoSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} />}
-            {cardSettings && <CardSettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />}
+            {cardSettings && managedProducts.length > 0 && (
+              <AdminAccordion title="Product layout">
+                <PromoSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} />
+              </AdminAccordion>
+            )}
+            {cardSettings && (
+              <AdminAccordion title="Product page settings">
+                <CardSettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
+              </AdminAccordion>
+            )}
           </>
         )}
         {tab === "pickup dates" && (
@@ -3593,7 +3611,7 @@ export default function AdminDashboard() {
               <div className="field"><label htmlFor="email-template-subject">Subject</label><input id="email-template-subject" maxLength={140} value={content.fields[template.subjectField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.subjectField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.subjectField] || "").length} / 140</small></div>
               <div className="field"><label htmlFor="email-template-body">Body copy</label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><div className="admin-editor-meta">{usesPickupAddress(template.bodyField) && <small className="admin-editor-hint">{pickupAddressToken} is always replaced with the pickup address in Settings.</small>}<small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small></div></div>
             </div>
-            <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !contentChanged}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save template"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
+            <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !contentChanged}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save changes"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
           </form>;
         })()}
         {contentModules[tab] && tab !== "email templates" && (
