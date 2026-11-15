@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import PhotoLightbox from "@/components/photo-lightbox";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const arrow = {
@@ -13,6 +14,7 @@ export default function HeroCarousel({ images, name }: { images: string[]; name:
   const pending = useRef<number | null>(null);
   const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [index, setIndex] = useState(0);
+  const [open, setOpen] = useState<number | null>(null);
   const count = images.length;
 
   const sync = useCallback(() => {
@@ -73,7 +75,9 @@ export default function HeroCarousel({ images, name }: { images: string[]; name:
         <ul ref={track} onScroll={sync} onPointerDown={clearPending} onWheel={clearPending} onTouchStart={clearPending}>
           {images.map((image, i) => (
             <li key={image} aria-label={`Photo ${i + 1} of ${count}`}>
-              <Image src={image} alt="" fill sizes="(max-width: 900px) 80vw, 640px" priority={i === 0} unoptimized={!image.includes("images.unsplash.com")} />
+              <button type="button" className="photo-carousel-open" onClick={() => setOpen(i)} aria-label={`View ${name} photo ${i + 1} larger`}>
+                <Image src={image} alt="" fill sizes="(max-width: 900px) 80vw, 640px" priority={i === 0} unoptimized={!image.includes("images.unsplash.com")} />
+              </button>
             </li>
           ))}
         </ul>
@@ -105,6 +109,7 @@ export default function HeroCarousel({ images, name }: { images: string[]; name:
           </div>
         </>
       )}
+      <PhotoLightbox images={images} name={name} open={open} onOpenChange={setOpen} />
     </div>
   );
 }
