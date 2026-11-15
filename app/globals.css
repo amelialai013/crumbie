@@ -5841,7 +5841,7 @@ html:has(.orb-intro:not(.is-leaving)) body {
   width: 420px;
   height: 420px;
   background: radial-gradient(circle, rgba(246,200,140,.34), rgba(246,200,140,.11) 45%, transparent 70%);
-  animation: explore-orb-a 9s ease-in-out infinite;
+  animation: explore-orb-a 6s ease-in-out infinite;
 }
 .explore-crumbs::before {
   bottom: -160px;
@@ -5849,7 +5849,7 @@ html:has(.orb-intro:not(.is-leaving)) body {
   width: 360px;
   height: 360px;
   background: radial-gradient(circle, rgba(214,150,130,.28), transparent 68%);
-  animation: explore-orb-b 12s ease-in-out -4s infinite;
+  animation: explore-orb-b 8s ease-in-out -2.7s infinite;
 }
 @keyframes explore-orb-a {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: .8; }
