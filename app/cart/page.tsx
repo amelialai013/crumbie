@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import CartView from "@/components/cart-view";
 import { productSideProfile } from "@/lib/catalog";
 import { getCardOption, getProducts, getPromo } from "@/lib/catalog-store";
+
+export const metadata: Metadata = { title: "Cart", robots: { index: false, follow: false } };
 
 export default async function Cart() {
   await connection();

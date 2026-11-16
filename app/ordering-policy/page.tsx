@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Fragment } from "react";
 import { sharedKitchenWarning } from "@/lib/catalog";
 import SectionReveal from "@/components/section-reveal";
@@ -6,6 +7,8 @@ import { getRecord } from "@/lib/store";
 type PolicyContent = { fields?: Record<string, string>; sections?: { heading: string; body: string }[]; removedFields?: string[] };
 
 const paragraphs = (text: string) => text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
+
+export const metadata: Metadata = { title: "Ordering policy", description: "Pickup, payment, cancellation and allergen information for Club Crumbie orders." };
 
 export default async function Policy() {
   const content = await getRecord<PolicyContent>("content", "policy").catch(() => null);

@@ -5,7 +5,7 @@ import ProductCookieImage from "@/components/product-cookie-image";
 import PromoBanner from "@/components/promo-banner";
 import { getProducts, getPromo } from "@/lib/catalog-store";
 
-export const metadata: Metadata = { title: "Crumbs" };
+export const metadata: Metadata = { title: "Crumbs", description: "Browse Club Crumbie small-batch cookie boxes and order for pickup in Ivanhoe, Victoria." };
 
 export default async function Crumbs() {
   const products = await getProducts();

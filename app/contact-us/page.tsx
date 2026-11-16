@@ -4,7 +4,7 @@ import CustomOrderForm from "@/components/custom-order-form";
 import { parseEnquiryTypes } from "@/lib/email-templates";
 import { getRecord } from "@/lib/store";
 
-export const metadata: Metadata = { title: "Get in touch" };
+export const metadata: Metadata = { title: "Get in touch", description: "Questions, custom orders or gifting? Send Club Crumbie an enquiry and we will get back to you." };
 
 export default async function ContactUs() {
   // Enquiry types are managed in the admin portal, so read them per request.

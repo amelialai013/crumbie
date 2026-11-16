@@ -5,7 +5,7 @@ import RevealImage from "@/components/reveal-image";
 import SectionReveal from "@/components/section-reveal";
 import { getRecord } from "@/lib/store";
 
-export const metadata: Metadata = { title: "About" };
+export const metadata: Metadata = { title: "About", description: "The story behind Club Crumbie: small-batch cookies made with patience and care in Ivanhoe, Victoria." };
 
 const paragraphs = (text: string) => text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
 

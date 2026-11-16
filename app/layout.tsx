@@ -5,6 +5,7 @@ import "./motion.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { CartProvider } from "@/components/cart-context";
+import { siteDescription, siteName, siteUrl } from "@/lib/site";
 
 // A full page load or refresh always starts at the top; in-app back/forward still restores scroll.
 const scrollTopOnLoadScript = `try{if(!location.hash){history.scrollRestoration="manual";addEventListener("load",function(){scrollTo(0,0);setTimeout(function(){history.scrollRestoration="auto"},0)})}}catch(e){}`;
@@ -13,14 +14,30 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#1a140d" };
 export const metadata: Metadata = {
-	metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://clubcrumbie.com"),
-	title: { default: "Club Crumbie", template: "Club Crumbie — %s" },
-	description: "Premium small-batch cookie boxes for pickup in Ivanhoe, Victoria.",
+	metadataBase: new URL(siteUrl),
+	title: { default: "Club Crumbie — Small-batch cookie boxes in Ivanhoe", template: "%s | Club Crumbie" },
+	description: siteDescription,
+	applicationName: siteName,
+	alternates: { canonical: "./" },
 	openGraph: {
-		title: "Club Crumbie",
-		description: "Small-batch cookies, thoughtfully made in Ivanhoe.",
+		siteName,
+		title: "Club Crumbie — Small-batch cookie boxes in Ivanhoe",
+		description: siteDescription,
 		type: "website",
+		locale: "en_AU",
 	},
+	twitter: { card: "summary" },
+};
+
+const organizationJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "Bakery",
+	name: siteName,
+	url: siteUrl,
+	description: siteDescription,
+	areaServed: "Ivanhoe, Victoria, Australia",
+	address: { "@type": "PostalAddress", addressLocality: "Ivanhoe", addressRegion: "VIC", addressCountry: "AU" },
+	sameAs: ["https://instagram.com/clubcrumbie", "https://tiktok.com/@clubcrumbie", "https://facebook.com/clubcrumbie"],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		<html lang="en" className={dmSans.variable} data-scroll-behavior="smooth">
 			<head>
 				<script dangerouslySetInnerHTML={{ __html: scrollTopOnLoadScript }} />
+				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
 			</head>
 			<body>
 				<CartProvider>

@@ -7,6 +7,7 @@ import PhotoCarousel from "@/components/photo-carousel";
 import CookieExplorer from "@/components/cookie-explorer";
 import HeroCarousel from "@/components/hero-carousel";
 import { cardForProduct } from "@/lib/card";
+import { absoluteUrl, siteName } from "@/lib/site";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
 import { getCardOption, getGalleryCopy, getExploreCopy, getGalleryImages, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
@@ -43,8 +44,28 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const card = cardForProduct(defaultCard, promo, product.id);
   const galleryImages = sharedGallery.length > 0 ? sharedGallery : product.galleryImages || [];
 
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    url: absoluteUrl(`/crumbs/${product.slug}`),
+    ...(product.images[0] && /^https?:\/\//.test(product.images[0]) ? { image: product.images[0] } : {}),
+    brand: { "@type": "Brand", name: siteName },
+    offers: product.variants.map((variant) => ({
+      "@type": "Offer",
+      name: variant.label,
+      sku: variant.id,
+      url: absoluteUrl(`/crumbs/${product.slug}`),
+      priceCurrency: "AUD",
+      price: variant.price.toFixed(2),
+      availability: product.soldOut ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+    })),
+  };
+
   return (
     <section className="section section-warm product-detail-section">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       <nav className="shell breadcrumb" aria-label="Breadcrumb">
         <Link href="/crumbs">Crumbs</Link>
         <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
