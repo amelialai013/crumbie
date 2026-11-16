@@ -25,8 +25,9 @@ export const metadata: Metadata = {
 		description: siteDescription,
 		type: "website",
 		locale: "en_AU",
+		images: [{ url: "/hero-poster.webp", width: 1920, height: 1080, alt: "Club Crumbie cookie boxes" }],
 	},
-	twitter: { card: "summary" },
+	twitter: { card: "summary_large_image", images: ["/hero-poster.webp"] },
 };
 
 const organizationJsonLd = {

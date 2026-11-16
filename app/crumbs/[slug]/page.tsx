@@ -26,9 +26,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const products = await getProducts();
   const product = products.find((item) => item.slug === slug);
-  return product
-    ? { title: product.name, description: product.description, openGraph: { title: product.name, description: product.description, images: [] }, twitter: { card: "summary", title: product.name, description: product.description, images: [] } }
-    : {};
+  if (!product) return {};
+  const image = product.images[0] && /^https?:\/\//.test(product.images[0]) ? [product.images[0]] : ["/hero-poster.webp"];
+  return {
+    title: product.name,
+    description: product.description,
+    openGraph: { title: product.name, description: product.description, images: image },
+    twitter: { card: "summary_large_image", title: product.name, description: product.description, images: image },
+  };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
