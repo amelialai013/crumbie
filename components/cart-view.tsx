@@ -4,6 +4,7 @@ import { motionDuration } from "@/lib/motion";
 
 import RevealImage from "@/components/reveal-image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import signatureCookie from "@/assets/cookies/choc-chip-cookie/turntable-premium/frame-01.png";
@@ -13,13 +14,14 @@ import QuantityControl from "@/components/quantity-control";
 import { productSlugFromName } from "@/lib/catalog";
 import type { CardOption } from "@/lib/card";
 
-export default function CartView({ productImages, card, heroCard }: { productImages: Record<string, string>; card: CardOption; heroCard: { productId: string; label: string } | null }) {
+export default function CartView({ productImages, card, heroCard, deliveryEnabled }: { productImages: Record<string, string>; card: CardOption; deliveryEnabled: boolean; heroCard: { productId: string; label: string } | null }) {
   const { lines, total: itemsTotal, ready, remove, setQuantity, clear, setLineCard } = useCart();
   const cardCount = card.enabled ? lines.reduce((sum, line) => sum + (line.cardMessages?.length ?? 0), 0) : 0;
   const withCard = cardCount > 0;
   const cardLines = lines.filter((line) => (line.cardMessages?.length ?? 0) > 0);
   const summaryCardLabel = heroCard?.label && cardLines.length > 0 && cardLines.every((line) => line.productId === heroCard.productId) ? heroCard.label : card.label;
   const total = itemsTotal + cardCount * card.price;
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [removingKey, setRemovingKey] = useState<string | null>(null);
@@ -79,6 +81,10 @@ export default function CartView({ productImages, card, heroCard }: { productIma
   }
 
   async function checkout() {
+    if (deliveryEnabled) {
+      router.push("/checkout");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -194,7 +200,7 @@ export default function CartView({ productImages, card, heroCard }: { productIma
                 <p className="cart-summary-heading">Order total</p>
                 <h2>${total.toFixed(2)} <span>AUD</span></h2>
                 {withCard && <p className="cart-summary-card">Includes {cardCount} × {summaryCardLabel} · ${(card.price * cardCount).toFixed(2)}</p>}
-                <p>GST included. Pickup address provided in confirmation email.</p>
+                <p>{deliveryEnabled ? "GST included. Choose pickup or delivery next." : "GST included. Pickup address provided in confirmation email."}</p>
                 <button className="btn btn-dark" disabled={busy} onClick={checkout}>{busy ? "Starting secure checkout…" : "Checkout"}</button>
                 {error && <p className="field-error cart-checkout-error" role="alert">{error}</p>}
               </aside>

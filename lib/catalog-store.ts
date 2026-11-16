@@ -1,6 +1,7 @@
 import "server-only";
 import { products as catalogProducts, pickupDates as catalogPickupDates, productSlugFromName, type PickupDate, type Product } from "@/lib/catalog";
 import { cardOptionFrom, exploreCopyFrom, galleryCopyFrom, galleryImagesFrom, promoFrom, type CardOption } from "@/lib/card";
+import { deliveryFrom, type DeliveryOption } from "@/lib/delivery";
 import { getRecord, listRecords } from "@/lib/store";
 
 type ProductRecord = Product & { removed?: boolean };
@@ -40,6 +41,11 @@ export async function getPickupDates(): Promise<PickupDate[]> {
 export async function getCardOption(): Promise<CardOption> {
   const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
   return cardOptionFrom(settings?.fields);
+}
+
+export async function getDelivery(): Promise<DeliveryOption> {
+  const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
+  return deliveryFrom(settings?.fields);
 }
 
 export async function getGalleryCopy() {

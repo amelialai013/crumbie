@@ -8,6 +8,7 @@ import PremiumSelect from "./premium-select";
 import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
 import AdminSwitch from "@/components/admin-switch";
+import { deliveryFrom } from "@/lib/delivery";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultCardOption } from "@/lib/card";
@@ -35,6 +36,8 @@ type Order = {
   id?: string;
   createdAt?: string;
   customer?: { name?: string; email?: string };
+  fulfilment?: "pickup" | "delivery";
+  delivery?: { name?: string; street?: string; suburb?: string; postcode?: string };
   paymentStatus?: string;
   card?: { label?: string; price?: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null;
   lines?: Array<{
@@ -870,6 +873,101 @@ function CardSettings({
           {status === "Saving..." ? "Saving…" : "Save changes"}
         </button>
         {status && status !== "Saving..." && <span>{status}</span>}
+      </div>
+    </form>
+  );
+}
+
+function DeliverySettings({
+  begin,
+  finish,
+  initial,
+}: {
+  begin: (message: string) => void;
+  finish: (message?: string) => void;
+  initial: Record<string, string>;
+}) {
+  const pick = (source: Record<string, string>) => {
+    const option = deliveryFrom(source);
+    return {
+      deliveryEnabled: option.enabled ? "true" : "false",
+      deliveryFee: option.fee.toFixed(2),
+      deliveryFreeOver: option.freeOver === null ? "" : option.freeOver.toFixed(2),
+      deliveryPostcodes: option.postcodes,
+      deliveryNote: option.note,
+    };
+  };
+  const [fields, setFields] = useState(() => pick(initial));
+  const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const changed = JSON.stringify(fields) !== saved;
+  const on = fields.deliveryEnabled === "true";
+  const money = (key: "deliveryFee" | "deliveryFreeOver") => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const [whole, ...rest] = event.target.value.replace(/[^0-9.]/g, "").split(".");
+    setFields({ ...fields, [key]: rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole });
+  };
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    begin("Saving changes…");
+    const latest = await fetch("/api/admin/content?module=settings").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const response = await fetch("/api/admin/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ module: "settings", fields: { ...(latest?.fields ?? {}), ...fields } }),
+    });
+    setSaving(false);
+    if (response.ok) {
+      setSaved(JSON.stringify(fields));
+      finish("Changes successfully saved");
+      return;
+    }
+    finish();
+    setError((await response.json().catch(() => null))?.error || "Unable to save");
+  }
+
+  return (
+    <form className="enquiry-form admin-editor admin-card-settings" onSubmit={save}>
+      <div className="admin-editor-fields">
+        <AdminSwitch
+          checked={on}
+          onChange={(checked) => setFields({ ...fields, deliveryEnabled: checked ? "true" : "false" })}
+          label="Offer delivery on all products"
+        />
+        <p>{on ? "Customers choose Pickup or Delivery on a step after the cart, then pay on Stripe." : "Delivery is off. The cart's Checkout button goes straight to the Stripe payment page and every order is pickup."}</p>
+        {on && (
+          <>
+            <div className="admin-card-pair">
+              <div className="field">
+                <label htmlFor="delivery-fee">Delivery fee (AUD)</label>
+                <input id="delivery-fee" inputMode="decimal" maxLength={8} value={fields.deliveryFee} onChange={money("deliveryFee")} />
+              </div>
+              <div className="field">
+                <label htmlFor="delivery-free-over">Free delivery over (AUD)</label>
+                <input id="delivery-free-over" inputMode="decimal" maxLength={8} placeholder="Leave blank for none" value={fields.deliveryFreeOver} onChange={money("deliveryFreeOver")} />
+              </div>
+            </div>
+            <div className="field">
+              <label htmlFor="delivery-postcodes">Delivery postcodes</label>
+              <textarea id="delivery-postcodes" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={600} value={fields.deliveryPostcodes} onChange={(event) => setFields({ ...fields, deliveryPostcodes: event.target.value })} />
+              <small className="admin-editor-count">Single postcodes or ranges, e.g. 3000-3099, 3121. Addresses outside these are rejected.</small>
+            </div>
+            <div className="field">
+              <label htmlFor="delivery-note">Delivery note shown to customers</label>
+              <input id="delivery-note" maxLength={120} value={fields.deliveryNote} onChange={(event) => setFields({ ...fields, deliveryNote: event.target.value })} />
+            </div>
+          </>
+        )}
+      </div>
+      <div className="admin-editor-actions">
+        <button className={`btn btn-light${saving ? " btn-loading" : ""}`} disabled={saving || !changed}>
+          {saving && <span className="btn-spinner" aria-hidden="true" />}
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+        {error && <span>{error}</span>}
       </div>
     </form>
   );
@@ -2502,6 +2600,13 @@ export default function AdminDashboard() {
                       {order.customer?.name}
                       <br />
                       <small>{order.customer?.email}</small>
+                      <br />
+                      <span className="status">{order.fulfilment === "delivery" ? "Delivery" : "Pickup"}</span>
+                      {order.fulfilment === "delivery" && order.delivery && (
+                        <small style={{ display: "block" }}>
+                          {order.delivery.name}, {order.delivery.street}, {order.delivery.suburb} VIC {order.delivery.postcode}
+                        </small>
+                      )}
                     </td>
                     <td data-label="Items">
                       {order.lines?.map((line, index) => (
@@ -3464,6 +3569,11 @@ export default function AdminDashboard() {
             {cardSettings && managedProducts.length > 0 && (
               <AdminAccordion title="Product layout">
                 <PromoSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} />
+              </AdminAccordion>
+            )}
+            {cardSettings && (
+              <AdminAccordion title="Delivery">
+                <DeliverySettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
               </AdminAccordion>
             )}
             {cardSettings && (

@@ -22,6 +22,8 @@ type Order = {
 	card?: { label: string; price: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null;
 	currency: string | null;
 	amountTotal: number | null;
+	fulfilment?: "pickup" | "delivery";
+	delivery?: { name: string; street: string; suburb: string; postcode: string } | null;
 };
 
 const defaultNotificationEmail = "clubcrumbieadmin@gmail.com";
@@ -143,7 +145,7 @@ export async function sendOrderConfirmation(order: Order) {
 	const currency = order.currency?.toUpperCase() || "AUD";
 	const values = {
 		customerName: order.customer.name || "there",
-		pickupAddress: singleLine(settings.pickupAddress || "") || "Ivanhoe, Victoria (exact address to follow)",
+		pickupAddress: order.fulfilment === "delivery" && order.delivery ? `None needed. We'll deliver to ${order.delivery.name}, ${order.delivery.street}, ${order.delivery.suburb} VIC ${order.delivery.postcode}` : singleLine(settings.pickupAddress || "") || "Ivanhoe, Victoria (exact address to follow)",
 		orderNumber: order.id.slice(0, 8).toUpperCase(),
 		pickupDate: uniqueLineValues(order.lines, "pickupDate"),
 		pickupWindow: uniqueLineValues(order.lines, "pickupWindow"),

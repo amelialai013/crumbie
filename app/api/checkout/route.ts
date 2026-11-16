@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { z } from "zod";
 import { isDateClosed } from "@/lib/catalog";
-import { getCardOption, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
+import { deliveryFeeFor, postcodeAllowed } from "@/lib/delivery";
+import { getCardOption, getDelivery, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
 import { setRecord } from "@/lib/store";
 
 const lineSchema = z.object({
@@ -13,7 +14,17 @@ const lineSchema = z.object({
 	cardMessages: z.array(z.string().max(300)).max(99).optional(),
 	cardNames: z.array(z.string().max(60)).max(99).optional(),
 });
-const schema = z.object({ lines: z.array(lineSchema).min(1).max(30) });
+const deliverySchema = z.object({
+	name: z.string().trim().min(1).max(80),
+	street: z.string().trim().min(1).max(120),
+	suburb: z.string().trim().min(1).max(60),
+	postcode: z.string().trim(),
+});
+const schema = z.object({
+	lines: z.array(lineSchema).min(1).max(30),
+	fulfilment: z.enum(["pickup", "delivery"]).optional(),
+	delivery: deliverySchema.optional(),
+});
 
 type TaxConfig =
 	| { enabled: false }
@@ -35,7 +46,7 @@ const integrationIdentifier = (() => {
 })();
 
 export async function POST(req: Request) {
-	const [products, pickupDates, cardOption, promo] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getPromo()]);
+	const [products, pickupDates, cardOption, promo, deliveryOption] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getPromo(), getDelivery()]);
 	const parsed = schema.safeParse(await req.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: "Your cart is invalid." }, { status: 400 });
 
@@ -89,6 +100,20 @@ export async function POST(req: Request) {
 	// Each line's cards are capped at its own box count, so a stale cart can't buy more cards than boxes.
 	const card = cardMessages.length > 0 ? { label: promo?.cardLabel && cardProductIds.size === 1 && cardProductIds.has(promo.productId) ? promo.cardLabel : cardOption.label, price: cardOption.price, quantity: cardMessages.length, names: cardNames, messages: cardMessages, products: cardProducts } : null;
 
+	// Delivery is validated server-side; when switched off in admin every order is pickup.
+	const fulfilment = deliveryOption.enabled && parsed.data.fulfilment === "delivery" ? "delivery" : "pickup";
+	let delivery: { name: string; street: string; suburb: string; postcode: string } | null = null;
+	let deliveryFee = 0;
+	if (fulfilment === "delivery") {
+		if (!parsed.data.delivery) return NextResponse.json({ error: "Please enter your delivery address." }, { status: 400 });
+		delivery = parsed.data.delivery;
+		if (!postcodeAllowed(delivery.postcode, deliveryOption.postcodes)) {
+			return NextResponse.json({ error: "Sorry, we don't deliver to that postcode. Choose pickup or try another address." }, { status: 400 });
+		}
+		const subtotal = clean.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + (card ? card.price * card.quantity : 0);
+		deliveryFee = deliveryFeeFor(deliveryOption, subtotal);
+	}
+
 	if (!process.env.STRIPE_SECRET_KEY) {
 		return NextResponse.json({ error: "Online checkout is temporarily unavailable. Please try again later." }, { status: 503 });
 	}
@@ -99,7 +124,7 @@ export async function POST(req: Request) {
 
 	const pendingId = crypto.randomUUID();
 	try {
-		await setRecord("pending-checkout", pendingId, { id: pendingId, lines: clean, card, createdAt: new Date().toISOString() });
+		await setRecord("pending-checkout", pendingId, { id: pendingId, lines: clean, card, fulfilment, delivery, deliveryFee, createdAt: new Date().toISOString() });
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = clean.map((line) => ({
 			quantity: line.quantity,
@@ -125,6 +150,17 @@ export async function POST(req: Request) {
 				},
 			});
 		}
+		if (delivery && deliveryFee > 0) {
+			lineItems.push({
+				quantity: 1,
+				price_data: {
+					currency: "aud",
+					unit_amount: Math.round(deliveryFee * 100),
+					tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
+					product_data: { name: "Delivery", tax_code: tax.enabled ? tax.productTaxCode : undefined },
+				},
+			});
+		}
 		// Return to the origin the customer is on; the cart lives in that origin's localStorage.
 		const origin = new URL(req.url).origin;
 		const session = await stripe.checkout.sessions.create({
@@ -136,9 +172,12 @@ export async function POST(req: Request) {
 			customer_creation: "always",
 			phone_number_collection: { enabled: true },
 			success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${origin}/cart`,
+			cancel_url: `${origin}${delivery ? "/checkout" : "/cart"}`,
 			metadata: { pendingId },
-			payment_intent_data: { metadata: { pendingId } },
+			payment_intent_data: {
+				metadata: { pendingId },
+				...(delivery ? { shipping: { name: delivery.name, address: { line1: delivery.street, city: delivery.suburb, state: "VIC", postal_code: delivery.postcode, country: "AU" } } } : {}),
+			},
 		}, { idempotencyKey: pendingId });
 
 		if (!session.url) throw new Error("Stripe Checkout URL missing");
