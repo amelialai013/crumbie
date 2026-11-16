@@ -125,7 +125,8 @@ export async function POST(req: Request) {
 				},
 			});
 		}
-		const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+		// Return to the origin the customer is on; the cart lives in that origin's localStorage.
+		const origin = new URL(req.url).origin;
 		const session = await stripe.checkout.sessions.create({
 			mode: "payment",
 			currency: "aud",
