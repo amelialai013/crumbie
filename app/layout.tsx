@@ -38,7 +38,12 @@ const organizationJsonLd = {
 	description: siteDescription,
 	image: `${siteUrl}/hero-poster.webp`,
 	servesCuisine: "Cookies",
-	areaServed: "Ivanhoe, Victoria, Australia",
+	areaServed: "Melbourne, Victoria, Australia",
+	priceRange: "$$",
+	currenciesAccepted: "AUD",
+	paymentAccepted: "Credit Card, Debit Card",
+	geo: { "@type": "GeoCoordinates", latitude: -37.7686, longitude: 145.0446 },
+	potentialAction: { "@type": "OrderAction", target: `${siteUrl}/crumbs`, deliveryMethod: ["http://purl.org/goodrelations/v1#DeliveryModePickUp", "http://purl.org/goodrelations/v1#DeliveryModeOwnFleet"] },
 	address: { "@type": "PostalAddress", addressLocality: "Ivanhoe", addressRegion: "VIC", addressCountry: "AU" },
 	sameAs: ["https://instagram.com/clubcrumbie", "https://tiktok.com/@clubcrumbie", "https://facebook.com/clubcrumbie"],
 };
