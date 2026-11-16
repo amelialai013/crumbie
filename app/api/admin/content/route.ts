@@ -39,6 +39,7 @@ export async function PUT(request: Request) {
 		return NextResponse.json({ error: "Invalid content payload" }, { status: 400 });
 	}
 	const moduleLimits = limits[payload.module];
+	if (payload.module === "settings") payload.fields = Object.fromEntries(Object.entries(payload.fields).filter(([field]) => field in moduleLimits));
 	if (Object.entries(payload.fields).some(([field, value]) => typeof value !== "string" || !(field in moduleLimits) || value.length > moduleLimits[field])) {
 		return NextResponse.json({ error: "Content exceeds the character limit" }, { status: 413 });
 	}

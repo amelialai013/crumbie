@@ -6518,7 +6518,7 @@ textarea.card-addon-input {
 
 /* Pickup / delivery toggle on product pages */
 .fulfil-toggle { grid-column: 1 / -1; margin-bottom: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.fulfil-toggle button { position: relative; display: flex; flex-direction: column; justify-content: flex-start; line-height: 24px; padding: 14px 16px 14px 46px; border: 1px solid var(--line); border-radius: 16px; background: transparent; color: #efcdaa; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s ease, background .2s ease; }
+.fulfil-toggle button { position: relative; display: grid; align-content: start; justify-items: start; line-height: 24px; padding: 14px 16px 14px 46px; border: 1px solid var(--line); border-radius: 16px; background: transparent; color: #efcdaa; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s ease, background .2s ease; }
 .fulfil-toggle button::before { content: ""; position: absolute; left: 16px; top: 17px; width: 18px; height: 18px; border: 1.5px solid #8a7e72; border-radius: 50%; }
 .fulfil-toggle strong { display: block; font-weight: 500; font-size: 1rem; }
 .fulfil-toggle small { display: block; margin-top: 2px; opacity: .65; font-size: .82rem; }
@@ -6565,4 +6565,8 @@ textarea.card-addon-input {
 .admin-sync-note.admin-delivery-off-note ~ div .admin-filter-tabs,
 .admin-sync-note.admin-delivery-off-note ~ .admin-filter-tabs {
   margin-top: 24px;
+}
+
+@media (max-width: 760px) {
+  .fulfil-toggle { margin-bottom: 24px; }
 }
