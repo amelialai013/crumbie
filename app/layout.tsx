@@ -15,13 +15,13 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#1a140d" };
 export const metadata: Metadata = {
 	metadataBase: new URL(siteUrl),
-	title: { default: "Club Crumbie — Small-batch cookie boxes in Ivanhoe", template: "%s | Club Crumbie" },
+	title: { default: "Club Crumbie", template: "%s | Club Crumbie" },
 	description: siteDescription,
 	applicationName: siteName,
 	alternates: { canonical: "./" },
 	openGraph: {
 		siteName,
-		title: "Club Crumbie — Small-batch cookie boxes in Ivanhoe",
+		title: "Club Crumbie",
 		description: siteDescription,
 		type: "website",
 		locale: "en_AU",
