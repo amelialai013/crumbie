@@ -35,9 +35,19 @@ const organizationJsonLd = {
 	name: siteName,
 	url: siteUrl,
 	description: siteDescription,
+	image: `${siteUrl}/hero-poster.webp`,
+	servesCuisine: "Cookies",
 	areaServed: "Ivanhoe, Victoria, Australia",
 	address: { "@type": "PostalAddress", addressLocality: "Ivanhoe", addressRegion: "VIC", addressCountry: "AU" },
 	sameAs: ["https://instagram.com/clubcrumbie", "https://tiktok.com/@clubcrumbie", "https://facebook.com/clubcrumbie"],
+};
+
+const websiteJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	name: siteName,
+	alternateName: ["Club Crumbie Cookies", "Crumbie"],
+	url: siteUrl,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -46,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 			<head>
 				<script dangerouslySetInnerHTML={{ __html: scrollTopOnLoadScript }} />
 				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
 			</head>
 			<body>
 				<CartProvider>

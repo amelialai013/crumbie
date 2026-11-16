@@ -63,9 +63,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     })),
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Crumbs", item: absoluteUrl("/crumbs") },
+      { "@type": "ListItem", position: 3, name: product.name, item: absoluteUrl(`/crumbs/${product.slug}`) },
+    ],
+  };
+
   return (
     <section className="section section-warm product-detail-section">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <nav className="shell breadcrumb" aria-label="Breadcrumb">
         <Link href="/crumbs">Crumbs</Link>
         <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">

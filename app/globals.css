@@ -6191,11 +6191,15 @@ section:has(#product-modal-toggle:checked) .admin-product-form,
   background-color: rgba(239, 205, 170, .04);
   box-shadow: 0 0 0 4px rgba(201, 173, 148, .14);
 }
-.card-addon-input.has-error { border-color: #e0a38a; }
+.card-addon-input.has-error { border-color: #ff8f8f; }
 .card-addon-error {
   justify-self: start !important;
   margin-top: -4px;
-  color: #e0a38a;
+  color: #ff8f8f;
+  font-size: .8rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
   opacity: 1 !important;
 }
 .card-addon-field textarea { min-height: 150px; padding-bottom: 48px; }
