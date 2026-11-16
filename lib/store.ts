@@ -101,6 +101,36 @@ export async function deleteRecord(kind: string, id: string) {
 	await kv.lrem(key(kind, "all"), 0, id);
 }
 
+const localFailures = new Map<string, { count: number; resetAt: number }>();
+
+export async function failureCount(bucket: string) {
+	if (!kv) {
+		const entry = localFailures.get(bucket);
+		return entry && entry.resetAt > Date.now() ? entry.count : 0;
+	}
+	return Number((await kv.get<number>(key("failures", bucket))) ?? 0);
+}
+
+export async function recordFailure(bucket: string, windowSeconds: number) {
+	if (!kv) {
+		const entry = localFailures.get(bucket);
+		const live = entry && entry.resetAt > Date.now() ? entry : { count: 0, resetAt: Date.now() + windowSeconds * 1000 };
+		live.count += 1;
+		localFailures.set(bucket, live);
+		return;
+	}
+	const k = key("failures", bucket);
+	if ((await kv.incr(k)) === 1) await kv.expire(k, windowSeconds);
+}
+
+export async function clearFailures(bucket: string) {
+	if (!kv) {
+		localFailures.delete(bucket);
+		return;
+	}
+	await kv.del(key("failures", bucket));
+}
+
 // Append in Redis atomically so Gmail retries and portal replies cannot overwrite one another.
 export async function appendEnquiryReply(id: string, reply: import("./enquiry-mail").StoredEnquiryReply) {
  if (kv) {

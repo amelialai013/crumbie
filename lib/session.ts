@@ -14,7 +14,7 @@ export async function createAdminSession() {
 	const token = await new SignJWT({ role: "admin" })
 		.setProtectedHeader({ alg: "HS256" })
 		.setIssuedAt()
-		.setExpirationTime("7d")
+		.setExpirationTime("1d")
 		.sign(secret());
 
 	(await cookies()).set(COOKIE, token, {
@@ -22,7 +22,7 @@ export async function createAdminSession() {
 		secure: process.env.NODE_ENV === "production",
 		sameSite: "strict",
 		path: "/",
-		maxAge: 60 * 60 * 24 * 7,
+		maxAge: 60 * 60 * 24,
 	});
 }
 
