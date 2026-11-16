@@ -956,7 +956,7 @@ function DeliverySettings({
     const response = await fetch("/api/admin/content", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ module: "settings", fields: { ...(latest?.fields ?? {}), ...fields } }),
+      body: JSON.stringify({ module: "settings", fields: { ...Object.fromEntries(Object.entries(latest?.fields ?? {}).filter(([key]) => key !== "deliveryNote")), ...fields } }),
     });
     setSaving(false);
     if (response.ok) {
@@ -1028,13 +1028,13 @@ function DeliverySettings({
               <div className="admin-card-price-input"><input id="delivery-radius" inputMode="numeric" maxLength={3} placeholder="Enter a radius to fill in the postcodes or leave blank to remove radius" value={radius} onChange={(event) => {
                 const value = event.target.value.replace(/\D/g, "");
                 setRadius(value);
-                setFields({ ...fields, deliveryPostcodes: value ? postcodesWithinKm(Number(value)).slice(0, 600) : "" });
+                setFields({ ...fields, deliveryPostcodes: value ? postcodesWithinKm(Number(value)) : "" });
               }} /></div>
             </div>
             </div>
             <div className="field">
               <label htmlFor="delivery-postcodes">Delivery postcodes</label>
-              <textarea id="delivery-postcodes" placeholder="Enter postcodes or ranges, separated by commas (e.g. 3000-3099, 3121)" className="admin-textarea-lines" style={{ "--lines": Math.max(2, Math.ceil(fields.deliveryPostcodes.length / 48)) } as React.CSSProperties} maxLength={600} value={fields.deliveryPostcodes} onChange={(event) => setFields({ ...fields, deliveryPostcodes: event.target.value })} />
+              <textarea id="delivery-postcodes" placeholder="Enter postcodes or ranges, separated by commas (e.g. 3000-3099, 3121)" className="admin-textarea-lines" style={{ "--lines": Math.max(2, Math.ceil(fields.deliveryPostcodes.length / 48)) } as React.CSSProperties} value={fields.deliveryPostcodes} onChange={(event) => setFields({ ...fields, deliveryPostcodes: event.target.value })} />
             </div>
             
           </>
