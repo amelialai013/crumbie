@@ -24,6 +24,7 @@ const schema = z.object({
 	lines: z.array(lineSchema).min(1).max(30),
 	fulfilment: z.enum(["pickup", "delivery"]).optional(),
 	delivery: deliverySchema.optional(),
+	deliverySlot: z.object({ date: z.string(), window: z.string() }).optional(),
 });
 
 type TaxConfig =
@@ -113,7 +114,11 @@ export async function POST(req: Request) {
 		}
 		const subtotal = clean.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + (card ? card.price * card.quantity : 0);
 		deliveryFee = deliveryFeeFor(deliveryOption, subtotal);
-		if (deliveryOption.date) deliverySlot = { date: deliveryOption.date, window: deliveryOption.window };
+		const requested = parsed.data.deliverySlot;
+		const openSlots = deliveryOption.slots.filter((slot) => !isDateClosed(slot));
+		const chosen = requested ? openSlots.find((slot) => slot.date === requested.date && slot.window === requested.window) : openSlots[0];
+		if (requested && !chosen) return NextResponse.json({ error: "That delivery date is no longer available. Please choose another." }, { status: 400 });
+		if (chosen) deliverySlot = { date: chosen.date, window: chosen.window };
 	}
 
 	if (!process.env.STRIPE_SECRET_KEY) {
@@ -160,6 +165,17 @@ export async function POST(req: Request) {
 					unit_amount: Math.round(deliveryFee * 100),
 					tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
 					product_data: { name: "Delivery", tax_code: tax.enabled ? tax.productTaxCode : undefined },
+				},
+			});
+		}
+		if (fulfilment === "pickup" && deliveryOption.pickupFee > 0) {
+			lineItems.push({
+				quantity: 1,
+				price_data: {
+					currency: "aud",
+					unit_amount: Math.round(deliveryOption.pickupFee * 100),
+					tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
+					product_data: { name: "Pickup", tax_code: tax.enabled ? tax.productTaxCode : undefined },
 				},
 			});
 		}

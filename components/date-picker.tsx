@@ -33,6 +33,7 @@ export function DatePicker({
   const monthRef = useRef<HTMLInputElement>(null);
   const yearRef = useRef<HTMLInputElement>(null);
   const nativeRef = useRef<HTMLInputElement>(null);
+  const [nativeKey, setNativeKey] = useState(0);
 
   function update(next: Parts) {
     setParts(next);
@@ -98,6 +99,7 @@ export function DatePicker({
         />
       </div>
       <input
+        key={nativeKey}
         ref={nativeRef}
         className="date-picker-native"
         type="date"
@@ -107,6 +109,8 @@ export function DatePicker({
         onChange={(event) => {
           update(toParts(event.target.value));
           event.target.blur();
+          // Safari ignores blur(); remounting the input forces its popup closed
+          setNativeKey((k) => k + 1);
         }}
       />
       <button

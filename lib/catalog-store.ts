@@ -43,9 +43,19 @@ export async function getCardOption(): Promise<CardOption> {
   return cardOptionFrom(settings?.fields);
 }
 
+export async function getDeliveryDates(): Promise<PickupDate[]> {
+  const stored = await listRecords<PickupDate & { removed?: boolean }>("delivery-date");
+  const dates = new Map<string, PickupDate>();
+  for (const date of stored) {
+    if (date.removed) dates.delete(date.id);
+    else if (date.date) dates.set(date.id, date);
+  }
+  return Array.from(dates.values()).sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export async function getDelivery(): Promise<DeliveryOption> {
-  const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
-  return deliveryFrom(settings?.fields);
+  const [settings, dates] = await Promise.all([getRecord<{ fields?: Record<string, string> }>("content", "settings"), getDeliveryDates()]);
+  return deliveryFrom(settings?.fields, dates);
 }
 
 export async function getGalleryCopy() {

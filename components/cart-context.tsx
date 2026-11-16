@@ -15,6 +15,8 @@ export type CartLine = {
 	pickupDateId: string;
 	pickupDate: string;
 	pickupWindow: string;
+	fulfilment?: "pickup" | "delivery";
+	deliverySlot?: { date: string; window: string };
 	cardMessages?: string[];
 	cardNames?: string[];
 };
@@ -70,6 +72,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 					Array.isArray(stored)
 						? stored.filter(isCartLine).map((line) => ({
 								...line,
+								fulfilment: line.fulfilment === "delivery" ? "delivery" : "pickup",
 								cardMessages: Array.isArray(line.cardMessages)
 									? line.cardMessages.filter((m): m is string => typeof m === "string").slice(0, line.quantity)
 									: undefined,
@@ -105,13 +108,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 				),
 			add: (line) =>
 				setLines((current) => {
-					const key = `${line.variantId}:${line.pickupDateId}`;
+					const key = `${line.variantId}:${line.pickupDateId}${line.fulfilment === "delivery" ? `:d:${line.deliverySlot?.date}|${line.deliverySlot?.window}` : ""}`;
 					const found = current.find((item) => item.key === key);
 					return found
 						? current.map((item) =>
 								item.key === key
 									? {
 											...item,
+											fulfilment: line.fulfilment ?? item.fulfilment,
 											quantity: Math.min(99, item.quantity + line.quantity),
 											cardMessages: [...(item.cardMessages ?? []), ...(line.cardMessages ?? [])].slice(0, Math.min(99, item.quantity + line.quantity)),
 											cardNames: [...(item.cardNames ?? []), ...(line.cardNames ?? [])].slice(0, Math.min(99, item.quantity + line.quantity)),

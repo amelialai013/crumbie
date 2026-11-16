@@ -1,12 +1,17 @@
 export type DeliveryOption = {
 	enabled: boolean;
 	fee: number;
+	pickupFee: number;
 	freeOver: number | null;
 	postcodes: string;
-	note: string;
-	date: string;
-	window: string;
+	slots: DeliverySlot[];
+	pickupTitle: string;
+	pickupDescription: string;
+	deliveryTitle: string;
+	deliveryDescription: string;
 };
+
+export type DeliverySlot = { id: string; date: string; window: string };
 
 export type DeliveryDetails = {
 	name: string;
@@ -16,7 +21,6 @@ export type DeliveryDetails = {
 };
 
 export const defaultDeliveryPostcodes = "3000-3099, 3101-3138, 3141-3196, 3204-3207";
-export const defaultDeliveryNote = "Delivered within 30 km of Melbourne CBD";
 
 function money(value: string | undefined) {
 	const amount = Number(value);
@@ -24,15 +28,18 @@ function money(value: string | undefined) {
 }
 
 // Delivery settings live in the "settings" content module as strings. Delivery is off until switched on.
-export function deliveryFrom(fields: Record<string, string> | undefined): DeliveryOption {
+export function deliveryFrom(fields: Record<string, string> | undefined, slots: DeliverySlot[] = []): DeliveryOption {
 	return {
 		enabled: fields?.deliveryEnabled === "true",
-		fee: money(fields?.deliveryFee) ?? 12,
+		fee: money(fields?.deliveryFee) ?? 10,
+		pickupFee: money(fields?.pickupFee) ?? 0,
 		freeOver: money(fields?.deliveryFreeOver),
 		postcodes: fields?.deliveryPostcodes?.trim() || defaultDeliveryPostcodes,
-		note: fields?.deliveryNote === undefined ? defaultDeliveryNote : fields.deliveryNote.trim(),
-		date: /^\d{4}-\d{2}-\d{2}$/.test(fields?.deliveryDate ?? "") ? fields!.deliveryDate : "",
-		window: fields?.deliveryWindow?.trim() ?? "",
+		slots,
+		pickupTitle: fields?.pickupTitle?.trim() || "Pickup",
+		pickupDescription: fields?.pickupDescription === undefined ? "Free · collect in Ivanhoe" : fields.pickupDescription.trim(),
+		deliveryTitle: fields?.deliveryTitle?.trim() || "Delivery",
+		deliveryDescription: fields?.deliveryDescription === undefined ? "" : fields.deliveryDescription.trim(),
 	};
 }
 

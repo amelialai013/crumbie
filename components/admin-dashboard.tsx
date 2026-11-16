@@ -12,6 +12,7 @@ import { deliveryFrom } from "@/lib/delivery";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultCardOption } from "@/lib/card";
+import { VIC_POSTCODES } from "@/lib/vic-postcodes";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
@@ -37,6 +38,7 @@ type Order = {
   createdAt?: string;
   customer?: { name?: string; email?: string };
   fulfilment?: "pickup" | "delivery";
+  deliverySlot?: { date?: string; window?: string };
   delivery?: { name?: string; street?: string; suburb?: string; postcode?: string };
   paymentStatus?: string;
   card?: { label?: string; price?: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null;
@@ -313,6 +315,7 @@ const adminTabs = [
   "enquiries",
   "products",
   "pickup dates",
+  "delivery dates",
   "homepage",
   "about",
   "contact us",
@@ -878,37 +881,71 @@ function CardSettings({
   );
 }
 
+function postcodesWithinKm(km: number) {
+  const [lat0, lng0] = [-37.8136, 144.9631];
+  const rad = Math.PI / 180;
+  const codes = VIC_POSTCODES.filter(([, lat, lng]) => {
+    const a = Math.sin(((lat - lat0) * rad) / 2) ** 2 + Math.cos(lat0 * rad) * Math.cos(lat * rad) * Math.sin(((lng - lng0) * rad) / 2) ** 2;
+    return 12742 * Math.asin(Math.sqrt(a)) <= km;
+  }).map(([code]) => code);
+  const ranges: string[] = [];
+  for (let i = 0; i < codes.length; ) {
+    let j = i;
+    while (j + 1 < codes.length && codes[j + 1] === codes[j] + 1) j++;
+    ranges.push(j > i ? `${codes[i]}-${codes[j]}` : `${codes[i]}`);
+    i = j + 1;
+  }
+  return ranges.join(", ");
+}
+
 function DeliverySettings({
   begin,
   finish,
   initial,
+  onSaved,
 }: {
   begin: (message: string) => void;
   finish: (message?: string) => void;
   initial: Record<string, string>;
+  onSaved: (enabled: boolean) => void;
 }) {
   const pick = (source: Record<string, string>) => {
     const option = deliveryFrom(source);
     return {
       deliveryEnabled: option.enabled ? "true" : "false",
       deliveryFee: option.fee.toFixed(2),
+      pickupFee: option.pickupFee ? option.pickupFee.toFixed(2) : "",
       deliveryFreeOver: option.freeOver === null ? "" : option.freeOver.toFixed(2),
       deliveryPostcodes: option.postcodes,
-      deliveryNote: option.note,
-      deliveryDate: option.date,
-      deliveryWindow: option.window,
+      pickupTitle: initial.pickupTitle ?? "",
+      pickupDescription: option.pickupDescription,
+      deliveryTitle: initial.deliveryTitle ?? "",
+      deliveryDescription: initial.deliveryDescription ?? "",
     };
   };
   const [fields, setFields] = useState(() => pick(initial));
+  const [radius, setRadius] = useState("");
   const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const changed = JSON.stringify(fields) !== saved;
-  const on = fields.deliveryEnabled === "true";
-  const money = (key: "deliveryFee" | "deliveryFreeOver") => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const [whole, ...rest] = event.target.value.replace(/[^0-9.]/g, "").split(".");
-    setFields({ ...fields, [key]: rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole });
-  };
+  const enabled = fields.deliveryEnabled === "true";
+  const plain = (key: "deliveryFee" | "deliveryFreeOver" | "pickupFee", id: string, placeholder: string) => (
+    <div className="admin-card-price-input">
+      {fields[key] !== "" && <span aria-hidden="true">$</span>}
+      <input
+        id={id}
+        inputMode="decimal"
+        maxLength={8}
+        placeholder={placeholder}
+        value={fields[key]}
+        onChange={(event) => {
+          const [whole, ...rest] = event.target.value.replace(/[^0-9.]/g, "").split(".");
+          setFields({ ...fields, [key]: rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole });
+        }}
+      />
+    </div>
+  );
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -924,6 +961,7 @@ function DeliverySettings({
     setSaving(false);
     if (response.ok) {
       setSaved(JSON.stringify(fields));
+      onSaved(enabled);
       finish("Changes successfully saved");
       return;
     }
@@ -934,46 +972,74 @@ function DeliverySettings({
   return (
     <form className="enquiry-form admin-editor admin-card-settings" onSubmit={save}>
       <div className="admin-editor-fields">
-        <AdminSwitch
-          checked={on}
-          onChange={(checked) => setFields({ ...fields, deliveryEnabled: checked ? "true" : "false" })}
-          label="Offer delivery on all products"
-        />
-        <p>{on ? "Customers choose Pickup or Delivery on a step after the cart, then pay on Stripe." : "Delivery is off. The cart's Checkout button goes straight to the Stripe payment page and every order is pickup."}</p>
-        {on && (
+        <label className={`${switchStyles.root} admin-promo-row`} style={{ marginBottom: 24 }}>
+          <span>
+            <strong>Offer delivery on all products</strong>
+            <small>{enabled ? "Customers choose Pickup or Delivery when they add a product to the cart." : "Every order is pickup and customers only choose a pickup date when they add a product to the cart."}</small>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={enabled}
+            onChange={(event) => setFields({ ...fields, deliveryEnabled: event.target.checked ? "true" : "false" })}
+          />
+          <span className={switchStyles.track} aria-hidden="true" />
+        </label>
+        <div className={enabled ? undefined : "admin-section-disabled"} inert={!enabled}>
+        {(
           <>
-            <div className="admin-card-pair">
-              <div className="field">
+            <div className="admin-card-pair admin-card-stack">
+              <div className="field admin-card-price">
                 <label htmlFor="delivery-fee">Delivery fee (AUD)</label>
-                <input id="delivery-fee" inputMode="decimal" maxLength={8} value={fields.deliveryFee} onChange={money("deliveryFee")} />
+                {plain("deliveryFee", "delivery-fee", "Leave blank to set default of $10")}
               </div>
-              <div className="field">
+              <div className="field admin-card-price">
                 <label htmlFor="delivery-free-over">Free delivery over (AUD)</label>
-                <input id="delivery-free-over" inputMode="decimal" maxLength={8} placeholder="Leave blank for none" value={fields.deliveryFreeOver} onChange={money("deliveryFreeOver")} />
+                {plain("deliveryFreeOver", "delivery-free-over", "Enter an order total or leave blank for none")}
+              </div>
+              <div className="field admin-card-price">
+                <label htmlFor="pickup-fee">Pickup fee (AUD)</label>
+                {plain("pickupFee", "pickup-fee", "Enter the pickup fee or leave blank for free")}
               </div>
             </div>
-            <div className="admin-card-pair">
+<div className="admin-card-pair admin-card-stack">
               <div className="field">
-                <label htmlFor="delivery-date">Delivery date</label>
-                <input id="delivery-date" type="date" value={fields.deliveryDate} onChange={(event) => setFields({ ...fields, deliveryDate: event.target.value })} />
+                <label htmlFor="opt-pickup-title">Pickup card title</label>
+                <input id="opt-pickup-title" placeholder="Leave blank to show Pickup" maxLength={30} value={fields.pickupTitle} onChange={(event) => setFields({ ...fields, pickupTitle: event.target.value })} />
               </div>
               <div className="field">
-                <label htmlFor="delivery-window">Delivery time period</label>
-                <input id="delivery-window" maxLength={40} placeholder="e.g. 2pm–4pm" value={fields.deliveryWindow} onChange={(event) => setFields({ ...fields, deliveryWindow: event.target.value })} />
+                <label htmlFor="opt-pickup-desc">Pickup card description</label>
+                <input id="opt-pickup-desc" placeholder="Leave blank to show pickup fee" maxLength={80} value={fields.pickupDescription} onChange={(event) => setFields({ ...fields, pickupDescription: event.target.value })} />
               </div>
             </div>
-            <small className="admin-editor-count">Shown to customers on the checkout page. Leave blank to use each order&apos;s pickup date and window.</small>
+            <div className="admin-card-pair admin-card-stack">
+              <div className="field">
+                <label htmlFor="opt-delivery-title">Delivery card title</label>
+                <input id="opt-delivery-title" placeholder="Leave blank to show Delivery" maxLength={30} value={fields.deliveryTitle} onChange={(event) => setFields({ ...fields, deliveryTitle: event.target.value })} />
+              </div>
+              <div className="field">
+                <label htmlFor="opt-delivery-desc">Delivery card description</label>
+                <input id="opt-delivery-desc" placeholder="Leave blank to show delivery fee" maxLength={80} value={fields.deliveryDescription} onChange={(event) => setFields({ ...fields, deliveryDescription: event.target.value })} />
+              </div>
+            </div>
+            <div className="admin-card-pair admin-card-stack">
+            <div className="field admin-card-price">
+              <label htmlFor="delivery-radius">Delivery radius from Melbourne CBD (km)</label>
+              <div className="admin-card-price-input"><input id="delivery-radius" inputMode="numeric" maxLength={3} placeholder="Enter a radius to fill in the postcodes or leave blank to remove radius" value={radius} onChange={(event) => {
+                const value = event.target.value.replace(/\D/g, "");
+                setRadius(value);
+                setFields({ ...fields, deliveryPostcodes: value ? postcodesWithinKm(Number(value)).slice(0, 600) : "" });
+              }} /></div>
+            </div>
+            </div>
             <div className="field">
               <label htmlFor="delivery-postcodes">Delivery postcodes</label>
-              <textarea id="delivery-postcodes" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={600} value={fields.deliveryPostcodes} onChange={(event) => setFields({ ...fields, deliveryPostcodes: event.target.value })} />
-              <small className="admin-editor-count">Single postcodes or ranges, e.g. 3000-3099, 3121. Addresses outside these are rejected.</small>
+              <textarea id="delivery-postcodes" placeholder="Enter postcodes or ranges, separated by commas (e.g. 3000-3099, 3121)" className="admin-textarea-lines" style={{ "--lines": Math.max(2, Math.ceil(fields.deliveryPostcodes.length / 48)) } as React.CSSProperties} maxLength={600} value={fields.deliveryPostcodes} onChange={(event) => setFields({ ...fields, deliveryPostcodes: event.target.value })} />
             </div>
-            <div className="field">
-              <label htmlFor="delivery-note">Delivery note shown to customers</label>
-              <input id="delivery-note" maxLength={120} value={fields.deliveryNote} onChange={(event) => setFields({ ...fields, deliveryNote: event.target.value })} />
-            </div>
+            
           </>
         )}
+        </div>
       </div>
       <div className="admin-editor-actions">
         <button className={`btn btn-light${saving ? " btn-loading" : ""}`} disabled={saving || !changed}>
@@ -1180,9 +1246,15 @@ export default function AdminDashboard() {
   const [enquirySort, setEnquirySort] = useState("newest");
   const [deletingEnquiryId, setDeletingEnquiryId] = useState<string | null>(null);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
+  const [managedDeliveryDates, setManagedDeliveryDates] = useState<PickupDate[]>([]);
+  const deliveryTab = tab === "delivery dates";
+  const dateNoun = deliveryTab ? "delivery" : "pickup";
+  const managedDates = deliveryTab ? managedDeliveryDates : managedPickupDates;
+  const setManagedDates = deliveryTab ? setManagedDeliveryDates : setManagedPickupDates;
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [cardSettings, setCardSettings] = useState<Record<string, string> | null>(null);
+  const deliveryOn = cardSettings ? deliveryFrom(cardSettings).enabled : false;
   const [productStatus, setProductStatus] = useState("");
   const [productFieldErrors, setProductFieldErrors] = useState<
     Record<string, string>
@@ -1271,12 +1343,14 @@ export default function AdminDashboard() {
         dashboardResult,
         configResult,
         pickupDatesResult,
+        deliveryDatesResult,
         productsResult,
         cardSettingsResult,
       ] = await Promise.allSettled([
         fetch("/api/admin/dashboard"),
         fetch("/api/admin/config"),
         fetch("/api/admin/pickup-dates"),
+        fetch("/api/admin/delivery-dates"),
         fetch("/api/admin/products"),
         fetch("/api/admin/content?module=settings"),
       ]);
@@ -1295,6 +1369,9 @@ export default function AdminDashboard() {
         pickupDatesResult.value.ok
       ) {
         setManagedPickupDates(await pickupDatesResult.value.json());
+      }
+      if (deliveryDatesResult.status === "fulfilled" && deliveryDatesResult.value.ok) {
+        setManagedDeliveryDates(await deliveryDatesResult.value.json());
       }
       if (productsResult.status === "fulfilled" && productsResult.value.ok) {
         setManagedProducts(await productsResult.value.json());
@@ -1654,7 +1731,7 @@ export default function AdminDashboard() {
   async function addPickupDate(event: React.FormEvent) {
     event.preventDefault();
     const fieldErrors: Record<string, string> = {};
-    if (!newPickupDate.trim()) fieldErrors.date = "Choose a pickup date.";
+    if (!newPickupDate.trim()) fieldErrors.date = `Choose a ${dateNoun} date.`;
     if (!TIME_PATTERN.test(newPickupStart))
       fieldErrors.start = "Enter a valid start time.";
     if (!TIME_PATTERN.test(newPickupEnd))
@@ -1664,8 +1741,8 @@ export default function AdminDashboard() {
     setPickupFieldErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return;
     setPickupDateStatus("Saving...");
-    beginAdminAction("Adding pickup date…");
-    const response = await fetch("/api/admin/pickup-dates", {
+    beginAdminAction(`Adding ${dateNoun} date…`);
+    const response = await fetch(`/api/admin/${dateNoun}-dates`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1677,19 +1754,19 @@ export default function AdminDashboard() {
       finishAdminAction();
       const message =
         (await response.json().catch(() => null))?.error ||
-        "Unable to save pickup date";
+        `Unable to save ${dateNoun} date`;
       setPickupDateStatus("");
       setPickupFieldErrors({ date: message });
       return;
     }
     const savedDate = await response.json();
-    setManagedPickupDates((current) =>
+    setManagedDates((current) =>
       [...current.filter((date) => date.id !== savedDate.id), savedDate].sort(
         (left, right) => left.date.localeCompare(right.date),
       ),
     );
     resetPickupForm();
-    finishAdminAction("Pickup date successfully added");
+    finishAdminAction(`${deliveryTab ? "Delivery" : "Pickup"} date successfully added`);
     const pickupModalToggle = document.getElementById("pickup-modal-toggle");
     if (pickupModalToggle instanceof HTMLInputElement) {
       pickupModalToggle.checked = false;
@@ -1701,9 +1778,9 @@ export default function AdminDashboard() {
     const { id } = pickupDatePendingRemoval;
     setRemovingPickupDateId(id);
     setPickupDateStatus("Removing...");
-    beginAdminAction("Removing pickup date…");
+    beginAdminAction(`Removing ${dateNoun} date…`);
     const response = await fetch(
-      `/api/admin/pickup-dates?id=${encodeURIComponent(id)}`,
+      `/api/admin/${dateNoun}-dates?id=${encodeURIComponent(id)}`,
       { method: "DELETE" },
     );
     if (!response.ok) {
@@ -1711,21 +1788,22 @@ export default function AdminDashboard() {
       finishAdminAction();
       setPickupDateStatus(
         (await response.json().catch(() => null))?.error ||
-          "Unable to remove pickup date",
+          `Unable to remove ${dateNoun} date`,
       );
       return;
     }
-    setManagedPickupDates((current) =>
+    setManagedDates((current) =>
       current.filter((date) => date.id !== id),
     );
     setRemovingPickupDateId("");
     setPickupDatePendingRemoval(null);
     setPickupDateStatus("");
-    finishAdminAction("Pickup date successfully removed");
+    finishAdminAction(`${deliveryTab ? "Delivery" : "Pickup"} date successfully removed`);
   }
 
   function orderCountForPickupDate(pickupDate: PickupDate) {
     const orders = (data?.orders || []) as Order[];
+    if (deliveryTab) return orders.filter((order) => order.deliverySlot?.date === pickupDate.date).length;
     return orders.filter((order) =>
       order.lines?.some(
         (line) =>
@@ -2456,14 +2534,14 @@ export default function AdminDashboard() {
               className="admin-confirm-modal"
               role="dialog"
             >
-              <h2 id="pickup-remove-title">Remove this pickup date?</h2>
+              <h2 id="pickup-remove-title">Remove this {dateNoun} date?</h2>
               <p id="pickup-remove-copy">
                 This will remove{" "}
                 <strong>
                   {formatPickupDate(pickupDatePendingRemoval.date)}
                 </strong>{" "}
                 from the checkout calendar. Customers will not be able to choose
-                this pickup window once it is removed.
+                this {dateNoun} window once it is removed.
               </p>
               <div className="admin-confirm-actions">
                 <button
@@ -2502,21 +2580,21 @@ export default function AdminDashboard() {
               className="admin-confirm-modal"
               role="dialog"
             >
-              <h2 id="pickup-blocked-title">This pickup date has orders</h2>
+              <h2 id="pickup-blocked-title">This {dateNoun} date has orders</h2>
               <p id="pickup-blocked-copy">
                 You cannot remove{" "}
                 <strong>
                   {formatPickupDate(blockedPickupDateRemoval.pickupDate.date)}
                 </strong>{" "}
                 until you move all orders that have chosen this date to a
-                different pickup date.
+                different {dateNoun} date.
               </p>
               <p>
                 {blockedPickupDateRemoval.orderCount}{" "}
                 {blockedPickupDateRemoval.orderCount === 1
                   ? "order is"
                   : "orders are"}{" "}
-                currently using this pickup date.
+                currently using this {dateNoun} date.
               </p>
               <div className="admin-confirm-actions">
                 <button
@@ -2547,7 +2625,7 @@ export default function AdminDashboard() {
                 </label>
               </>
             )}
-            {tab === "pickup dates" && (
+            {(tab === "pickup dates" || tab === "delivery dates") && (
               <>
                 <input
                   id="pickup-modal-toggle"
@@ -2561,7 +2639,7 @@ export default function AdminDashboard() {
                   className="btn btn-dark admin-pickup-open"
                   htmlFor="pickup-modal-toggle"
                 >
-                  Add pickup date
+                  Add {dateNoun} date
                 </label>
               </>
             )}
@@ -3585,22 +3663,26 @@ export default function AdminDashboard() {
               </AdminAccordion>
             )}
             {cardSettings && (
-              <AdminAccordion title="Delivery">
-                <DeliverySettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
-              </AdminAccordion>
-            )}
-            {cardSettings && (
               <AdminAccordion title="Product page settings">
                 <CardSettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
               </AdminAccordion>
             )}
           </>
         )}
-        {tab === "pickup dates" && (
+        {(tab === "pickup dates" || tab === "delivery dates") && (
           <>
+            {deliveryTab && cardSettings && !deliveryOn && (
+              <p className="admin-sync-note admin-delivery-off-note" role="note">
+                <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="8" cy="8" r="6.25" />
+                  <path d="M8 4.75V8l2.1 1.4" />
+                </svg>
+                <span>Delivery is turned off and won&apos;t display on the website.</span>
+              </p>
+            )}
             <form className="admin-modal admin-add-date" onSubmit={addPickupDate} noValidate>
               <div className="admin-modal-header">
-                <h2>Add pickup date</h2>
+                <h2>Add {dateNoun} date</h2>
                 <label
                   className="btn btn-light admin-pickup-close"
                   htmlFor="pickup-modal-toggle"
@@ -3614,7 +3696,7 @@ export default function AdminDashboard() {
               </div>
               <div className="admin-modal-body" key={pickupFormKey}>
               <div className={`field${pickupFieldErrors.date ? " has-error" : ""}`}>
-                <label htmlFor="new-pickup-date">Pickup date</label>
+                <label htmlFor="new-pickup-date">{deliveryTab ? "Delivery" : "Pickup"} date</label>
                 <DatePicker
                   id="new-pickup-date"
                   value={newPickupDate}
@@ -3661,17 +3743,18 @@ export default function AdminDashboard() {
                   {pickupDateStatus === "Saving..." && (
                     <span className="btn-spinner" aria-hidden="true" />
                   )}
-                  {pickupDateStatus === "Saving..." ? "Adding…" : "Add pickup date"}
+                  {pickupDateStatus === "Saving..." ? "Adding…" : `Add ${dateNoun} date`}
                 </button>
                 {pickupDateStatus && pickupDateStatus !== "Saving..." && (
                   <span>{pickupDateStatus}</span>
                 )}
               </div>
             </form>
+            <div>
             <div
               className="admin-filter-tabs"
               role="tablist"
-              aria-label="Pickup date filters"
+              aria-label={`${deliveryTab ? "Delivery" : "Pickup"} date filters`}
             >
               {(["all", "closed", "open"] as PickupFilter[]).map((filter) => (
                 <button
@@ -3683,15 +3766,15 @@ export default function AdminDashboard() {
                   onClick={() => setPickupFilter(filter)}
                 >
                   {filter === "all"
-                    ? "All pickup windows"
+                    ? `All ${dateNoun} windows`
                     : filter === "closed"
-                      ? "Closed pickup windows"
-                      : "Open pickup windows"}
+                      ? `Closed ${dateNoun} windows`
+                      : `Open ${dateNoun} windows`}
                 </button>
               ))}
             </div>
             {(() => {
-              const visiblePickupDates = managedPickupDates.filter(
+              const visiblePickupDates = managedDates.filter(
                 (pickupDate) =>
                   pickupFilter === "all" ||
                   (pickupFilter === "closed"
@@ -3703,7 +3786,7 @@ export default function AdminDashboard() {
                   <thead>
                     <tr>
                       <th>Date</th>
-                      <th>Pickup window</th>
+                      <th>{deliveryTab ? "Delivery" : "Pickup"} window</th>
                       <th>Status</th>
                       <th>
                         <span className="sr-only">Actions</span>
@@ -3743,13 +3826,19 @@ export default function AdminDashboard() {
                       })
                     ) : (
                       <tr>
-                        <td colSpan={4}>No pickup dates</td>
+                        <td colSpan={4}>No {dateNoun} dates</td>
                       </tr>
                     )}
                   </tbody>
                 </table>
               );
             })()}
+            </div>
+            {deliveryTab && cardSettings && (
+              <AdminAccordion title="Delivery settings">
+                <DeliverySettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} onSaved={(on) => setCardSettings((current) => (current ? { ...current, deliveryEnabled: on ? "true" : "false" } : current))} />
+              </AdminAccordion>
+            )}
           </>
         )}
         {tab === "email templates" && !emailTemplateKey && (

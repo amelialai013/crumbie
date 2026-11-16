@@ -10,7 +10,7 @@ import { cardForProduct } from "@/lib/card";
 import { absoluteUrl, siteName } from "@/lib/site";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
-import { getCardOption, getGalleryCopy, getExploreCopy, getGalleryImages, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
+import { getCardOption, getGalleryCopy, getExploreCopy, getGalleryImages, getProducts, getPickupDates, getPromo, getDelivery } from "@/lib/catalog-store";
 
 const legacyProductSlugs: Record<string, string> = {
   "signature-box": "signature-crumbie",
@@ -40,7 +40,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // Availability must reflect admin changes and the current ordering cutoff.
   await connection();
   const { slug } = await params;
-  const [products, pickupDates, defaultCard, galleryCopy, sharedGallery, promo, exploreCopy] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages(), getPromo(), getExploreCopy()]);
+  const [products, pickupDates, defaultCard, galleryCopy, sharedGallery, promo, exploreCopy, delivery] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages(), getPromo(), getExploreCopy(), getDelivery()]);
   const product = products.find((item) => item.slug === slug);
   if (!product && legacyProductSlugs[slug]) {
     redirect(`/crumbs/${legacyProductSlugs[slug]}`);
@@ -115,7 +115,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </div>
             </div>
           </header>
-          <ProductOrder product={product} pickupDates={pickupDates} card={card} />
+          <ProductOrder product={product} pickupDates={pickupDates} card={card} delivery={delivery} />
         </div>
       </div>
       {galleryImages.length > 0 && (

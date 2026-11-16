@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import type { CardOption } from "@/lib/card";
+import { isDateClosed } from "@/lib/catalog";
 import { formatPickupDate } from "@/lib/format-date";
 import { deliveryFeeFor, postcodeAllowed, type DeliveryOption } from "@/lib/delivery";
 
@@ -12,7 +13,8 @@ const empty = { name: "", street: "", suburb: "", postcode: "" };
 
 export default function CheckoutView({ delivery, card }: { delivery: DeliveryOption; card: CardOption }) {
   const { lines, total: itemsTotal, ready } = useCart();
-  const [mode, setMode] = useState<Mode>("delivery");
+  const [chosenMode, setMode] = useState<Mode | null>(null);
+  const mode: Mode = chosenMode ?? (lines.some((line) => line.fulfilment === "delivery") ? "delivery" : "pickup");
   const [form, setForm] = useState(empty);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -24,7 +26,7 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
 
   const cardCount = card.enabled ? lines.reduce((sum, line) => sum + (line.cardMessages?.length ?? 0), 0) : 0;
   const subtotal = itemsTotal + cardCount * card.price;
-  const fee = mode === "delivery" ? deliveryFeeFor(delivery, subtotal) : 0;
+  const fee = mode === "delivery" ? deliveryFeeFor(delivery, subtotal) : delivery.pickupFee;
   const postcodeFilled = /^\d{4}$/.test(form.postcode.trim());
   const postcodeOk = postcodeAllowed(form.postcode, delivery.postcodes);
   const outOfRange = mode === "delivery" && postcodeFilled && !postcodeOk;
@@ -33,8 +35,10 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
   const total = blocked && mode === "delivery" ? subtotal : subtotal + fee;
   const set = (key: keyof typeof empty) => (event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: event.target.value });
   const prettyDate = (date: string) => (/^\d{4}-\d{2}-\d{2}$/.test(date) ? formatPickupDate(date) : date);
-  const slots = delivery.date
-    ? [{ date: prettyDate(delivery.date), window: delivery.window }]
+  const deliveryLine = lines.find((line) => line.fulfilment === "delivery" && line.deliverySlot);
+  const deliverySlots = deliveryLine?.deliverySlot ? [deliveryLine.deliverySlot] : delivery.slots.filter((slot) => !isDateClosed(slot)).slice(0, 1);
+  const slots = mode === "delivery" && deliverySlots.length
+    ? deliverySlots.map((slot) => ({ date: prettyDate(slot.date), window: slot.window }))
     : Array.from(new Map(lines.map((line) => [`${line.pickupDate}|${line.pickupWindow}`, { date: prettyDate(line.pickupDate), window: line.pickupWindow }])).values());
   const feeText = fee === 0 ? "Free" : `$${fee.toFixed(2)}`;
 
@@ -47,7 +51,7 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lines, fulfilment: mode, ...(mode === "delivery" ? { delivery: form } : {}) }),
+        body: JSON.stringify({ lines, fulfilment: mode, ...(mode === "delivery" && deliveryLine?.deliverySlot ? { deliverySlot: deliveryLine.deliverySlot } : {}), ...(mode === "delivery" ? { delivery: form } : {}) }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || typeof data.url !== "string") {
@@ -80,15 +84,13 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
           <h1 className="page-title">Checkout</h1>
           <div className="checkout-cols">
             <div className="checkout-form">
-              <div className="checkout-opts" role="radiogroup" aria-label="Pickup or delivery">
-                <button type="button" role="radio" aria-checked={mode === "pickup"} className={`checkout-opt${mode === "pickup" ? " is-active" : ""}`} onClick={() => setMode("pickup")}>
-                  <b>Pickup <i className="checkout-dot" /></b>
-                  <span>Free · address in your confirmation email</span>
-                </button>
-                <button type="button" role="radio" aria-checked={mode === "delivery"} className={`checkout-opt${mode === "delivery" ? " is-active" : ""}`} onClick={() => setMode("delivery")}>
-                  <b>Delivery <i className="checkout-dot" /></b>
-                  <span>{deliveryFeeFor(delivery, subtotal) === 0 ? "Free" : `$${deliveryFeeFor(delivery, subtotal).toFixed(0)}`}{delivery.note ? ` · ${delivery.note.charAt(0).toLowerCase()}${delivery.note.slice(1)}` : ""}</span>
-                </button>
+              <div className="fulfil-toggle" role="radiogroup" aria-label="Pickup or delivery">
+                {(["pickup", "delivery"] as const).map((option) => (
+                  <button key={option} type="button" role="radio" aria-checked={mode === option} className={mode === option ? "is-active" : ""} onClick={() => setMode(option)}>
+                    <strong>{option === "pickup" ? delivery.pickupTitle : delivery.deliveryTitle}</strong>
+                    <small>{option === "pickup" ? delivery.pickupDescription || (delivery.pickupFee === 0 ? "Free" : `$${delivery.pickupFee.toFixed(delivery.pickupFee % 1 ? 2 : 0)}`) : delivery.deliveryDescription || `${delivery.fee === 0 ? "Free" : `$${delivery.fee.toFixed(delivery.fee % 1 ? 2 : 0)}`}`}</small>
+                  </button>
+                ))}
               </div>
 
               {mode === "pickup" ? (
@@ -124,9 +126,8 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
                   {postcodeOk && <p className="checkout-status" role="status">{check}<span>Great, we deliver to {form.suburb.trim() || form.postcode}.</span></p>}
                   {outOfRange && <p className="checkout-status is-error" role="alert">{check}<span>Sorry, we don&apos;t deliver to this postcode. Choose pickup instead.</span></p>}
                   <div className="checkout-slot">
-                    <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 6.5h9v7h-9zM11.5 9h3.5l2.5 2.5v2h-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><circle cx="6" cy="14.5" r="1.4" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="14.5" cy="14.5" r="1.4" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
                     <div>
-                      <span>Arrives</span>
+                      <span>Delivery window</span>
                       {slots.map((slot) => (
                         <p key={`${slot.date}${slot.window}`}>{slot.date}{slot.window && <em> · {slot.window}</em>}</p>
                       ))}

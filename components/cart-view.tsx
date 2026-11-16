@@ -149,10 +149,11 @@ export default function CartView({ productImages, card, heroCard, deliveryEnable
                   </div>
                   <div className="cart-row-meta">
                     <p>{line.variantLabel}</p>
+                    <p>{line.fulfilment === "delivery" ? "Delivery" : "Pickup"}</p>
                     <p className="cart-row-pickup">
-                      <span>{new Intl.DateTimeFormat("en-AU", { dateStyle: "full", timeZone: "Australia/Melbourne" }).format(new Date(`${line.pickupDate}T12:00:00+10:00`))}</span>
+                      <span>{new Intl.DateTimeFormat("en-AU", { dateStyle: "full", timeZone: "Australia/Melbourne" }).format(new Date(`${(line.fulfilment === "delivery" && line.deliverySlot ? line.deliverySlot.date : line.pickupDate)}T12:00:00+10:00`))}</span>
                       <span className="cart-row-meta-separator" aria-hidden="true"> · </span>
-                      <span>{line.pickupWindow.replace(/\s*[–-]\s*/, " – ")}</span>
+                      <span>{(line.fulfilment === "delivery" && line.deliverySlot ? line.deliverySlot.window : line.pickupWindow).replace(/\s*[–-]\s*/, " – ")}</span>
                     </p>
                   </div>
                 </div>

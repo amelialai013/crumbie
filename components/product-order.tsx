@@ -7,12 +7,13 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import { isDateClosed, type PickupDate, type Product } from "@/lib/catalog";
 import { formatPickupDate } from "@/lib/format-date";
+import { deliveryFeeFor, type DeliveryOption } from "@/lib/delivery";
 import type { CardOption } from "@/lib/card";
 import { cardCountFor, useCart, type CardChoice } from "./cart-context";
 import PremiumSelect from "./premium-select";
 import QuantityControl from "./quantity-control";
 
-export default function ProductOrder({ product, pickupDates, card }: { product: Product; pickupDates: PickupDate[]; card: CardOption }) {
+export default function ProductOrder({ product, pickupDates, card, delivery }: { product: Product; pickupDates: PickupDate[]; card: CardOption; delivery: DeliveryOption }) {
   const { add } = useCart();
   const [cardSelected, setCard] = useState<CardChoice>(0);
   const [cardMessages, setCardMessages] = useState<string[]>([]);
@@ -24,12 +25,18 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
   const [variantId, setVariantId] = useState(product.variants[0].id);
   const [dateId, setDateId] = useState(() => available[0]?.id ?? "");
   const [quantity, setQuantity] = useState(1);
+  const [fulfilment, setFulfilment] = useState<"pickup" | "delivery">("pickup");
+  const delivering = delivery.enabled && fulfilment === "delivery";
+  const [slotId, setSlotId] = useState("");
+  const slotOptions = delivery.slots.filter((slot) => !isDateClosed(slot));
+  const chosenSlot = delivering ? slotOptions.find((slot) => slot.id === slotId) ?? slotOptions[0] : undefined;
   const [confirmation, setConfirmation] = useState<{ quantity: number; variant: string } | null>(null);
   const [confirmationClosing, setConfirmationClosing] = useState(false);
   const selectedVariant = product.variants.find((item) => item.id === variantId) ?? product.variants[0];
   const boxes = quantity || 1;
   const cardCount = card.enabled ? cardCountFor(cardSelected, boxes) : 0;
-  const orderTotal = selectedVariant.price * boxes + cardCount * card.price;
+  const subtotal = selectedVariant.price * boxes + cardCount * card.price;
+  const orderTotal = subtotal + (delivering ? deliveryFeeFor(delivery, subtotal) : delivery.pickupFee);
   const updateMessage = (index: number, value: string) => {
     const next = Array.from({ length: Math.max(cardMessages.length, index + 1) }, (_, i) => cardMessages[i] ?? "");
     next[index] = value;
@@ -112,6 +119,8 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
       pickupDateId: date.id,
       pickupDate: date.date,
       pickupWindow: date.window,
+      fulfilment: delivering ? "delivery" : "pickup",
+      ...(chosenSlot ? { deliverySlot: { date: chosenSlot.date, window: chosenSlot.window } } : {}),
       cardMessages: Array.from({ length: cardCount }, (_, i) => (cardMessages[i] ?? "").trim()),
       cardNames: Array.from({ length: cardCount }, (_, i) => (cardNames[i] ?? "").trim()),
     });
@@ -146,8 +155,28 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
           />
         </div>
         <QuantityControl value={quantity} inputId="quantity" onChange={setQuantity} />
+        {delivery.enabled && (
+          <div className="fulfil-toggle" role="radiogroup" aria-label="Pickup or delivery">
+            {(["pickup", "delivery"] as const).map((option) => (
+              <button key={option} type="button" role="radio" aria-checked={fulfilment === option} className={fulfilment === option ? "is-active" : ""} onClick={() => setFulfilment(option)}>
+                <strong>{option === "pickup" ? delivery.pickupTitle : delivery.deliveryTitle}</strong>
+                <small>{option === "pickup" ? delivery.pickupDescription || (delivery.pickupFee === 0 ? "Free" : `$${delivery.pickupFee.toFixed(delivery.pickupFee % 1 ? 2 : 0)}`) : delivery.deliveryDescription || `${delivery.fee === 0 ? "Free" : `$${delivery.fee.toFixed(delivery.fee % 1 ? 2 : 0)}`}`}</small>
+              </button>
+            ))}
+          </div>
+        )}
         <div className="field product-date">
-          <span className="field-label" id="date-label">Pickup date</span>
+          <span className="field-label" id="date-label">{delivering ? "Delivery date" : "Pickup date"}</span>
+          {delivering ? (
+            <PremiumSelect
+              labelId="date-label"
+              value={chosenSlot?.id ?? ""}
+              options={slotOptions.map((slot) => ({ value: slot.id, label: formatPickupDate(slot.date), detail: slot.window }))}
+              placeholder={slotOptions.length ? "Select a delivery date" : "No delivery dates currently available"}
+              disabled={slotOptions.length === 0}
+              onChange={setSlotId}
+            />
+          ) : (
           <PremiumSelect
             labelId="date-label"
             value={dateId}
@@ -160,6 +189,7 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
             disabled={soldOut}
             onChange={setDateId}
           />
+          )}
         </div>
       </div>
       {card.enabled && (
@@ -252,7 +282,7 @@ export default function ProductOrder({ product, pickupDates, card }: { product: 
       )}
       <div className="product-order-total" aria-live="polite">
         <strong>${Number.isInteger(orderTotal) ? orderTotal : orderTotal.toFixed(2)} <span>AUD</span></strong>
-        <button type="button" className="btn btn-dark" onClick={submit} disabled={soldOut || !dateId}>
+        <button type="button" className="btn btn-dark" onClick={submit} disabled={soldOut || !dateId || (delivering && !chosenSlot)}>
           {soldOut ? "Sold out" : "Add to cart"}
         </button>
       </div>
