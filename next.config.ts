@@ -13,7 +13,8 @@ const nextConfig: NextConfig = {
       source: "/:path*",
       has: [{ type: "host" as const, value: host }],
       destination: `${siteUrl}/:path*`,
-      permanent: true,
+      // Search Console's change-of-address check requires a literal 301 (permanent: true sends 308).
+      statusCode: 301 as const,
     }));
     return [
       ...hostRedirects,
