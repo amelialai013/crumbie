@@ -4,6 +4,7 @@ import { Resend } from "resend";
 import { enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 import { enquiryMailbox, enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
 import { threadToken } from "@/lib/enquiry-thread";
+import { formatPickupDate } from "@/lib/format-date";
 import { getRecord } from "@/lib/store";
 
 type Content = { fields: Record<string, string> };
@@ -24,6 +25,7 @@ type Order = {
 	amountTotal: number | null;
 	fulfilment?: "pickup" | "delivery";
 	delivery?: { name: string; street: string; suburb: string; postcode: string } | null;
+	deliverySlot?: { date: string; window: string } | null;
 };
 
 const defaultNotificationEmail = "clubcrumbieadmin@gmail.com";
@@ -143,12 +145,13 @@ export async function sendOrderConfirmation(order: Order) {
 		contentFields("settings"),
 	]);
 	const currency = order.currency?.toUpperCase() || "AUD";
+	const slot = order.fulfilment === "delivery" ? order.deliverySlot : null;
 	const values = {
 		customerName: order.customer.name || "there",
 		pickupAddress: order.fulfilment === "delivery" && order.delivery ? `None needed. We'll deliver to ${order.delivery.name}, ${order.delivery.street}, ${order.delivery.suburb} VIC ${order.delivery.postcode}` : singleLine(settings.pickupAddress || "") || "Ivanhoe, Victoria (exact address to follow)",
 		orderNumber: order.id.slice(0, 8).toUpperCase(),
-		pickupDate: uniqueLineValues(order.lines, "pickupDate"),
-		pickupWindow: uniqueLineValues(order.lines, "pickupWindow"),
+		pickupDate: slot ? formatPickupDate(slot.date) : uniqueLineValues(order.lines, "pickupDate"),
+		pickupWindow: slot ? slot.window : uniqueLineValues(order.lines, "pickupWindow"),
 		orderTotal: new Intl.NumberFormat("en-AU", { style: "currency", currency }).format((order.amountTotal || 0) / 100),
 	};
 	await sendTextEmail({

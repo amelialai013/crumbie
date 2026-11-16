@@ -895,6 +895,8 @@ function DeliverySettings({
       deliveryFreeOver: option.freeOver === null ? "" : option.freeOver.toFixed(2),
       deliveryPostcodes: option.postcodes,
       deliveryNote: option.note,
+      deliveryDate: option.date,
+      deliveryWindow: option.window,
     };
   };
   const [fields, setFields] = useState(() => pick(initial));
@@ -950,6 +952,17 @@ function DeliverySettings({
                 <input id="delivery-free-over" inputMode="decimal" maxLength={8} placeholder="Leave blank for none" value={fields.deliveryFreeOver} onChange={money("deliveryFreeOver")} />
               </div>
             </div>
+            <div className="admin-card-pair">
+              <div className="field">
+                <label htmlFor="delivery-date">Delivery date</label>
+                <input id="delivery-date" type="date" value={fields.deliveryDate} onChange={(event) => setFields({ ...fields, deliveryDate: event.target.value })} />
+              </div>
+              <div className="field">
+                <label htmlFor="delivery-window">Delivery time period</label>
+                <input id="delivery-window" maxLength={40} placeholder="e.g. 2pm–4pm" value={fields.deliveryWindow} onChange={(event) => setFields({ ...fields, deliveryWindow: event.target.value })} />
+              </div>
+            </div>
+            <small className="admin-editor-count">Shown to customers on the checkout page. Leave blank to use each order&apos;s pickup date and window.</small>
             <div className="field">
               <label htmlFor="delivery-postcodes">Delivery postcodes</label>
               <textarea id="delivery-postcodes" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={600} value={fields.deliveryPostcodes} onChange={(event) => setFields({ ...fields, deliveryPostcodes: event.target.value })} />

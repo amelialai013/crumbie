@@ -6494,6 +6494,11 @@ textarea.card-addon-input {
 .checkout-status { display: flex; gap: 10px; align-items: flex-start; padding: 14px 16px; border: 1px solid #9fd8a8; border-radius: 12px; font-size: .88rem; line-height: 1.5; color: #9fd8a8; margin: 0; }
 .checkout-status svg { flex: none; margin-top: 2px; }
 .checkout-status.is-error { border-color: #ff8f8f; color: #ff8f8f; }
+.checkout-slot { display: flex; gap: 14px; align-items: flex-start; padding: 14px 18px; border-radius: 12px; background: rgba(239, 205, 170, .06); }
+.checkout-slot svg { flex: none; margin-top: 3px; color: #c9ad94; }
+.checkout-slot span { display: block; font-size: .8rem; opacity: .65; margin-bottom: 2px; }
+.checkout-slot p { margin: 0; font-size: 1.05rem; line-height: 1.4; }
+.checkout-slot em { font-style: normal; opacity: .75; }
 .checkout-muted { margin: 0; opacity: .7; font-size: .85rem; line-height: 1.55; }
 .checkout-pickup { display: grid; gap: 10px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 16px; }
 .checkout-pickup h3 { margin: 0; font-size: 1.3rem; font-weight: 500; letter-spacing: -.02em; }

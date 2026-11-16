@@ -104,6 +104,7 @@ export async function POST(req: Request) {
 	const fulfilment = deliveryOption.enabled && parsed.data.fulfilment === "delivery" ? "delivery" : "pickup";
 	let delivery: { name: string; street: string; suburb: string; postcode: string } | null = null;
 	let deliveryFee = 0;
+	let deliverySlot: { date: string; window: string } | null = null;
 	if (fulfilment === "delivery") {
 		if (!parsed.data.delivery) return NextResponse.json({ error: "Please enter your delivery address." }, { status: 400 });
 		delivery = parsed.data.delivery;
@@ -112,6 +113,7 @@ export async function POST(req: Request) {
 		}
 		const subtotal = clean.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + (card ? card.price * card.quantity : 0);
 		deliveryFee = deliveryFeeFor(deliveryOption, subtotal);
+		if (deliveryOption.date) deliverySlot = { date: deliveryOption.date, window: deliveryOption.window };
 	}
 
 	if (!process.env.STRIPE_SECRET_KEY) {
@@ -124,7 +126,7 @@ export async function POST(req: Request) {
 
 	const pendingId = crypto.randomUUID();
 	try {
-		await setRecord("pending-checkout", pendingId, { id: pendingId, lines: clean, card, fulfilment, delivery, deliveryFee, createdAt: new Date().toISOString() });
+		await setRecord("pending-checkout", pendingId, { id: pendingId, lines: clean, card, fulfilment, delivery, deliveryFee, deliverySlot, createdAt: new Date().toISOString() });
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = clean.map((line) => ({
 			quantity: line.quantity,

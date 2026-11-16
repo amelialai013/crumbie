@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import type { CardOption } from "@/lib/card";
+import { formatPickupDate } from "@/lib/format-date";
 import { deliveryFeeFor, postcodeAllowed, type DeliveryOption } from "@/lib/delivery";
 
 type Mode = "pickup" | "delivery";
@@ -31,7 +32,10 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
   const blocked = mode === "delivery" && (missing || !postcodeOk);
   const total = blocked && mode === "delivery" ? subtotal : subtotal + fee;
   const set = (key: keyof typeof empty) => (event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: event.target.value });
-  const pickups = Array.from(new Set(lines.map((line) => `${line.pickupDate}, ${line.pickupWindow}`)));
+  const prettyDate = (date: string) => (/^\d{4}-\d{2}-\d{2}$/.test(date) ? formatPickupDate(date) : date);
+  const slots = delivery.date
+    ? [{ date: prettyDate(delivery.date), window: delivery.window }]
+    : Array.from(new Map(lines.map((line) => [`${line.pickupDate}|${line.pickupWindow}`, { date: prettyDate(line.pickupDate), window: line.pickupWindow }])).values());
   const feeText = fee === 0 ? "Free" : `$${fee.toFixed(2)}`;
 
   async function pay() {
@@ -90,7 +94,7 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
               {mode === "pickup" ? (
                 <div className="checkout-pickup">
                   <span className="checkout-eyebrow" style={{ margin: 0 }}>Your pickup</span>
-                  <h3>{pickups.join(" · ")}</h3>
+                  <h3>{slots.map((slot) => `${slot.date}, ${slot.window}`).join(" · ")}</h3>
                   <p className="checkout-muted">The pickup address is in your confirmation email. Want it delivered instead? Choose Delivery above.</p>
                 </div>
               ) : (
@@ -119,7 +123,15 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
                   </div>
                   {postcodeOk && <p className="checkout-status" role="status">{check}<span>Great, we deliver to {form.suburb.trim() || form.postcode}.</span></p>}
                   {outOfRange && <p className="checkout-status is-error" role="alert">{check}<span>Sorry, we don&apos;t deliver to this postcode. Choose pickup instead.</span></p>}
-                  <p className="checkout-muted">Delivered on {pickups.join(" · ")}.</p>
+                  <div className="checkout-slot">
+                    <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 6.5h9v7h-9zM11.5 9h3.5l2.5 2.5v2h-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><circle cx="6" cy="14.5" r="1.4" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="14.5" cy="14.5" r="1.4" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
+                    <div>
+                      <span>Arrives</span>
+                      {slots.map((slot) => (
+                        <p key={`${slot.date}${slot.window}`}>{slot.date}{slot.window && <em> · {slot.window}</em>}</p>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

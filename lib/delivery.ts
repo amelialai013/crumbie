@@ -4,6 +4,8 @@ export type DeliveryOption = {
 	freeOver: number | null;
 	postcodes: string;
 	note: string;
+	date: string;
+	window: string;
 };
 
 export type DeliveryDetails = {
@@ -29,6 +31,8 @@ export function deliveryFrom(fields: Record<string, string> | undefined): Delive
 		freeOver: money(fields?.deliveryFreeOver),
 		postcodes: fields?.deliveryPostcodes?.trim() || defaultDeliveryPostcodes,
 		note: fields?.deliveryNote === undefined ? defaultDeliveryNote : fields.deliveryNote.trim(),
+		date: /^\d{4}-\d{2}-\d{2}$/.test(fields?.deliveryDate ?? "") ? fields!.deliveryDate : "",
+		window: fields?.deliveryWindow?.trim() ?? "",
 	};
 }
 
