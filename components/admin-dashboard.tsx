@@ -624,19 +624,24 @@ function normalizeCardSettings(data: { fields?: Record<string, string> } | null)
   return next;
 }
 
+const CARD_KEYS = ["cardEnabled", "cardPrice", "cardLabel", "cardDescription", "cardNamePlaceholder", "cardNameMaxLength", "cardMessagePlaceholder", "cardMessageMaxLength"];
+const PAGE_KEYS = ["galleryTitle", "galleryBody", "galleryImages"];
+const BANNER_KEYS = ["exploreTitle", "exploreSubtext"];
+
 function CardSettings({
+  part,
   begin,
   finish,
   initial,
 }: {
+  part: "card" | "page" | "banner";
   begin: (message: string) => void;
   finish: (message?: string) => void;
   initial: Record<string, string>;
 }) {
+  const keys = part === "card" ? CARD_KEYS : part === "banner" ? BANNER_KEYS : PAGE_KEYS;
   const [fields, setFields] = useState<Record<string, string> | null>(initial);
-  const [saved, setSaved] = useState(() =>
-    JSON.stringify([initial.cardEnabled, initial.cardPrice, initial.cardLabel, initial.cardDescription, initial.cardNamePlaceholder, initial.cardMessagePlaceholder, initial.galleryTitle, initial.galleryBody, initial.galleryImages, initial.exploreTitle, initial.exploreSubtext, initial.unavailableMessage, initial.deliverableMessage, initial.undeliverableMessage]),
-  );
+  const [saved, setSaved] = useState(() => JSON.stringify(keys.map((key) => initial[key])));
   const [status, setStatus] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [galleryDragActive, setGalleryDragActive] = useState(false);
@@ -653,7 +658,7 @@ function CardSettings({
     }
   })();
   const setGalleryImages = (next: string[]) => setFields({ ...fields, galleryImages: JSON.stringify(next) });
-  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.cardLabel, fields.cardDescription, fields.cardNamePlaceholder, fields.cardMessagePlaceholder, fields.galleryTitle, fields.galleryBody, fields.galleryImages, fields.exploreTitle, fields.exploreSubtext, fields.unavailableMessage, fields.deliverableMessage, fields.undeliverableMessage]) !== saved || galleryFiles.length > 0;
+  const changed = JSON.stringify(keys.map((key) => fields[key])) !== saved || galleryFiles.length > 0;
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -676,12 +681,12 @@ function CardSettings({
     const response = await fetch("/api/admin/content", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ module: "settings", fields: { ...(latest?.fields ?? {}), ...nextFields } }),
+      body: JSON.stringify({ module: "settings", fields: { ...(latest?.fields ?? {}), ...Object.fromEntries(keys.map((key) => [key, nextFields[key] ?? ""])) } }),
     });
     if (response.ok) {
       setFields(nextFields);
       setGalleryFiles([]);
-      setSaved(JSON.stringify([nextFields.cardEnabled, nextFields.cardPrice, nextFields.cardLabel, nextFields.cardDescription, nextFields.cardNamePlaceholder, nextFields.cardMessagePlaceholder, nextFields.galleryTitle, nextFields.galleryBody, nextFields.galleryImages, nextFields.exploreTitle, nextFields.exploreSubtext, nextFields.unavailableMessage, nextFields.deliverableMessage, nextFields.undeliverableMessage]));
+      setSaved(JSON.stringify(keys.map((key) => nextFields[key])));
       setStatus("");
       finish("Changes successfully saved");
       return;
@@ -693,6 +698,7 @@ function CardSettings({
   return (
     <form className="enquiry-form admin-editor admin-card-settings" onSubmit={save}>
       <div className="admin-editor-fields">
+        {part === "card" && (<>
         <div className="admin-card-pair">
           <div className="field admin-card-toggle-field">
             <label htmlFor="content-cardEnabled">Club Crumbie Card</label>
@@ -770,6 +776,20 @@ function CardSettings({
           <small className="admin-editor-count">{(fields.cardNamePlaceholder ?? defaultCardOption.namePlaceholder).length} / 120</small>
         </div>
         <div className="field">
+          <label htmlFor="content-cardNameMaxLength">Name character limit (5–60)</label>
+          <input
+            id="content-cardNameMaxLength"
+            inputMode="numeric"
+            maxLength={2}
+            placeholder={String(defaultCardOption.nameMaxLength)}
+            value={fields.cardNameMaxLength ?? ""}
+            onChange={(event) => setFields({ ...fields, cardNameMaxLength: event.target.value.replace(/\D/g, "") })}
+            onBlur={() => {
+              if (fields.cardNameMaxLength?.trim()) setFields({ ...fields, cardNameMaxLength: String(Math.min(60, Math.max(5, Number(fields.cardNameMaxLength)))) });
+            }}
+          />
+        </div>
+        <div className="field">
           <label htmlFor="content-cardMessagePlaceholder">Card message placeholder</label>
           <textarea
             id="content-cardMessagePlaceholder"
@@ -783,7 +803,23 @@ function CardSettings({
           <small className="admin-editor-count">{(fields.cardMessagePlaceholder ?? defaultCardOption.messagePlaceholder).length} / 160</small>
         </div>
         <div className="field">
-          <label htmlFor="content-galleryTitle">Product photos heading</label>
+          <label htmlFor="content-cardMessageMaxLength">Message character limit (20–500)</label>
+          <input
+            id="content-cardMessageMaxLength"
+            inputMode="numeric"
+            maxLength={3}
+            placeholder={String(defaultCardOption.messageMaxLength)}
+            value={fields.cardMessageMaxLength ?? ""}
+            onChange={(event) => setFields({ ...fields, cardMessageMaxLength: event.target.value.replace(/\D/g, "") })}
+            onBlur={() => {
+              if (fields.cardMessageMaxLength?.trim()) setFields({ ...fields, cardMessageMaxLength: String(Math.min(500, Math.max(20, Number(fields.cardMessageMaxLength)))) });
+            }}
+          />
+        </div>
+        </>)}
+        {part === "page" && (<>
+        <div className="field">
+          <label htmlFor="content-galleryTitle">Gallery heading</label>
           <input
             id="content-galleryTitle"
             maxLength={80}
@@ -793,7 +829,7 @@ function CardSettings({
           <small className="admin-editor-count">{(fields.galleryTitle ?? "").length} / 80</small>
         </div>
         <div className="field">
-          <label htmlFor="content-galleryBody">Product photos copy</label>
+          <label htmlFor="content-galleryBody">Gallery copy</label>
           <textarea
             id="content-galleryBody"
             className="admin-textarea-lines"
@@ -857,7 +893,9 @@ function CardSettings({
             />
           )}
         </div>
-        <h3 className="admin-promo-heading">Product page banner</h3>
+        </>)}
+        {part === "banner" && (<>
+        <p className="admin-section-note">This banner appears at the bottom of every product page, below the product photos.</p>
         <div className="admin-explore-fields">
             <div className="field">
               <label htmlFor="explore-title">Title</label>
@@ -870,23 +908,7 @@ function CardSettings({
               <small className="admin-editor-count">{(fields.exploreSubtext ?? "").length} / 160</small>
             </div>
         </div>
-        <h3 className="admin-promo-heading">Checkout alert</h3>
-        <h3 className="admin-promo-heading">Delivery postcode messages</h3>
-        <div className="field">
-          <label htmlFor="deliverable-message">Postcode is deliverable (use {"{postcode}"} to show it)</label>
-          <textarea id="deliverable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultDeliverableMessage} value={fields.deliverableMessage ?? ""} onChange={(event) => setFields({ ...fields, deliverableMessage: event.target.value })} />
-          <small className="admin-editor-count">{(fields.deliverableMessage ?? "").length} / 200</small>
-        </div>
-        <div className="field">
-          <label htmlFor="undeliverable-message">Postcode is outside the delivery area</label>
-          <textarea id="undeliverable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultUndeliverableMessage} value={fields.undeliverableMessage ?? ""} onChange={(event) => setFields({ ...fields, undeliverableMessage: event.target.value })} />
-          <small className="admin-editor-count">{(fields.undeliverableMessage ?? "").length} / 200</small>
-        </div>
-        <div className="field">
-          <label htmlFor="unavailable-message">Product or box size unavailable</label>
-          <textarea id="unavailable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultUnavailableMessage} value={fields.unavailableMessage ?? ""} onChange={(event) => setFields({ ...fields, unavailableMessage: event.target.value })} />
-          <small className="admin-editor-count">{(fields.unavailableMessage ?? "").length} / 200</small>
-        </div>
+        </>)}
       </div>
       <div className="admin-editor-actions">
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
@@ -960,6 +982,10 @@ function DeliverySettings({
         onChange={(event) => {
           const [whole, ...rest] = event.target.value.replace(/[^0-9.]/g, "").split(".");
           setFields({ ...fields, [key]: rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole });
+        }}
+        onBlur={() => {
+          const amount = Number(fields[key]);
+          if (fields[key].trim() && Number.isFinite(amount)) setFields({ ...fields, [key]: amount.toFixed(2) });
         }}
       />
     </div>
@@ -1193,6 +1219,77 @@ function PromoSettings({
           {status === "Saving..." ? "Saving…" : "Save changes"}
         </button>
         {status && status !== "Saving..." && <span>{status}</span>}
+      </div>
+    </form>
+  );
+}
+
+function MessageSettings({
+  begin,
+  finish,
+  initial,
+}: {
+  begin: (message: string) => void;
+  finish: (message?: string) => void;
+  initial: Record<string, string>;
+}) {
+  const pick = (source: Record<string, string>) => ({
+    deliverableMessage: source.deliverableMessage ?? "",
+    undeliverableMessage: source.undeliverableMessage ?? "",
+    unavailableMessage: source.unavailableMessage ?? "",
+  });
+  const [fields, setFields] = useState(() => pick(initial));
+  const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const changed = JSON.stringify(fields) !== saved;
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    begin("Saving changes…");
+    const latest = await fetch("/api/admin/content?module=settings").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const response = await fetch("/api/admin/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ module: "settings", fields: { ...(latest?.fields ?? {}), ...fields } }),
+    });
+    setSaving(false);
+    if (response.ok) {
+      setSaved(JSON.stringify(fields));
+      finish("Changes successfully saved");
+      return;
+    }
+    finish();
+    setError((await response.json().catch(() => null))?.error || "Unable to save");
+  }
+
+  return (
+    <form className="enquiry-form admin-editor admin-card-settings" onSubmit={save}>
+      <div className="admin-editor-fields">
+        <div className="field">
+          <label htmlFor="deliverable-message">Postcode is deliverable (use {"{postcode}"} to show it)</label>
+          <textarea id="deliverable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultDeliverableMessage} value={fields.deliverableMessage ?? ""} onChange={(event) => setFields({ ...fields, deliverableMessage: event.target.value })} />
+          <small className="admin-editor-count">{(fields.deliverableMessage ?? "").length} / 200</small>
+        </div>
+        <div className="field">
+          <label htmlFor="undeliverable-message">Postcode is outside the delivery area</label>
+          <textarea id="undeliverable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultUndeliverableMessage} value={fields.undeliverableMessage ?? ""} onChange={(event) => setFields({ ...fields, undeliverableMessage: event.target.value })} />
+          <small className="admin-editor-count">{(fields.undeliverableMessage ?? "").length} / 200</small>
+        </div>
+        <div className="field">
+          <label htmlFor="unavailable-message">Product or box size unavailable</label>
+          <textarea id="unavailable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultUnavailableMessage} value={fields.unavailableMessage ?? ""} onChange={(event) => setFields({ ...fields, unavailableMessage: event.target.value })} />
+          <small className="admin-editor-count">{(fields.unavailableMessage ?? "").length} / 200</small>
+        </div>
+      </div>
+      <div className="admin-editor-actions">
+        <button className={`btn btn-light${saving ? " btn-loading" : ""}`} disabled={saving || !changed}>
+          {saving && <span className="btn-spinner" aria-hidden="true" />}
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+        {error && <span>{error}</span>}
       </div>
     </form>
   );
@@ -3617,7 +3714,7 @@ export default function AdminDashboard() {
                   <th className="admin-product-price">Four</th>
                   <th className="admin-product-price">Six</th>
                   <th className="admin-product-price">Twelve</th>
-                  <th>
+                  <th className="admin-table-action">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
@@ -3681,8 +3778,23 @@ export default function AdminDashboard() {
               </AdminAccordion>
             )}
             {cardSettings && (
-              <AdminAccordion title="Product page settings">
-                <CardSettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
+              <AdminAccordion title="Product gallery">
+                <CardSettings part="page" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
+              </AdminAccordion>
+            )}
+            {cardSettings && (
+              <AdminAccordion title="Product banner">
+                <CardSettings part="banner" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
+              </AdminAccordion>
+            )}
+            {cardSettings && (
+              <AdminAccordion title="Card settings">
+                <CardSettings part="card" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
+              </AdminAccordion>
+            )}
+            {cardSettings && (
+              <AdminAccordion title="Checkout messages">
+                <MessageSettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
               </AdminAccordion>
             )}
           </>

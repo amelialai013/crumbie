@@ -207,7 +207,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
               {card.description && <small>{card.description}</small>}
             </span>
             <span className="card-addon-meta">
-              <em>{cardCount > 0 ? `+$${formatPrice(cardCount * card.price)}` : `+$${formatPrice(card.price)} each`}</em>
+              <em>{cardCount > 0 ? `+$${formatPrice(cardCount * card.price)}${cardCount > 1 ? ` ($${formatPrice(card.price)} each)` : ""}` : `+$${formatPrice(card.price)} each`}</em>
               <span className="card-addon-check" aria-hidden="true">
                 <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" /></svg>
               </span>
@@ -226,7 +226,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                 )}
                 {boxes > 1 && (
                 <div className="card-addon-count-row">
-                <p className="card-addon-count">{cardCount} of {boxes} boxes · ${formatPrice(card.price)} each</p>
+                <p className="card-addon-count">{cardCount} of {boxes} boxes</p>
                 <div className={`card-addon-reveal${mode === "some" ? " is-open" : ""}`} aria-hidden={mode !== "some"}>
                   <div>
                     <div className="card-addon-step">
@@ -246,7 +246,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                         id={`card-name-${index}`}
                         className={`card-addon-input${showNameErrors && missingName(index) ? " has-error" : ""}`}
                         rows={1}
-                        maxLength={60}
+                        maxLength={card.nameMaxLength}
                         autoComplete="off"
                         required
                         placeholder={card.namePlaceholder}
@@ -261,13 +261,13 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                         <textarea
                           id={`card-message-${index}`}
                           rows={5}
-                          maxLength={300}
+                          maxLength={card.messageMaxLength}
                           aria-label={cardCount === 1 ? "Card message" : `Card ${index + 1} message`}
                           placeholder={card.messagePlaceholder}
                           value={cardMessages[index] ?? ""}
                           onChange={(event) => updateMessage(index, event.target.value)}
                         />
-                        <small className="card-addon-count">{(cardMessages[index] ?? "").length}/300</small>
+                        <small className="card-addon-count">{(cardMessages[index] ?? "").length}/{card.messageMaxLength}</small>
                       </div>
                     </div>
                   ))}

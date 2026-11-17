@@ -1849,12 +1849,17 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   white-space: nowrap;
 }
 @media (min-width: 641px) {
+  .admin-product-table { table-layout: fixed; }
   .admin-product-table th.admin-product-price,
   .admin-product-table td.admin-product-price {
-    width: 64px;
-    min-width: 64px;
+    width: 84px;
     padding-right: 0;
   }
+  .admin-product-table th.admin-table-action,
+  .admin-product-table td.admin-table-action {
+    width: 160px;
+  }
+  .admin-product-table .admin-product-description { max-width: none; }
 }
 .admin-enquiries-table .admin-table-action { white-space: nowrap; }
 .admin-row-clickable {
@@ -7186,4 +7191,10 @@ html.lightbox-open body {
 html:has(.cart-modal-overlay) .site-header {
   z-index: 90;
   pointer-events: none;
+}
+
+.admin-section-note {
+  margin: 0 0 12px;
+  opacity: .7;
+  font-size: .9rem;
 }

@@ -1,4 +1,4 @@
-export type CardOption = { enabled: boolean; price: number; label: string; description: string; namePlaceholder: string; messagePlaceholder: string };
+export type CardOption = { enabled: boolean; price: number; label: string; description: string; namePlaceholder: string; messagePlaceholder: string; nameMaxLength: number; messageMaxLength: number };
 
 export const defaultCardOption: CardOption = {
 	enabled: true,
@@ -7,6 +7,8 @@ export const defaultCardOption: CardOption = {
 	description: "Add a card to go inside your Club Crumbie box, so you can leave someone special with a surprise crumb.",
 	namePlaceholder: "Full name (the box recipient or your own, shown on the outside of the box)",
 	messagePlaceholder: "Write a little something to go on your card (leave blank for a blank card)",
+	nameMaxLength: 30,
+	messageMaxLength: 300,
 };
 
 // Card settings live in the "settings" content module as strings.
@@ -19,6 +21,8 @@ export function cardOptionFrom(fields: Record<string, string> | undefined): Card
 		// Unset uses the default; a saved blank hides the description.
 		namePlaceholder: fields?.cardNamePlaceholder === undefined ? defaultCardOption.namePlaceholder : fields.cardNamePlaceholder.trim(),
 		messagePlaceholder: fields?.cardMessagePlaceholder === undefined ? defaultCardOption.messagePlaceholder : fields.cardMessagePlaceholder.trim(),
+		nameMaxLength: Math.min(60, Math.max(5, Math.round(Number(fields?.cardNameMaxLength)) || defaultCardOption.nameMaxLength)),
+		messageMaxLength: Math.min(500, Math.max(20, Math.round(Number(fields?.cardMessageMaxLength)) || defaultCardOption.messageMaxLength)),
 		description: fields?.cardDescription === undefined ? defaultCardOption.description : fields.cardDescription.trim(),
 	};
 }

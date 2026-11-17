@@ -13,7 +13,7 @@ const lineSchema = z.object({
 	pickupDateId: z.string(),
 	fulfilment: z.enum(["pickup", "delivery"]).optional(),
 	deliverySlot: z.object({ date: z.string(), window: z.string() }).optional(),
-	cardMessages: z.array(z.string().max(300)).max(99).optional(),
+	cardMessages: z.array(z.string().max(500)).max(99).optional(),
 	cardNames: z.array(z.string().max(60)).max(99).optional(),
 });
 const deliverySchema = z.object({
@@ -76,12 +76,12 @@ export async function POST(req: Request) {
 		if (cardOption.enabled) {
 			const lineMessages = (line.cardMessages ?? []).slice(0, line.quantity);
 			for (const [index, message] of lineMessages.entries()) {
-				const name = (line.cardNames?.[index] ?? "").trim();
+				const name = (line.cardNames?.[index] ?? "").trim().slice(0, cardOption.nameMaxLength);
 				if (!name) {
 					return NextResponse.json({ error: `${product.name}: please add a name for each Club Crumbie Card.` }, { status: 400 });
 				}
 				cardNames.push(name);
-				cardMessages.push(message.trim());
+				cardMessages.push(message.trim().slice(0, cardOption.messageMaxLength));
 				cardProductIds.add(product.id);
 				cardProducts.push(`${product.name} — ${variant.label}`);
 			}
