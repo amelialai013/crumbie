@@ -317,7 +317,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
               <strong>{card.label} × {lineCards.length}</strong>
               <p className="co-price">${(card.price * lineCards.length).toFixed(2)} AUD</p>
               {lineCards.map((message, i) => (
-                <small key={i}>{(lineCards.length > 1 ? `Card ${i + 1}: ` : "") + [line.cardNames?.[i]?.trim(), message.trim() ? `“${message.trim()}”` : "Blank Card"].filter(Boolean).join(" - ")}</small>
+                <small key={i}>{[line.cardNames?.[i]?.trim(), message.trim() ? `“${message.trim()}”` : "Blank Card"].filter(Boolean).join(" - ")}</small>
               ))}
               <button type="button" className="co-link co-remove" onClick={() => setLineCard(line.key, [], [])}>Remove</button>
             </div>

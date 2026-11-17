@@ -23,7 +23,7 @@ export type DeliveryDetails = {
 };
 
 export const defaultDeliverableMessage = "Great, we deliver to {postcode}.";
-export const defaultUndeliverableMessage = "Sorry, we don't deliver to this postcode. Remove the delivery items to continue.";
+export const defaultUndeliverableMessage = "Sorry, we don't deliver to this postcode. Please order this product through pickup.";
 
 export const defaultDeliveryPostcodes = "3000-3099, 3101-3138, 3141-3196, 3204-3207";
 

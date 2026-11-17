@@ -7,14 +7,17 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import { isDateClosed, productCardImage, type PickupDate, type Product } from "@/lib/catalog";
 import { formatPickupDate } from "@/lib/format-date";
-import { deliveryFeeFor, type DeliveryOption } from "@/lib/delivery";
+import { deliveryFeeFor, postcodeAllowed, type DeliveryOption } from "@/lib/delivery";
 import type { CardOption } from "@/lib/card";
 import { cardCountFor, useCart, type CardChoice } from "./cart-context";
 import PremiumSelect from "./premium-select";
 import QuantityControl from "./quantity-control";
 
+const check = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M6 10.4l2.6 2.6L14 7.6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const cross = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="m7 7 6 6M13 7l-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
+
 export default function ProductOrder({ product, pickupDates, card, delivery }: { product: Product; pickupDates: PickupDate[]; card: CardOption; delivery: DeliveryOption }) {
-  const { add } = useCart();
+  const { add, total: cartTotal, count: cartCount } = useCart();
   const [cardSelected, setCard] = useState<CardChoice>(0);
   const [cardMessages, setCardMessages] = useState<string[]>([]);
   const [cardNames, setCardNames] = useState<string[]>([]);
@@ -27,10 +30,14 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
   const [quantity, setQuantity] = useState(1);
   const [fulfilment, setFulfilment] = useState<"pickup" | "delivery">("pickup");
   const delivering = delivery.enabled && fulfilment === "delivery";
+  const [postcode, setPostcode] = useState("");
+  const postcodeFilled = postcode.length === 4;
+  const postcodeOk = postcodeFilled && postcodeAllowed(postcode, delivery.postcodes);
+  const [showPostcodeError, setShowPostcodeError] = useState(false);
   const [slotId, setSlotId] = useState("");
   const slotOptions = delivery.slots.filter((slot) => !isDateClosed(slot));
   const chosenSlot = delivering ? slotOptions.find((slot) => slot.id === slotId) ?? slotOptions[0] : undefined;
-  const [confirmation, setConfirmation] = useState<{ quantity: number; variant: string } | null>(null);
+  const [confirmation, setConfirmation] = useState<{ quantity: number; variant: string; image: string; detail: string } | null>(null);
   const [confirmationClosing, setConfirmationClosing] = useState(false);
   const selectedVariant = product.variants.find((item) => item.id === variantId) ?? product.variants[0];
   const boxes = quantity || 1;
@@ -100,6 +107,11 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
   function submit() {
     const date = pickupDates.find((item) => item.id === dateId);
     if (!date) return;
+    if (delivering && !postcodeOk) {
+      setShowPostcodeError(true);
+      document.getElementById("delivery-postcode-check")?.focus();
+      return;
+    }
     if (Array.from({ length: cardCount }, (_, i) => i).some(missingName)) {
       setShowNameErrors(true);
       const first = Array.from({ length: cardCount }, (_, i) => i).find(missingName);
@@ -129,7 +141,13 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
     setCardNames([]);
     setShowNameErrors(false);
     setConfirmationClosing(false);
-    setConfirmation({ quantity: addedQuantity, variant: selectedVariant.label });
+    const when = chosenSlot ?? { date: date.date, window: date.window };
+    setConfirmation({
+      quantity: addedQuantity,
+      variant: selectedVariant.label,
+      image: productCardImage(product) || product.images[0] || "",
+      detail: `${delivering ? "Delivery" : "Pickup"} · ${formatPickupDate(when.date)}`,
+    });
   }
 
   function closeConfirmation() {
@@ -163,6 +181,15 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                 <small>{option === "pickup" ? delivery.pickupDescription || (delivery.pickupFee === 0 ? "Free" : `$${delivery.pickupFee.toFixed(delivery.pickupFee % 1 ? 2 : 0)}`) : delivery.deliveryDescription || `${delivery.fee === 0 ? "Free" : `$${delivery.fee.toFixed(delivery.fee % 1 ? 2 : 0)}`}`}</small>
               </button>
             ))}
+          </div>
+        )}
+        {delivering && (
+          <div className={`field product-postcode${(postcodeFilled && !postcodeOk) || (showPostcodeError && !postcodeOk) ? " has-error" : ""}`}>
+            <label htmlFor="delivery-postcode-check">Delivery postcode</label>
+            <input id="delivery-postcode-check" inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder="Enter your postcode" value={postcode} onChange={(event) => { setPostcode(event.target.value.replace(/\D/g, "")); setShowPostcodeError(false); }} />
+            {postcodeOk && <p className="checkout-status" role="status">{check}<span>{delivery.deliverableMessage.replaceAll("{postcode}", postcode)}</span></p>}
+            {postcodeFilled && !postcodeOk && <p className="checkout-status is-error" role="alert">{cross}<span>{delivery.undeliverableMessage.replaceAll("{postcode}", postcode)}</span></p>}
+            {showPostcodeError && !postcodeFilled && <p className="field-error" role="alert">Enter your postcode to check we deliver to you</p>}
           </div>
         )}
         <div className="field product-date">
@@ -288,27 +315,39 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
       </div>
       {confirmation && typeof document !== "undefined" && createPortal(
         <div className="cart-toast-layer">
-          <div
-            className={`cart-card${confirmationClosing ? " is-closing" : ""}`}
-            role="status"
-            aria-live="polite"
-          >
-            <button className="cart-card-close" type="button" onClick={closeConfirmation} aria-label="Close">
-              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 5.5 9 9M14.5 5.5l-9 9" /></svg>
-            </button>
-            <span className="cart-card-check" aria-hidden="true">
-              <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" pathLength="1" /></svg>
-            </span>
-            <strong>Added to your cart</strong>
-            <p>{confirmation.quantity} × {confirmation.variant} · {product.name}</p>
+          <div className={`cart-drawer-scrim${confirmationClosing ? " is-closing" : ""}`} onClick={closeConfirmation} />
+          <aside className={`cart-card${confirmationClosing ? " is-closing" : ""}`} role="dialog" aria-live="polite" aria-label="Added to your cart">
+            <div className="cart-card-head">
+              <span className="cart-card-title">
+                <span className="cart-card-check" aria-hidden="true">
+                  <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" pathLength="1" /></svg>
+                </span>
+                Added to your cart
+              </span>
+              <button className="cart-card-close" type="button" onClick={closeConfirmation} aria-label="Close">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 5.5 9 9M14.5 5.5l-9 9" /></svg>
+              </button>
+            </div>
+            <div className="cart-card-item">
+              {confirmation.image && <img src={confirmation.image} alt="" />}
+              <div>
+                <strong>{product.name}</strong>
+                <p>{confirmation.variant} · Qty {confirmation.quantity}</p>
+                <p>{confirmation.detail}</p>
+              </div>
+            </div>
+            <div className="cart-card-total">
+              <span>Cart subtotal ({cartCount} {cartCount === 1 ? "item" : "items"})</span>
+              <strong>${formatPrice(cartTotal)}</strong>
+            </div>
             <div className="cart-card-actions">
-              <button className="cart-card-keep" type="button" onClick={closeConfirmation}>Keep shopping</button>
               <Link className="cart-card-view" href="/cart">
                 View cart
                 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4.5 5.5 5.5L7 15.5" /></svg>
               </Link>
+              <button className="cart-card-keep" type="button" onClick={closeConfirmation}>Keep shopping</button>
             </div>
-          </div>
+          </aside>
         </div>,
         document.body,
       )}
