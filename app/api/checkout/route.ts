@@ -141,7 +141,7 @@ export async function POST(req: Request) {
 				tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
 				product_data: {
 					name: `${line.productName} — ${line.variantLabel}`,
-					description: `Pickup ${line.pickupDate}, ${line.pickupWindow}`,
+					description: delivery ? (deliverySlot ? `Delivery ${deliverySlot.date}, ${deliverySlot.window}` : "Delivery") : `Pickup ${line.pickupDate}, ${line.pickupWindow}`,
 					tax_code: tax.enabled ? tax.productTaxCode : undefined,
 				},
 			},

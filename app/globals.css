@@ -6492,9 +6492,9 @@ textarea.card-addon-input {
 .checkout-a .field input:focus { outline: 0; border-color: #c9ad94; box-shadow: 0 0 0 4px rgba(201, 173, 148, .14); }
 .checkout-a .field input[readonly] { opacity: .6; }
 .checkout-a .field.has-error input { border-color: #ff8f8f; }
-.checkout-status { display: flex; gap: 12px; align-items: center; padding: 16px 20px; border: 1px solid #9fd8a8; border-radius: 20px; font-size: 1rem; font-weight: 500; letter-spacing: -.01em; line-height: 1.3; color: #efcdaa; margin: 0; }
+.checkout-status { display: flex; gap: 12px; align-items: center; padding: 16px 20px; border: 1px solid #9fd8a8; border-radius: 20px; font-size: 1rem; font-weight: 500; letter-spacing: -.01em; line-height: 1.3; color: #9fd8a8; margin: 0; }
 .checkout-status svg { flex: none; color: #9fd8a8; }
-.checkout-status.is-error { border-color: #ff8f8f; }
+.checkout-status.is-error { border-color: #ff8f8f; color: #ff8f8f; }
 .checkout-status.is-error svg { color: #ff8f8f; }
 .checkout-slot { display: flex; gap: 14px; align-items: flex-start; padding: 14px 18px; border-radius: 12px; background: rgba(239, 205, 170, .06); }
 .checkout-slot svg { flex: none; margin-top: 3px; color: #c9ad94; }
@@ -6792,3 +6792,24 @@ img.checkout-thumb { object-fit: contain; background: transparent; }
   .co-link:hover:not(:disabled) { opacity: .95; }
   .checkout-opt:hover:not(.is-active), .fulfil-toggle button:hover:not(.is-active) { border-color: rgba(201, 173, 148, .55); }
 }
+
+.checkout-aside .checkout-fine { display: flex; justify-content: center; opacity: 1; margin-top: 16px; }
+
+.co-group-head .co-title h2 { font-size: .875rem; letter-spacing: -.01em; line-height: 1.3; padding: 6px 14px; }
+
+.co-clear { display: inline-flex; align-items: center; gap: 6px; margin: 0; white-space: nowrap; }
+.co-clear svg { width: 15px; height: 15px; flex: none; }
+.checkout-fine { display: flex; justify-content: center; opacity: 1; margin-top: 16px; }
+
+/* Distinct, subtle hover per control type */
+.co-pay { transition: background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), filter var(--motion-fast) var(--motion-fade), transform var(--motion-fast) var(--motion-ease); }
+@media (hover: hover) {
+}
+
+/* Smooth thumbnail hover: a long, gentle scale on its own compositor layer (the old 1.5% scale snapped between pixels) */
+.co-item > a { display: block; line-height: 0; }
+.co-item > a .checkout-thumb { transition: transform 500ms cubic-bezier(.22, 1, .36, 1); will-change: transform; backface-visibility: hidden; transform: translateZ(0); }
+@media (hover: hover) {
+  .co-item > a:hover .checkout-thumb { transform: translateZ(0) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) { .co-item > a .checkout-thumb { transition: none; } .co-item > a:hover .checkout-thumb { transform: none; } }
