@@ -15,8 +15,15 @@ export function isOrbIntroCovering() {
   return !orbIntroState.revealed && document.querySelector(".orb-intro") !== null;
 }
 
-// Each visit to the home page starts covered again, before the hero video's effects run.
+// Module state survives client-side navigation but not a page load, so the orb plays once per
+// load; later visits to the home page are already warm and skip straight to the hero.
+let orbPlayed = false;
+
 function resetReveal() {
+  if (orbPlayed) {
+    orbIntroState.revealed = true;
+    return "done" as const;
+  }
   orbIntroState.revealed = false;
   return "pulse" as const;
 }
@@ -42,6 +49,9 @@ export default function OrbIntro() {
   const [phase, setPhase] = useState<"pulse" | "fade" | "done">(resetReveal);
 
   useEffect(() => {
+    if (orbPlayed) {
+      return;
+    }
     window.scrollTo(0, 0);
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const start = performance.now();
@@ -65,6 +75,7 @@ export default function OrbIntro() {
       timers.push(
         setTimeout(() => {
           window.scrollTo(0, 0);
+          orbPlayed = true;
           setPhase("fade");
           reveal();
           timers.push(setTimeout(() => setPhase("done"), motionDuration("orb-exit", 1000)));
