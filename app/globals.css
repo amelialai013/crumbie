@@ -7198,8 +7198,8 @@ html:has(.cart-modal-overlay) .site-header {
   font-size: .9rem;
 }
 
-.card-addon-field-name .card-addon-input { min-height: 0; padding: 14px 64px 14px 16px; }
-.card-addon-field-name .card-addon-count { bottom: auto; top: 50%; transform: translateY(-50%); }
+.card-addon-field-name .card-addon-input { min-height: 0; padding: 14px 16px 38px; }
+.card-addon-field-name .card-addon-count { right: 16px; bottom: 12px; line-height: 1; }
 
 /* One close-button size across the site (matches the photo lightbox). */
 .cart-card-close,
