@@ -157,6 +157,7 @@ html { scrollbar-gutter: stable; }
 :is(
   .hero-content .hero-logo-heading,
   .hero-content .actions > *,
+  .promo-banner-section .promo-banner,
   .crumbs-catalog .product-card,
   .custom-order-section .enquiry-field-group,
   .custom-order-section .enquiry-submit,
@@ -164,6 +165,8 @@ html { scrollbar-gutter: stable; }
   .cart-empty .btn,
   .cart-items > .cart-row,
   .cart-summary,
+  .co-stack > *,
+  .checkout-aside,
   .product-detail-heading h1,
   .product-detail-heading p,
   .product-order-heading,
@@ -192,6 +195,11 @@ html { scrollbar-gutter: stable; }
 }
 
 /* Cascade positions that don't come from DOM order. */
+.promo-banner-section ~ .crumbs-catalog { --reveal-base: 120ms; }
+.co-stack > :nth-child(1) { --i: 0; }
+.co-stack > :nth-child(2) { --i: 1; }
+.co-stack > :nth-child(n + 3) { --i: 2; }
+.checkout-aside { --i: 1; }
 .hero-content { --reveal-base: 200ms; }
 .hero-content .hero-logo-heading { --i: 0; }
 .hero-content .actions > :nth-child(1) { --i: 1; }
