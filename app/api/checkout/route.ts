@@ -11,6 +11,8 @@ const lineSchema = z.object({
 	variantId: z.string(),
 	quantity: z.number().int().min(1).max(99),
 	pickupDateId: z.string(),
+	fulfilment: z.enum(["pickup", "delivery"]).optional(),
+	deliverySlot: z.object({ date: z.string(), window: z.string() }).optional(),
 	cardMessages: z.array(z.string().max(300)).max(99).optional(),
 	cardNames: z.array(z.string().max(60)).max(99).optional(),
 });
@@ -95,30 +97,41 @@ export async function POST(req: Request) {
 			pickupDateId: pickup.id,
 			pickupDate: pickup.date,
 			pickupWindow: pickup.window,
+			fulfilment: (line.fulfilment ?? parsed.data.fulfilment) === "delivery" && deliveryOption.enabled ? ("delivery" as const) : ("pickup" as const),
+			deliverySlot: line.deliverySlot ?? parsed.data.deliverySlot,
 		});
 	}
 
 	// Each line's cards are capped at its own box count, so a stale cart can't buy more cards than boxes.
 	const card = cardMessages.length > 0 ? { label: promo?.cardLabel && cardProductIds.size === 1 && cardProductIds.has(promo.productId) ? promo.cardLabel : cardOption.label, price: cardOption.price, quantity: cardMessages.length, names: cardNames, messages: cardMessages, products: cardProducts } : null;
 
-	// Delivery is validated server-side; when switched off in admin every order is pickup.
-	const fulfilment = deliveryOption.enabled && parsed.data.fulfilment === "delivery" ? "delivery" : "pickup";
+	// Each line is either pickup or delivery; delivery lines are validated server-side and need an address.
+	const deliveryLines = clean.filter((line) => line.fulfilment === "delivery");
+	const hasPickup = clean.some((line) => line.fulfilment === "pickup");
+	const fulfilment = deliveryLines.length > 0 ? "delivery" : "pickup";
 	let delivery: { name: string; street: string; suburb: string; postcode: string } | null = null;
 	let deliveryFee = 0;
 	let deliverySlot: { date: string; window: string } | null = null;
-	if (fulfilment === "delivery") {
+	const openSlots = deliveryOption.slots.filter((slot) => !isDateClosed(slot));
+	const lineSlots = new Map<(typeof clean)[number], { date: string; window: string } | null>();
+	if (deliveryLines.length > 0) {
 		if (!parsed.data.delivery) return NextResponse.json({ error: "Please enter your delivery address." }, { status: 400 });
 		delivery = parsed.data.delivery;
 		if (!postcodeAllowed(delivery.postcode, deliveryOption.postcodes)) {
 			return NextResponse.json({ error: "Sorry, we don't deliver to that postcode. Choose pickup or try another address." }, { status: 400 });
 		}
-		const subtotal = clean.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + (card ? card.price * card.quantity : 0);
-		deliveryFee = deliveryFeeFor(deliveryOption, subtotal);
-		const requested = parsed.data.deliverySlot;
-		const openSlots = deliveryOption.slots.filter((slot) => !isDateClosed(slot));
-		const chosen = requested ? openSlots.find((slot) => slot.date === requested.date && slot.window === requested.window) : openSlots[0];
-		if (requested && !chosen) return NextResponse.json({ error: "That delivery date is no longer available. Please choose another." }, { status: 400 });
-		if (chosen) deliverySlot = { date: chosen.date, window: chosen.window };
+		const deliverySubtotal = deliveryLines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + (card ? card.price * card.quantity : 0);
+		deliveryFee = deliveryFeeFor(deliveryOption, deliverySubtotal);
+		for (const line of deliveryLines) {
+			const requested = line.deliverySlot;
+			const chosen = requested ? openSlots.find((slot) => slot.date === requested.date && slot.window === requested.window) : openSlots[0];
+			if (requested && !chosen) return NextResponse.json({ error: "That delivery date is no longer available. Please choose another." }, { status: 400 });
+			lineSlots.set(line, chosen ? { date: chosen.date, window: chosen.window } : null);
+		}
+		deliverySlot = lineSlots.get(deliveryLines[0]) ?? null;
+	}
+	for (const line of clean) {
+		line.deliverySlot = lineSlots.get(line) ?? undefined;
 	}
 
 	if (!process.env.STRIPE_SECRET_KEY) {
@@ -141,7 +154,7 @@ export async function POST(req: Request) {
 				tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
 				product_data: {
 					name: `${line.productName} — ${line.variantLabel}`,
-					description: delivery ? (deliverySlot ? `Delivery ${deliverySlot.date}, ${deliverySlot.window}` : "Delivery") : `Pickup ${line.pickupDate}, ${line.pickupWindow}`,
+					description: line.fulfilment === "delivery" ? (line.deliverySlot ? `Delivery ${line.deliverySlot.date}, ${line.deliverySlot.window}` : "Delivery") : `Pickup ${line.pickupDate}, ${line.pickupWindow}`,
 					tax_code: tax.enabled ? tax.productTaxCode : undefined,
 				},
 			},
@@ -168,7 +181,7 @@ export async function POST(req: Request) {
 				},
 			});
 		}
-		if (fulfilment === "pickup" && deliveryOption.pickupFee > 0) {
+		if (hasPickup && deliveryOption.pickupFee > 0) {
 			lineItems.push({
 				quantity: 1,
 				price_data: {

@@ -9,6 +9,15 @@ const arrow = {
   next: <path d="m6 3.5 4.5 4.5L6 12.5" />,
 };
 
+function FadeImage(props: React.ComponentProps<typeof Image>) {
+  const ref = useRef<HTMLImageElement>(null);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (ref.current && !ref.current.complete) setLoading(true);
+  }, []);
+  return <Image {...props} ref={ref} className={`fade-image${loading ? " is-loading" : ""}`} onLoad={() => setLoading(false)} />;
+}
+
 export default function HeroCarousel({ images, name }: { images: string[]; name: string }) {
   const track = useRef<HTMLUListElement>(null);
   const pending = useRef<number | null>(null);
@@ -76,7 +85,7 @@ export default function HeroCarousel({ images, name }: { images: string[]; name:
           {images.map((image, i) => (
             <li key={image} aria-label={`Photo ${i + 1} of ${count}`}>
               <button type="button" className="photo-carousel-open" onClick={() => setOpen(i)} aria-label={`View ${name} photo ${i + 1} larger`}>
-                <Image src={image} alt="" fill sizes="(max-width: 900px) 80vw, 640px" priority={i === 0} unoptimized={!image.includes("images.unsplash.com")} />
+                <FadeImage src={image} alt="" fill sizes="(max-width: 900px) 80vw, 640px" priority={i === 0} unoptimized={!image.includes("images.unsplash.com")} />
               </button>
             </li>
           ))}
@@ -95,7 +104,7 @@ export default function HeroCarousel({ images, name }: { images: string[]; name:
           <div className="hero-carousel-thumbs">
             {images.map((image, i) => (
               <button key={image} type="button" className={i === index ? "is-active" : undefined} onClick={() => goTo(i)} aria-label={`Show photo ${i + 1}`} aria-current={i === index}>
-                <Image src={image} alt="" fill sizes="120px" unoptimized={!image.includes("images.unsplash.com")} />
+                <FadeImage src={image} alt="" fill sizes="120px" loading="eager" unoptimized={!image.includes("images.unsplash.com")} />
               </button>
             ))}
           </div>

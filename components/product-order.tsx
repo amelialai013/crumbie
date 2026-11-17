@@ -224,6 +224,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                 </div>
                   </>
                 )}
+                {boxes > 1 && (
                 <div className="card-addon-count-row">
                 <p className="card-addon-count">{cardCount} of {boxes} boxes · ${formatPrice(card.price)} each</p>
                 <div className={`card-addon-reveal${mode === "some" ? " is-open" : ""}`} aria-hidden={mode !== "some"}>
@@ -236,6 +237,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                   </div>
                 </div>
                 </div>
+                )}
                 <div className="card-addon-messages">
                   {Array.from({ length: cardCount }, (_, index) => (
                     <div className="card-addon-message" key={index}>

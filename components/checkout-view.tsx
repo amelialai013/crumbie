@@ -164,7 +164,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          lines,
+          lines: lines.map((line) => ({ ...line, fulfilment: modeOf(line), ...(modeOf(line) === "delivery" ? { deliverySlot: whenOf(line, "delivery") } : {}) })),
           fulfilment: hasDelivery ? "delivery" : "pickup",
           ...(hasDelivery && slot ? { deliverySlot: slot } : {}),
           ...(hasDelivery ? { delivery: form } : {}),

@@ -6819,3 +6819,4 @@ img.checkout-thumb { object-fit: contain; background: transparent; }
 .card-addon-count-row > .card-addon-reveal { flex: 0 0 auto; }
 .card-addon-count-row .card-addon-step { justify-content: flex-end; }
 .card-addon-count-row { margin-bottom: 12px; }
+.card-addon-count-row { margin-bottom: 8px; }

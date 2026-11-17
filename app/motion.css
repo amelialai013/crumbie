@@ -166,7 +166,9 @@ html { scrollbar-gutter: stable; }
   .cart-items > .cart-row,
   .cart-summary,
   .co-stack > *,
+  .checkout-status,
   .checkout-aside,
+  .hero-carousel,
   .product-detail-heading h1,
   .product-detail-heading p,
   .product-order-heading,
@@ -179,6 +181,9 @@ html { scrollbar-gutter: stable; }
   animation: reveal-up var(--motion-reveal) var(--motion-ease) backwards;
   animation-delay: calc(var(--reveal-base, 0ms) + var(--i, 0) * var(--motion-stagger));
 }
+
+.fade-image { transition: opacity var(--motion-reveal) var(--motion-ease); }
+.fade-image.is-loading { opacity: 0; }
 
 /* Entrances that wait for scroll. SectionReveal tags each item it is watching with
    data-reveal-item, so nothing is hidden unless an observer is there to reveal it. */
@@ -201,6 +206,7 @@ html { scrollbar-gutter: stable; }
 .co-stack > :nth-child(2) { --i: 1; }
 .co-stack > :nth-child(n + 3) { --i: 2; }
 .checkout-aside { --i: 1; }
+.checkout-status { --i: 2; }
 .hero-content { --reveal-base: 200ms; }
 .hero-content .hero-logo-heading { --i: 0; }
 .hero-content .actions > :nth-child(1) { --i: 1; }
@@ -210,6 +216,7 @@ html { scrollbar-gutter: stable; }
 .custom-order-section .enquiry-submit { --i: 5; }
 .cart-empty .btn,
 .cart-summary { --i: 1; }
+.hero-carousel { --i: 0; }
 .product-detail-heading p { --i: 1; }
 .product-order-heading { --i: 2; }
 .product-order-fields { --i: 3; }
