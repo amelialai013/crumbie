@@ -6492,7 +6492,7 @@ textarea.card-addon-input {
 .checkout-a .field input:focus { outline: 0; border-color: #c9ad94; box-shadow: 0 0 0 4px rgba(201, 173, 148, .14); }
 .checkout-a .field input[readonly] { opacity: .6; }
 .checkout-a .field.has-error input { border-color: #ff8f8f; }
-.checkout-status { display: flex; gap: 12px; align-items: center; padding: 16px 20px; border: 1px solid #9fd8a8; border-radius: 20px; font-size: 1rem; font-weight: 500; letter-spacing: -.01em; line-height: 1.3; color: #9fd8a8; margin: 0; }
+.checkout-status { display: flex; gap: 12px; align-items: center; padding: 16px 20px; border: 1px solid #9fd8a8; border-radius: 12px; font-size: 1rem; font-weight: 500; letter-spacing: -.01em; line-height: 1.3; color: #9fd8a8; margin: 0; }
 .checkout-status svg { flex: none; color: #9fd8a8; }
 .checkout-status.is-error { border-color: #ff8f8f; color: #ff8f8f; }
 .checkout-status.is-error svg { color: #ff8f8f; }

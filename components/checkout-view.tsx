@@ -8,6 +8,7 @@ import QuantityControl from "@/components/quantity-control";
 import type { CardOption } from "@/lib/card";
 import { isDateClosed, productSlugFromName } from "@/lib/catalog";
 import { formatPickupDate } from "@/lib/format-date";
+import { addressShapeOk, streetOk, suburbOk } from "@/lib/address";
 import { deliveryFeeFor, postcodeAllowed, type DeliveryOption } from "@/lib/delivery";
 
 type Mode = "pickup" | "delivery";
@@ -77,6 +78,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
   const [active, setActive] = useState(-1);
   const placesOff = useRef(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const searchSeq = useRef(0);
 
   useEffect(() => {
     if (!error) return;
@@ -96,23 +98,28 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
   function searchAddress(value: string) {
     setForm((current) => ({ ...current, street: value }));
     clearTimeout(searchTimer.current);
+    const seq = ++searchSeq.current;
     if (placesOff.current || value.trim().length < 3) return setSuggestions([]);
     searchTimer.current = setTimeout(async () => {
       try {
         const response = await fetch(`/api/places?input=${encodeURIComponent(value.trim())}`);
         if (response.status === 503) placesOff.current = true;
         const data = response.ok ? await response.json() : { suggestions: [] };
+        if (seq !== searchSeq.current) return;
         setSuggestions(data.suggestions ?? []);
         setActive(-1);
       } catch {
-        setSuggestions([]);
+        if (seq === searchSeq.current) setSuggestions([]);
       }
     }, 250);
   }
 
   function pickAddress(item: Suggestion) {
+    clearTimeout(searchTimer.current);
+    searchSeq.current++;
     setSuggestions([]);
-    setForm((current) => ({ ...current, street: item.street || current.street, suburb: item.suburb || current.suburb, postcode: /^\d{4}$/.test(item.postcode) ? item.postcode : current.postcode }));
+    setActive(-1);
+    setForm((current) => ({ ...current, street: item.street || current.street, suburb: item.suburb || current.suburb, postcode: /^\d{4}$/.test(item.postcode) ? item.postcode : "" }));
   }
 
   const prettyDate = (date: string) => (/^\d{4}-\d{2}-\d{2}$/.test(date) ? formatPickupDate(date) : date);
@@ -145,16 +152,17 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
   const postcodeOk = postcodeAllowed(form.postcode, delivery.postcodes);
   const outOfRange = hasDelivery && postcodeFilled && !postcodeOk;
   const missing = hasDelivery && Object.values(form).some((value) => !value.trim());
-  const blocked = hasDelivery && (missing || !postcodeOk);
+  const shapeOk = addressShapeOk(form.street, form.suburb);
+  const blocked = hasDelivery && (missing || !postcodeOk || !shapeOk);
   const total = subtotal + pickupFee + deliveryFee;
-  const set = (key: keyof typeof empty) => (event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: event.target.value });
+  const set = (key: keyof typeof empty) => (event: React.ChangeEvent<HTMLInputElement>) => { const value = event.target.value; setForm((current) => ({ ...current, [key]: value })); };
   const money = (value: number) => (value === 0 ? "Free" : `$${value.toFixed(2)}`);
   const optionTitle = (option: Mode) => (option === "pickup" ? delivery.pickupTitle : delivery.deliveryTitle);
 
   async function pay() {
     setTouched(true);
     if (blocked) {
-      const target = ["name", "street", "suburb", "postcode"].find((key) => key === "postcode" ? !postcodeOk : !form[key as keyof typeof form].trim());
+      const target = ["name", "street", "suburb", "postcode"].find((key) => key === "postcode" ? !postcodeOk : key === "street" ? !streetOk(form.street) : key === "suburb" ? !suburbOk(form.suburb) : !form[key as keyof typeof form].trim());
       const input = target && document.getElementById(`delivery-${target}`);
       if (input) {
         const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -221,7 +229,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
         <input id="delivery-name" autoComplete="name" maxLength={80} placeholder="Name for the delivery" value={form.name} onChange={set("name")} />
         {touched && !form.name.trim() && <p className="field-error" role="alert">Enter full name</p>}
       </div>
-      <div className={`field${touched && !form.street.trim() ? " has-error" : ""}`}>
+      <div className={`field${touched && !streetOk(form.street) ? " has-error" : ""}`}>
         <label htmlFor="delivery-street">Street address</label>
         <div className="co-suggest">
           <input
@@ -232,9 +240,10 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
             aria-expanded={suggestions.length > 0}
             aria-controls="delivery-street-list"
             aria-autocomplete="list"
+            aria-activedescendant={active >= 0 && suggestions[active] ? `delivery-street-opt-${active}` : undefined}
             value={form.street}
             onChange={(event) => searchAddress(event.target.value)}
-            onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+            onBlur={() => { searchSeq.current++; clearTimeout(searchTimer.current); setSuggestions([]); }}
             onKeyDown={(event) => {
               if (!suggestions.length) return;
               if (event.key === "ArrowDown") { event.preventDefault(); setActive((active + 1) % suggestions.length); }
@@ -246,18 +255,20 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
           {suggestions.length > 0 && (
             <ul id="delivery-street-list" role="listbox" className="co-suggest-list">
               {suggestions.map((item, index) => (
-                <li key={item.placeId} role="option" aria-selected={index === active} className={index === active ? "is-active" : undefined} onMouseDown={(event) => { event.preventDefault(); pickAddress(item); }}>{item.text}</li>
+                <li key={item.placeId} id={`delivery-street-opt-${index}`} role="option" aria-selected={index === active} className={index === active ? "is-active" : undefined} onMouseDown={(event) => { event.preventDefault(); pickAddress(item); }}>{item.text}</li>
               ))}
             </ul>
           )}
         </div>
         {touched && !form.street.trim() && <p className="field-error" role="alert">Enter street address</p>}
+        {touched && form.street.trim() && !streetOk(form.street) && <p className="field-error" role="alert">Enter a street number and name</p>}
       </div>
       <div className="checkout-grid">
-        <div className={`field${touched && !form.suburb.trim() ? " has-error" : ""}`}>
+        <div className={`field${touched && !suburbOk(form.suburb) ? " has-error" : ""}`}>
           <label htmlFor="delivery-suburb">Suburb</label>
           <input id="delivery-suburb" autoComplete="address-level2" maxLength={60} value={form.suburb} onChange={set("suburb")} />
         {touched && !form.suburb.trim() && <p className="field-error" role="alert">Enter suburb</p>}
+        {touched && form.suburb.trim() && !suburbOk(form.suburb) && <p className="field-error" role="alert">Enter a valid suburb</p>}
         </div>
         <div className="field">
           <label htmlFor="delivery-state">State</label>
@@ -265,7 +276,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
         </div>
         <div className={`field${outOfRange || (touched && !postcodeOk) ? " has-error" : ""}`}>
           <label htmlFor="delivery-postcode">Postcode</label>
-          <input id="delivery-postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} value={form.postcode} onChange={(event) => setForm({ ...form, postcode: event.target.value.replace(/\D/g, "") })} />
+          <input id="delivery-postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} value={form.postcode} onChange={(event) => { const value = event.target.value.replace(/\D/g, ""); setForm((current) => ({ ...current, postcode: value })); }} />
         {touched && !postcodeOk && <p className="field-error" role="alert">{postcodeFilled ? "Sorry, we don't deliver to this postcode" : "Enter postcode"}</p>}
         </div>
       </div>
