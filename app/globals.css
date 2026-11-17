@@ -6830,7 +6830,7 @@ img.checkout-thumb { object-fit: contain; background: transparent; }
 @keyframes cart-modal-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes cart-modal-pop-in { from { transform: translateY(8px) scale(.985); } to { transform: none; } }
 @keyframes cart-modal-pop-out { from { transform: none; } to { transform: translateY(8px) scale(.985); } }
-.cart-modal-overlay { animation: cart-modal-in .2s ease-out both; }
+.cart-modal-overlay { background: rgba(8, 5, 2, .9); animation: cart-modal-in .2s ease-out both; }
 .cart-modal-overlay .admin-confirm-modal { animation: cart-modal-pop-in .25s cubic-bezier(.22, 1, .36, 1) both; }
 .cart-modal-overlay.is-leaving { animation: cart-modal-out .2s ease-in both; pointer-events: none; }
 .cart-modal-overlay.is-leaving .admin-confirm-modal { animation: cart-modal-pop-out .2s ease-in both; }
@@ -7134,3 +7134,50 @@ html.lightbox-open body {
   @starting-style { .cart-card { transform: none; } }
   .cart-card.is-closing { transform: none; }
 }
+
+@media (max-width: 640px) {
+  .cart-card-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cart-card-keep,
+  .cart-card-view {
+    width: 100%;
+    min-height: 50px;
+    font-size: .95rem;
+  }
+  .cart-card-view { order: -1; }
+}
+
+.cart-card-close {
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease), transform 100ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cart-card-close:hover { background: #3a342c; }
+}
+.cart-card-close:active { transform: scale(.92); }
+.cart-card-close:focus-visible,
+.cart-card-keep:focus-visible,
+.cart-card-view:focus-visible {
+  outline: 2px solid #1a140d;
+  outline-offset: 2px;
+}
+
+/* Desktop sizing: buttons match the site's 50px .btn, card and type scale up slightly. */
+.cart-card { width: min(440px, 100%); }
+.cart-card strong { font-size: 1.5rem; }
+.cart-card p { font-size: .92rem; }
+.cart-card-keep,
+.cart-card-view { min-height: 50px; padding: 0 28px; font-size: .92rem; }
+.cart-card-close { width: 36px; height: 36px; top: 14px; right: 14px; }
+@media (max-width: 640px) {
+  .cart-card strong { font-size: 1.3rem; }
+  .cart-card p { font-size: .86rem; }
+  .cart-card-close { width: 32px; height: 32px; top: 12px; right: 12px; }
+}
+
+/* Clearing the cart: content fades out while the modal fades, then the empty state eases in. */
+.checkout-a { transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease); }
+.cart-empty.is-appearing { animation: cart-empty-in .5s var(--motion-ease) 60ms both; }

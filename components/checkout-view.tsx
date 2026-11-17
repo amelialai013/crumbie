@@ -40,11 +40,11 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
 
   function closeModal(after?: () => void) {
     setModalLeaving(true);
+    after?.();
     window.setTimeout(() => {
       setPendingRemoval(null);
       setConfirmClear(false);
       setModalLeaving(false);
-      after?.();
     }, 200);
   }
 
@@ -60,8 +60,10 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
       }
       return drop();
     }
-    if (last) setRemovingLast(true);
-    else setRemovingKey(key);
+    if (last) {
+      setRemovingLast(true);
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    } else setRemovingKey(key);
     removeTimeout.current = window.setTimeout(() => {
       drop();
       setRemovingLast(false);
