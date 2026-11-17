@@ -190,7 +190,7 @@ export async function POST(req: Request) {
 			customer_creation: "always",
 			phone_number_collection: { enabled: true },
 			success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${origin}${delivery ? "/checkout" : "/cart"}`,
+			cancel_url: `${origin}/cart`,
 			metadata: { pendingId },
 			payment_intent_data: {
 				metadata: { pendingId },
