@@ -6218,13 +6218,13 @@ section:has(#product-modal-toggle:checked) .admin-product-form,
   opacity: .65;
   pointer-events: none;
 }
-.card-addon-messages { margin-top: -8px; padding-top: 0; }
+.card-addon-messages { margin-top: -4px; padding-top: 0; }
 .card-addon-message:first-child { padding-top: 0; }
 .card-addon-options .card-addon-reveal.is-open + .card-addon-messages { margin-top: 10px; }
 .cart-card-line-end { align-self: end; align-content: end; }
 .card-addon-message { border-top: 0; padding: 12px 0; }
 .card-addon-message:first-child { padding-top: 0; }
-.card-addon-options .card-addon-reveal.is-open + .card-addon-messages { margin-top: 4px; }
+.card-addon-options .card-addon-reveal.is-open + .card-addon-messages { margin-top: 8px; }
 .card-addon-options .card-addon-reveal.is-open .card-addon-step { padding-top: 4px; }
 .card-addon-messages { gap: 16px; }
 .card-addon-message, .card-addon-message:first-child { padding: 0; }
@@ -6837,7 +6837,8 @@ img.checkout-thumb { object-fit: contain; background: transparent; }
 .card-addon-count-row { margin-bottom: 12px; }
 .card-addon-count-row { margin-bottom: 8px; }
 
-.card-addon-options > .card-addon-messages:first-child { margin-top: 0; padding-top: 10px; }
+.card-addon-options > .card-addon-messages:first-child { margin-top: 0; padding-top: 8px; }
+.card-addon > .card-addon-reveal.is-open { margin-top: -3px; }
 
 .co-pay-action { align-content: start; align-self: end; }
 .checkout-fine { align-self: start; }
