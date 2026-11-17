@@ -6514,7 +6514,7 @@ textarea.card-addon-input {
 .co-when small { opacity: .65; }
 .co-when-date { margin: 0; font-size: 1.1rem; color: #efcdaa; }
 .co-dates { display: grid; gap: 16px; }
-.co-date { display: grid; gap: 16px; padding: 20px 28px; border: 1px solid var(--line); border-radius: 20px; }
+.co-date { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; }
 .co-date-head { display: grid; gap: 6px; }
 .co-line { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .co-line:last-child { border-bottom: 0; padding-bottom: 0; }
@@ -6545,7 +6545,7 @@ textarea.card-addon-input {
 .co-pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: end; }
 .co-bar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 40px; align-items: end; padding: 32px; border-radius: 28px; background: #241e16; }
 .co-bar .co-pay-row { grid-template-columns: 1fr; gap: 20px; }
-.co-deliver { display: grid; gap: 18px; padding: 20px 28px; border: 1px solid var(--line); border-radius: 20px; }
+.co-deliver { display: grid; gap: 18px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; }
 .co-deliver h2 { margin: 0; font-size: 1.25rem; font-weight: 500; }
 .co-pill { display: inline-block; padding: 6px 14px; border: 1px solid #efcdaa; border-radius: 999px; font-size: .78rem; font-weight: 600; }
 .co-pill.is-pickup { background: #efcdaa; color: #1a140d; }
@@ -6594,7 +6594,7 @@ textarea.card-addon-input {
 }
 .checkout-pickup { display: grid; gap: 10px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 16px; }
 .checkout-pickup h3 { margin: 0; font-size: 1.3rem; font-weight: 500; letter-spacing: -.02em; }
-.checkout-aside { border: 1px solid var(--line); border-radius: 20px; padding: 20px 28px; position: sticky; top: 110px; }
+.checkout-aside { border: 1px solid var(--line); border-radius: 20px; padding: 20px; position: sticky; top: 110px; }
 .checkout-lines { display: grid; gap: 14px; margin: 20px 0 22px; }
 .checkout-item { display: flex; gap: 14px; align-items: center; }
 .checkout-item > div { flex: 1; }

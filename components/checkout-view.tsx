@@ -11,6 +11,7 @@ import { formatPickupDate } from "@/lib/format-date";
 import { deliveryFeeFor, postcodeAllowed, type DeliveryOption } from "@/lib/delivery";
 
 type Mode = "pickup" | "delivery";
+type Suggestion = { placeId: string; text: string; street: string; suburb: string; postcode: string };
 const empty = { name: "", street: "", suburb: "", postcode: "" };
 
 export default function CheckoutView({ delivery, card, images }: { delivery: DeliveryOption; card: CardOption; images: Record<string, string> }) {
@@ -72,10 +73,9 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
       removeTimeout.current = null;
     }, motionDuration(last ? "panel" : "exit", last ? 320 : 220));
   }
-  const [suggestions, setSuggestions] = useState<Array<{ placeId: string; text: string }>>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [active, setActive] = useState(-1);
   const placesOff = useRef(false);
-  const sessionToken = useRef("");
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
@@ -98,9 +98,8 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
     clearTimeout(searchTimer.current);
     if (placesOff.current || value.trim().length < 3) return setSuggestions([]);
     searchTimer.current = setTimeout(async () => {
-      sessionToken.current ||= crypto.randomUUID();
       try {
-        const response = await fetch(`/api/places?token=${sessionToken.current}&input=${encodeURIComponent(value.trim())}`);
+        const response = await fetch(`/api/places?input=${encodeURIComponent(value.trim())}`);
         if (response.status === 503) placesOff.current = true;
         const data = response.ok ? await response.json() : { suggestions: [] };
         setSuggestions(data.suggestions ?? []);
@@ -111,17 +110,9 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
     }, 250);
   }
 
-  async function pickAddress(placeId: string, text: string) {
+  function pickAddress(item: Suggestion) {
     setSuggestions([]);
-    const token = sessionToken.current;
-    sessionToken.current = "";
-    setForm((current) => ({ ...current, street: text.split(",")[0] }));
-    try {
-      const response = await fetch(`/api/places?token=${token}&placeId=${encodeURIComponent(placeId)}`);
-      if (!response.ok) return;
-      const data = await response.json();
-      setForm((current) => ({ ...current, street: data.street || current.street, suburb: data.suburb || current.suburb, postcode: /^\d{4}$/.test(data.postcode) ? data.postcode : current.postcode }));
-    } catch {}
+    setForm((current) => ({ ...current, street: item.street || current.street, suburb: item.suburb || current.suburb, postcode: /^\d{4}$/.test(item.postcode) ? item.postcode : current.postcode }));
   }
 
   const prettyDate = (date: string) => (/^\d{4}-\d{2}-\d{2}$/.test(date) ? formatPickupDate(date) : date);
@@ -248,14 +239,14 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
               if (!suggestions.length) return;
               if (event.key === "ArrowDown") { event.preventDefault(); setActive((active + 1) % suggestions.length); }
               else if (event.key === "ArrowUp") { event.preventDefault(); setActive((active - 1 + suggestions.length) % suggestions.length); }
-              else if (event.key === "Enter" && active >= 0) { event.preventDefault(); pickAddress(suggestions[active].placeId, suggestions[active].text); }
+              else if (event.key === "Enter" && active >= 0) { event.preventDefault(); pickAddress(suggestions[active]); }
               else if (event.key === "Escape") setSuggestions([]);
             }}
           />
           {suggestions.length > 0 && (
             <ul id="delivery-street-list" role="listbox" className="co-suggest-list">
               {suggestions.map((item, index) => (
-                <li key={item.placeId} role="option" aria-selected={index === active} className={index === active ? "is-active" : undefined} onMouseDown={(event) => { event.preventDefault(); pickAddress(item.placeId, item.text); }}>{item.text}</li>
+                <li key={item.placeId} role="option" aria-selected={index === active} className={index === active ? "is-active" : undefined} onMouseDown={(event) => { event.preventDefault(); pickAddress(item); }}>{item.text}</li>
               ))}
             </ul>
           )}
