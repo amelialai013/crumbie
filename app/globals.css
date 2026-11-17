@@ -7147,7 +7147,7 @@ html.lightbox-open body {
     min-height: 50px;
     font-size: .95rem;
   }
-  .cart-card-view { order: -1; }
+  .cart-card-view { order: 1; }
 }
 
 .cart-card-close {
@@ -7181,3 +7181,9 @@ html.lightbox-open body {
 /* Clearing the cart: content fades out while the modal fades, then the empty state eases in. */
 .checkout-a { transition: opacity var(--motion-panel) var(--motion-ease), transform var(--motion-panel) var(--motion-ease); }
 .cart-empty.is-appearing { animation: cart-empty-in .5s var(--motion-ease) 60ms both; }
+
+/* Keep the header visible above the modal overlay, but not usable while a modal is open. */
+html:has(.cart-modal-overlay) .site-header {
+  z-index: 90;
+  pointer-events: none;
+}
