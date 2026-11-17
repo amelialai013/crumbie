@@ -6781,3 +6781,14 @@ img.checkout-thumb { object-fit: contain; background: transparent; }
 
 .co-group-head .co-title strong { letter-spacing: -.045em; line-height: 1.02; }
 @media (max-width: 640px) { .co-group-head .co-title strong { line-height: 1.25; } }
+
+/* Cart hover affordances (pointer devices only) */
+.co-item strong a { text-decoration: underline transparent; text-underline-offset: 4px; transition: text-decoration-color var(--motion-fast) var(--motion-fade); }
+.co-item > a .checkout-thumb { transition: transform var(--motion-panel) var(--motion-ease), filter var(--motion-fast) var(--motion-fade); }
+.co-link { transition: opacity var(--motion-fast) var(--motion-fade), text-underline-offset var(--motion-fast) var(--motion-ease); }
+@media (hover: hover) {
+  .co-item strong a:hover { text-decoration-color: rgba(239, 205, 170, .5); }
+  .co-item > a:hover .checkout-thumb { transform: scale(1.015); }
+  .co-link:hover:not(:disabled) { opacity: .95; }
+  .checkout-opt:hover:not(.is-active), .fulfil-toggle button:hover:not(.is-active) { border-color: rgba(201, 173, 148, .55); }
+}
