@@ -5489,9 +5489,26 @@ html:has(.orb-intro:not(.is-leaving)) body {
   gap: 12px;
   padding: 3px;
 }
-.card-addon-step span {
-  font-size: .85rem;
-  opacity: .8;
+.card-addon-step button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #efcdaa;
+  border-radius: 50%;
+  background: transparent;
+  color: #efcdaa;
+}
+.card-addon-step button:disabled {
+  opacity: .3;
+}
+.card-addon-step output {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 44px;
+  border: 1px solid #c9ad94;
+  border-radius: 12px;
+  color: #efcdaa;
+  user-select: none;
 }
 .card-addon-messages {
   display: grid;
@@ -6793,8 +6810,6 @@ img.checkout-thumb { object-fit: contain; background: transparent; }
 }
 @media (prefers-reduced-motion: reduce) { .co-item > a .checkout-thumb { transition: none; } .co-item > a:hover .checkout-thumb { transform: none; } }
 
-.card-addon-step .product-quantity { flex: 0 0 150px; margin: 0; }
-.card-addon-step .quantity-stepper { margin-bottom: 0; }
 .card-addon-count-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .card-addon-count-row > p { margin: 0; }
 .card-addon-count-row > .card-addon-reveal { margin-left: auto; }

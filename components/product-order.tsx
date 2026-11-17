@@ -229,16 +229,9 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                 <div className={`card-addon-reveal${mode === "some" ? " is-open" : ""}`} aria-hidden={mode !== "some"}>
                   <div>
                     <div className="card-addon-step">
-                      <QuantityControl
-                        value={cardCount}
-                        inputId="card-count"
-                        inputAriaLabel="Number of cards"
-                        label={null}
-                        min={1}
-                        max={Math.max(1, boxes - 1)}
-                        tabIndex={mode === "some" ? 0 : -1}
-                        onChange={setCard}
-                      />
+                      <button type="button" aria-label="Fewer cards" tabIndex={mode === "some" ? 0 : -1} disabled={cardCount <= 1} onClick={() => setCard(Math.max(1, cardCount - 1))}>−</button>
+                      <output aria-label="Number of cards" aria-live="polite">{cardCount}</output>
+                      <button type="button" aria-label="More cards" tabIndex={mode === "some" ? 0 : -1} disabled={cardCount >= boxes - 1} onClick={() => setCard(Math.min(boxes - 1, cardCount + 1))}>+</button>
                     </div>
                   </div>
                 </div>
