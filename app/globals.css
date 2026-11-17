@@ -6820,3 +6820,110 @@ img.checkout-thumb { object-fit: contain; background: transparent; }
 .card-addon-count-row .card-addon-step { justify-content: flex-end; }
 .card-addon-count-row { margin-bottom: 12px; }
 .card-addon-count-row { margin-bottom: 8px; }
+
+.card-addon-options > .card-addon-messages:first-child { margin-top: 0; padding-top: 10px; }
+
+.co-pay-action { align-content: start; align-self: end; }
+.checkout-fine { align-self: start; }
+
+@keyframes cart-modal-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cart-modal-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes cart-modal-pop-in { from { transform: translateY(8px) scale(.985); } to { transform: none; } }
+@keyframes cart-modal-pop-out { from { transform: none; } to { transform: translateY(8px) scale(.985); } }
+.cart-modal-overlay { animation: cart-modal-in .2s ease-out both; }
+.cart-modal-overlay .admin-confirm-modal { animation: cart-modal-pop-in .25s cubic-bezier(.22, 1, .36, 1) both; }
+.cart-modal-overlay.is-leaving { animation: cart-modal-out .2s ease-in both; pointer-events: none; }
+.cart-modal-overlay.is-leaving .admin-confirm-modal { animation: cart-modal-pop-out .2s ease-in both; }
+@media (prefers-reduced-motion: reduce) {
+  .cart-modal-overlay, .cart-modal-overlay .admin-confirm-modal { animation-duration: .01ms !important; }
+}
+
+@media (max-width: 600px) {
+  .cart-modal-overlay { padding: 16px; }
+  .cart-modal-overlay .admin-confirm-modal { padding: 26px 22px 22px; border-radius: 22px; }
+  .cart-modal-overlay .admin-confirm-modal h2 { font-size: 1.7rem; line-height: 1.1; }
+  .cart-modal-overlay .admin-confirm-modal p { margin-top: 12px; line-height: 1.55; }
+  .cart-modal-overlay .admin-confirm-actions { flex-direction: column; gap: 10px; margin-top: 22px; }
+  .cart-modal-overlay .admin-confirm-actions .btn { width: 100%; justify-content: center; }
+}
+
+/* Cart toast: full-width bar, deep brown */
+.cart-confirmation {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  justify-content: space-between;
+  padding: 18px max(32px, env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(32px, env(safe-area-inset-left));
+  border-radius: 0;
+  background: #3a2a1c;
+  color: #efcdaa;
+  box-shadow: 0 -14px 32px -12px rgba(0, 0, 0, .55);
+  transform: none;
+}
+@starting-style {
+  .cart-confirmation {
+    transform: translateY(100%);
+  }
+}
+.cart-confirmation.is-closing {
+  transform: translateY(100%);
+}
+.cart-confirmation-check {
+  border-color: #efcdaa;
+  color: #efcdaa;
+}
+.cart-confirmation p,
+.cart-confirmation-link {
+  color: #efcdaa;
+}
+.cart-confirmation p {
+  opacity: .8;
+}
+.cart-confirmation-text {
+  flex: 1;
+}
+.cart-confirmation-link {
+  margin-left: auto;
+  padding: 0 8px;
+}
+.cart-confirmation-close {
+  background: #efcdaa;
+  color: #1a140d;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cart-confirmation-close:hover {
+    background: #fff;
+  }
+}
+@media (max-width: 640px) {
+  .cart-confirmation {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  }
+}
+.cart-confirmation.is-closing {
+  filter: none;
+  opacity: 0;
+  transform: translateY(40%);
+  transition: transform var(--motion-exit) cubic-bezier(.4, 0, 1, 1), opacity var(--motion-exit) cubic-bezier(.4, 0, .6, 1);
+}
+.cart-confirmation.is-closing .cart-confirmation-text,
+.cart-confirmation.is-closing .cart-confirmation-link {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 140ms ease-out, transform 140ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cart-confirmation.is-closing {
+    transform: none;
+    transition: opacity 120ms linear;
+  }
+  .cart-confirmation.is-closing .cart-confirmation-text,
+  .cart-confirmation.is-closing .cart-confirmation-link {
+    transform: none;
+  }
+}

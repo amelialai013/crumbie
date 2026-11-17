@@ -34,6 +34,20 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [emptyAppearing, lines.length]);
 
+  const [pendingRemoval, setPendingRemoval] = useState<CartLine | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [modalLeaving, setModalLeaving] = useState(false);
+
+  function closeModal(after?: () => void) {
+    setModalLeaving(true);
+    window.setTimeout(() => {
+      setPendingRemoval(null);
+      setConfirmClear(false);
+      setModalLeaving(false);
+      after?.();
+    }, 200);
+  }
+
   function removeLine(key: string | null) {
     if (removeTimeout.current !== null) return;
     const last = key === null || lines.length === 1;
@@ -287,7 +301,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
             <strong><Link href={href}>{line.productName}</Link></strong>
             <p className="co-price">${(line.unitPrice * line.quantity).toFixed(2)} AUD</p>
             <small>{line.variantLabel}</small>
-            <button type="button" className="co-link co-remove" aria-label={`Remove ${line.productName}`} disabled={removingLast} onClick={() => removeLine(line.key)}>Remove</button>
+            <button type="button" className="co-link co-remove" aria-label={`Remove ${line.productName}`} disabled={removingLast} onClick={() => (cardsOf(line) > 0 ? setPendingRemoval(line) : removeLine(line.key))}>Remove</button>
           </div>
           <div className="co-actions">
             <QuantityControl value={line.quantity} inputId={`quantity-${line.key}`} inputAriaLabel={`Quantity for ${line.productName}`} onChange={(value) => setQuantity(line.key, value)} />
@@ -299,7 +313,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
               <strong>{card.label} × {lineCards.length}</strong>
               <p className="co-price">${(card.price * lineCards.length).toFixed(2)} AUD</p>
               {lineCards.map((message, i) => (
-                <small key={i}>{[line.cardNames?.[i]?.trim(), message.trim() ? `“${message.trim()}”` : "Blank card"].filter(Boolean).join(": ")}</small>
+                <small key={i}>{(lineCards.length > 1 ? `Card ${i + 1}: ` : "") + [line.cardNames?.[i]?.trim(), message.trim() ? `“${message.trim()}”` : "Blank Card"].filter(Boolean).join(" - ")}</small>
               ))}
               <button type="button" className="co-link co-remove" onClick={() => setLineCard(line.key, [], [])}>Remove</button>
             </div>
@@ -324,13 +338,13 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
   const payRow = (
     <div className="co-pay-row">
       <div className="co-total" aria-live="polite">
-        <span>Total (AUD)</span>
-        <strong>${total.toFixed(2)}</strong>
+        <span>Total</span>
+        <strong>${total.toFixed(2)}<small>AUD</small></strong>
       </div>
       <div className="co-pay-action">
         <button className="btn btn-dark co-pay" disabled={busy} onClick={pay}>{busy ? "Starting secure checkout…" : "Confirm and pay"}</button>
         <div className="checkout-fine">
-        <button type="button" className="co-link co-clear" disabled={removingLast} onClick={() => removeLine(null)}>
+        <button type="button" className="co-link co-clear" disabled={removingLast} onClick={() => setConfirmClear(true)}>
           <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 5.5h13M7.5 5.5V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5M5 5.5l.7 10a1.5 1.5 0 0 0 1.5 1.4h5.6a1.5 1.5 0 0 0 1.5-1.4l.7-10M8.3 9v4.5M11.7 9v4.5" /></svg>
           Clear cart
         </button>
@@ -408,6 +422,30 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
           )}
         </div>
       </section>
+      {pendingRemoval && (
+        <div className={`admin-confirm-overlay cart-modal-overlay${modalLeaving ? " is-leaving" : ""}`} role="presentation">
+          <div className="admin-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cart-remove-title" aria-describedby="cart-remove-copy">
+            <h2 id="cart-remove-title">Remove this item?</h2>
+            <p id="cart-remove-copy">Removing this will also remove {cardsOf(pendingRemoval) === 1 ? "the card" : `the ${cardsOf(pendingRemoval)} cards`} attached to it.</p>
+            <div className="admin-confirm-actions">
+              <button className="btn btn-light" type="button" autoFocus onClick={() => closeModal()}>Keep item</button>
+              <button className="btn btn-dark admin-confirm-danger" type="button" onClick={() => { const key = pendingRemoval.key; closeModal(() => removeLine(key)); }}>Remove item</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {confirmClear && (
+        <div className={`admin-confirm-overlay cart-modal-overlay${modalLeaving ? " is-leaving" : ""}`} role="presentation">
+          <div className="admin-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cart-clear-title" aria-describedby="cart-clear-copy">
+            <h2 id="cart-clear-title">Clear your cart?</h2>
+            <p id="cart-clear-copy">This will remove everything from your cart. This can&apos;t be undone.</p>
+            <div className="admin-confirm-actions">
+              <button className="btn btn-light" type="button" autoFocus onClick={() => closeModal()}>Keep cart</button>
+              <button className="btn btn-dark admin-confirm-danger" type="button" onClick={() => closeModal(() => removeLine(null))}>Clear cart</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
