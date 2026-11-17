@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart, type CartLine } from "@/components/cart-context";
 import QuantityControl from "@/components/quantity-control";
 import type { CardOption } from "@/lib/card";
@@ -23,6 +23,12 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
   const placesOff = useRef(false);
   const sessionToken = useRef("");
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(""), 8000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   function searchAddress(value: string) {
     setForm((current) => ({ ...current, street: value }));
@@ -256,7 +262,6 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
       </div>
       <div className="co-pay-action">
         <button className="btn btn-dark co-pay" disabled={busy} onClick={pay}>{busy ? "Starting secure checkout…" : "Confirm and pay"}</button>
-        {error && <p className="field-error" role="alert">{error}</p>}
         <p className="checkout-fine">You&apos;ll finish on Stripe&apos;s secure page · GST included</p>
       </div>
     </div>
@@ -303,6 +308,16 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
 
   return (
     <>
+      {error && (
+        <div className="co-alert" role="alert">
+          <p>{error}</p>
+          <button type="button" className="btn btn-light co-alert-close" aria-label="Close" title="Close" onClick={() => setError("")}>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="m5 5 10 10M15 5 5 15" />
+            </svg>
+          </button>
+        </div>
+      )}
       <section className="page-hero"><div className="shell"><h1 className="page-title">Your order</h1></div></section>
       <section className="section cart-section">
         <div className="shell">

@@ -1,6 +1,6 @@
 import "server-only";
 import { products as catalogProducts, pickupDates as catalogPickupDates, productSlugFromName, type PickupDate, type Product } from "@/lib/catalog";
-import { cardOptionFrom, exploreCopyFrom, galleryCopyFrom, galleryImagesFrom, promoFrom, type CardOption } from "@/lib/card";
+import { cardOptionFrom, exploreCopyFrom, galleryCopyFrom, galleryImagesFrom, promoFrom, unavailableMessageFrom, type CardOption } from "@/lib/card";
 import { deliveryFrom, type DeliveryOption } from "@/lib/delivery";
 import { getRecord, listRecords } from "@/lib/store";
 
@@ -76,4 +76,9 @@ export async function getPromo() {
 export async function getExploreCopy() {
   const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
   return exploreCopyFrom(settings?.fields);
+}
+
+export async function getUnavailableMessage() {
+  const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
+  return unavailableMessageFrom(settings?.fields);
 }

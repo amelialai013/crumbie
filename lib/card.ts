@@ -74,3 +74,10 @@ export function exploreCopyFrom(fields: Record<string, string> | undefined) {
 		subtext: fields?.exploreSubtext?.trim() ?? "Fresh batches, baked to order and ready for pickup. Browse every flavour.",
 	};
 }
+
+export const defaultUnavailableMessage = "This product or box size is no longer available. Please remove it and choose another box.";
+
+// Shown in the checkout alert when a cart item can no longer be ordered.
+export function unavailableMessageFrom(fields: Record<string, string> | undefined) {
+	return fields?.unavailableMessage?.trim() || defaultUnavailableMessage;
+}

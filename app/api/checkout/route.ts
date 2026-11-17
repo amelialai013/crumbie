@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { isDateClosed } from "@/lib/catalog";
 import { deliveryFeeFor, postcodeAllowed } from "@/lib/delivery";
-import { getCardOption, getDelivery, getProducts, getPickupDates, getPromo } from "@/lib/catalog-store";
+import { getCardOption, getDelivery, getProducts, getPickupDates, getPromo, getUnavailableMessage } from "@/lib/catalog-store";
 import { setRecord } from "@/lib/store";
 
 const lineSchema = z.object({
@@ -47,7 +47,7 @@ const integrationIdentifier = (() => {
 })();
 
 export async function POST(req: Request) {
-	const [products, pickupDates, cardOption, promo, deliveryOption] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getPromo(), getDelivery()]);
+	const [products, pickupDates, cardOption, promo, deliveryOption, unavailableMessage] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getPromo(), getDelivery(), getUnavailableMessage()]);
 	const parsed = schema.safeParse(await req.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: "Your cart is invalid." }, { status: 400 });
 
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 
 		if (!product || !variant || !pickup || product.soldOut || product.soldOutDates?.includes(pickup.id) || isDateClosed(pickup)) {
 			const error = !product || !variant || product.soldOut
-        ? "This product or box size is no longer available. Please remove it and choose another box."
+        ? unavailableMessage
         : !pickup || product.soldOutDates?.includes(pickup.id) || pickup.soldOut
           ? `${product.name}: this pickup is no longer available. Please remove it and choose another pickup date.`
           : `${product.name}: orders for ${pickup.date} (${pickup.window}) have closed. Orders close 72 hours before pickup. Please remove this item and choose an available pickup date.`;
