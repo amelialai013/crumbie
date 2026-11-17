@@ -17,6 +17,8 @@ export default function HeroMedia() {
   // Render the videos on the server so they start downloading before hydration;
   // reduced-motion users are handled by CSS and by the effect below.
   const [reduceMotion, setReduceMotion] = useState(false);
+  // Phones get one looping clip: decoding and downloading three HD videos made the entrance stutter.
+  const [compact, setCompact] = useState(true);
   const [hasCrossfaded, setHasCrossfaded] = useState(false);
   const [activeClip, setActiveClip] = useState(0);
   const [outgoingClip, setOutgoingClip] = useState<number | null>(null);
@@ -34,6 +36,14 @@ export default function HeroMedia() {
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduceMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 900px)");
+    const update = () => setCompact(media.matches);
     update();
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
@@ -250,7 +260,7 @@ export default function HeroMedia() {
       {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized 45KB webp, must render before hydration */}
       <img className="hero-poster" src="/hero-poster.webp" alt="" fetchPriority="high" decoding="async" />
       {!reduceMotion &&
-        clips.map((clip, index) => {
+        clips.slice(0, compact ? 1 : clips.length).map((clip, index) => {
           const isReady = readyClips.includes(index) && !failedClips.includes(index);
           const isPlaying = playingClips.includes(index);
           const className = [

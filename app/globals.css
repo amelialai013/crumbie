@@ -3145,8 +3145,7 @@ body {
   .page-hero { padding: 60px 0 40px; }
   .hero-content { padding-block: 48px; }
   .hero-logo-heading { width: min(340px, 86vw); margin-bottom: 8px; }
-  .hero-logo-desktop { display: none; }
-  .hero-logo-mobile { display: block; }
+  .hero-logo { aspect-ratio: 13220 / 5415; }
   .hero-content .actions { width: 100%; }
   .hero-content .actions .btn { flex: 1 1 240px; }
   .custom-order-notice a {
@@ -7198,3 +7197,20 @@ html:has(.cart-modal-overlay) .site-header {
   opacity: .7;
   font-size: .9rem;
 }
+
+.card-addon-field-name .card-addon-input { min-height: 0; padding: 14px 64px 14px 16px; }
+.card-addon-field-name .card-addon-count { bottom: auto; top: 50%; transform: translateY(-50%); }
+
+/* One close-button size across the site (matches the photo lightbox). */
+.cart-card-close,
+.co-alert-close,
+.cart-confirmation-close {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+}
+.cart-card-close svg,
+.co-alert-close svg,
+.cart-confirmation-close svg { width: 18px; height: 18px; }
+.cart-card-close { top: 10px; right: 10px; }

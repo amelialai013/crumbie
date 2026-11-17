@@ -1,6 +1,6 @@
 import { productCardImage, productCardIsPhoto } from "@/lib/catalog";
 import Link from "next/link";
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import PromoBanner from "@/components/promo-banner";
 import { getProducts, getPromo } from "@/lib/catalog-store";
 import whiteLogo from "@/brand/latest-logos/new-text-logo/text-white.png";
@@ -17,14 +17,20 @@ export default async function Home() {
   const content = await getRecord<{ fields?: Record<string, string> }>("content", "homepage").catch(() => null);
   const f = content?.fields || {};
   const catalogHeading = f.catalogHeading && f.catalogHeading !== "Crumbs for every craving" ? f.catalogHeading : null;
+  const logoProps = { alt: "Club Crumbie", quality: 100 };
+  const { props: desktopLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "640px" });
+  const { props: mobileLogo } = getImageProps({ ...logoProps, src: whiteVerticalLogo, sizes: "340px" });
   return (
     <>
       <section className="hero">
         <HeroMedia />
         <div className="hero-content">
           <h1 className="hero-logo-heading">
-            <Image className="hero-logo hero-logo-desktop" src={whiteLogo} alt="Club Crumbie" preload quality={100} sizes="640px" />
-            <Image className="hero-logo hero-logo-mobile" src={whiteVerticalLogo} alt="Club Crumbie" preload quality={100} sizes="340px" />
+            <picture>
+              <source media="(max-width: 640px)" srcSet={mobileLogo.srcSet} sizes={mobileLogo.sizes} />
+              {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is in desktopLogo */}
+              <img {...desktopLogo} className="hero-logo" fetchPriority="high" />
+            </picture>
           </h1>
           <div className="actions">
             <Link className="btn btn-dark btn-arrow" href="/crumbs">

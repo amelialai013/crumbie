@@ -242,20 +242,23 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                   {Array.from({ length: cardCount }, (_, index) => (
                     <div className="card-addon-message" key={index}>
                       {cardCount > 1 && <label className="card-addon-message-title" htmlFor={`card-name-${index}`}>{`Card ${index + 1}`}</label>}
-                      <textarea
-                        id={`card-name-${index}`}
-                        className={`card-addon-input${showNameErrors && missingName(index) ? " has-error" : ""}`}
-                        rows={1}
-                        maxLength={card.nameMaxLength}
-                        autoComplete="off"
-                        required
-                        placeholder={card.namePlaceholder}
-                        aria-label={cardCount === 1 ? "Card recipient name" : `Card ${index + 1} recipient name`}
-                        aria-invalid={showNameErrors && missingName(index)}
-                        value={cardNames[index] ?? ""}
-                        onChange={(event) => updateName(index, event.target.value.replace(/\n/g, " "))}
-                        onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault(); }}
-                      />
+                      <div className="card-addon-field card-addon-field-name">
+                        <textarea
+                          id={`card-name-${index}`}
+                          className={`card-addon-input${showNameErrors && missingName(index) ? " has-error" : ""}`}
+                          rows={1}
+                          maxLength={card.nameMaxLength}
+                          autoComplete="off"
+                          required
+                          placeholder={card.namePlaceholder}
+                          aria-label={cardCount === 1 ? "Card recipient name" : `Card ${index + 1} recipient name`}
+                          aria-invalid={showNameErrors && missingName(index)}
+                          value={cardNames[index] ?? ""}
+                          onChange={(event) => updateName(index, event.target.value.replace(/\n/g, " "))}
+                          onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault(); }}
+                        />
+                        <small className="card-addon-count">{(cardNames[index] ?? "").length}/{card.nameMaxLength}</small>
+                      </div>
                       {showNameErrors && missingName(index) && <small className="card-addon-error" role="alert">Please add a name for this card</small>}
                       <div className="card-addon-field">
                         <textarea
