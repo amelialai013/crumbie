@@ -37,7 +37,7 @@ const defaultTemplates = {
 Thanks for your order with Club Crumbie. We have received your payment and your cookie box is confirmed.
 
 Order number: {{orderNumber}}
-Pickup date: {{pickupDate}}
+Pickup window: {{pickupDate}}
 Pickup window: {{pickupWindow}}
 Order total: {{orderTotal}}
 Pickup address: {{pickupAddress}}

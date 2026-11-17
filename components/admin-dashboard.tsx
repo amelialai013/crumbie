@@ -315,8 +315,8 @@ const adminTabs = [
   "pickup schedule",
   "enquiries",
   "products",
-  "pickup dates",
-  "delivery dates",
+  "pickup windows",
+  "delivery windows",
   "homepage",
   "about",
   "contact us",
@@ -379,7 +379,7 @@ const contentModules: Record<string, ContentModule> = {
         stepOneBody: "Pick a curated collection in a box of four, six or twelve.",
         stepTwoTitle: "Select pickup",
         stepTwoBody:
-          "Choose an available pickup date and time in Ivanhoe, Victoria.",
+          "Choose an available pickup window in Ivanhoe, Victoria.",
         stepThreeTitle: "Pay securely",
         stepThreeBody: "Complete payment and receive immediate confirmation.",
         catalogHeading: "Crumbs for every craving",
@@ -468,10 +468,10 @@ const contentModules: Record<string, ContentModule> = {
         pageTitle: "Crumbie policies",
         pickupHeading: "Pickup",
         pickupCopy:
-          "Club Crumbie currently offers pickup only from Ivanhoe, Victoria. Each item must be assigned to an available pickup date and its fixed collection window before checkout. The exact address is provided after successful payment in your confirmation email.",
+          "Club Crumbie currently offers pickup only from Ivanhoe, Victoria. Each item must be assigned to an available pickup window and its fixed collection window before checkout. The exact address is provided after successful payment in your confirmation email.",
         deadlineHeading: "Order deadlines",
         deadlineCopy:
-          "Standard box orders close 72 hours before their pickup window. A date or individual product may be marked sold out earlier by Club Crumbie.",
+          "Standard box orders close 72 hours before their pickup window. A window or individual product may be marked sold out earlier by Club Crumbie.",
         paymentHeading: "Payments",
         paymentCopy:
           "Standard orders are confirmed immediately after successful payment through Stripe. Prices are in Australian dollars and include GST where applicable.",
@@ -525,7 +525,7 @@ const contentModules: Record<string, ContentModule> = {
 Thanks for your order with Club Crumbie. We have received your payment and your cookie box is confirmed.
 
 Order number: {{orderNumber}}
-Pickup date: {{pickupDate}}
+Pickup window: {{pickupDate}}
 Pickup window: {{pickupWindow}}
 Order total: {{orderTotal}}
 Pickup address: {{pickupAddress}}
@@ -538,7 +538,7 @@ Club Crumbie`,
 
 Just a reminder that your Club Crumbie order is ready for pickup soon.
 
-Pickup date: {{pickupDate}}
+Pickup window: {{pickupDate}}
 Pickup window: {{pickupWindow}}
 Order number: {{orderNumber}}
 Pickup address: {{pickupAddress}}
@@ -993,7 +993,7 @@ function DeliverySettings({
         <label className={`${switchStyles.root} admin-promo-row`} style={{ marginBottom: 24 }}>
           <span>
             <strong>Offer delivery on all products</strong>
-            <small>{enabled ? "Customers choose Pickup or Delivery when they add a product to the cart." : "Every order is pickup and customers only choose a pickup date when they add a product to the cart."}</small>
+            <small>{enabled ? "Customers choose Pickup or Delivery when they add a product to the cart." : "Every order is pickup and customers only choose a pickup window when they add a product to the cart."}</small>
           </span>
           <input
             type="checkbox"
@@ -1265,7 +1265,7 @@ export default function AdminDashboard() {
   const [deletingEnquiryId, setDeletingEnquiryId] = useState<string | null>(null);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [managedDeliveryDates, setManagedDeliveryDates] = useState<PickupDate[]>([]);
-  const deliveryTab = tab === "delivery dates";
+  const deliveryTab = tab === "delivery windows";
   const dateNoun = deliveryTab ? "delivery" : "pickup";
   const managedDates = deliveryTab ? managedDeliveryDates : managedPickupDates;
   const setManagedDates = deliveryTab ? setManagedDeliveryDates : setManagedPickupDates;
@@ -1749,7 +1749,7 @@ export default function AdminDashboard() {
   async function addPickupDate(event: React.FormEvent) {
     event.preventDefault();
     const fieldErrors: Record<string, string> = {};
-    if (!newPickupDate.trim()) fieldErrors.date = `Choose a ${dateNoun} date.`;
+    if (!newPickupDate.trim()) fieldErrors.date = `Choose a ${dateNoun} window.`;
     if (!TIME_PATTERN.test(newPickupStart))
       fieldErrors.start = "Enter a valid start time.";
     if (!TIME_PATTERN.test(newPickupEnd))
@@ -1759,7 +1759,7 @@ export default function AdminDashboard() {
     setPickupFieldErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return;
     setPickupDateStatus("Saving...");
-    beginAdminAction(`Adding ${dateNoun} date…`);
+    beginAdminAction(`Adding ${dateNoun} window…`);
     const response = await fetch(`/api/admin/${dateNoun}-dates`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1772,7 +1772,7 @@ export default function AdminDashboard() {
       finishAdminAction();
       const message =
         (await response.json().catch(() => null))?.error ||
-        `Unable to save ${dateNoun} date`;
+        `Unable to save ${dateNoun} window`;
       setPickupDateStatus("");
       setPickupFieldErrors({ date: message });
       return;
@@ -1784,7 +1784,7 @@ export default function AdminDashboard() {
       ),
     );
     resetPickupForm();
-    finishAdminAction(`${deliveryTab ? "Delivery" : "Pickup"} date successfully added`);
+    finishAdminAction(`${deliveryTab ? "Delivery" : "Pickup"} window successfully added`);
     const pickupModalToggle = document.getElementById("pickup-modal-toggle");
     if (pickupModalToggle instanceof HTMLInputElement) {
       pickupModalToggle.checked = false;
@@ -1796,7 +1796,7 @@ export default function AdminDashboard() {
     const { id } = pickupDatePendingRemoval;
     setRemovingPickupDateId(id);
     setPickupDateStatus("Removing...");
-    beginAdminAction(`Removing ${dateNoun} date…`);
+    beginAdminAction(`Removing ${dateNoun} window…`);
     const response = await fetch(
       `/api/admin/${dateNoun}-dates?id=${encodeURIComponent(id)}`,
       { method: "DELETE" },
@@ -1806,7 +1806,7 @@ export default function AdminDashboard() {
       finishAdminAction();
       setPickupDateStatus(
         (await response.json().catch(() => null))?.error ||
-          `Unable to remove ${dateNoun} date`,
+          `Unable to remove ${dateNoun} window`,
       );
       return;
     }
@@ -1816,7 +1816,7 @@ export default function AdminDashboard() {
     setRemovingPickupDateId("");
     setPickupDatePendingRemoval(null);
     setPickupDateStatus("");
-    finishAdminAction(`${deliveryTab ? "Delivery" : "Pickup"} date successfully removed`);
+    finishAdminAction(`${deliveryTab ? "Delivery" : "Pickup"} window successfully removed`);
   }
 
   function orderCountForPickupDate(pickupDate: PickupDate) {
@@ -2552,7 +2552,7 @@ export default function AdminDashboard() {
               className="admin-confirm-modal"
               role="dialog"
             >
-              <h2 id="pickup-remove-title">Remove this {dateNoun} date?</h2>
+              <h2 id="pickup-remove-title">Remove this {dateNoun} window?</h2>
               <p id="pickup-remove-copy">
                 This will remove{" "}
                 <strong>
@@ -2568,7 +2568,7 @@ export default function AdminDashboard() {
                   onClick={() => setPickupDatePendingRemoval(null)}
                   disabled={Boolean(removingPickupDateId)}
                 >
-                  Keep date
+                  Keep window
                 </button>
                 <button
                   className="btn btn-dark admin-confirm-danger"
@@ -2598,21 +2598,21 @@ export default function AdminDashboard() {
               className="admin-confirm-modal"
               role="dialog"
             >
-              <h2 id="pickup-blocked-title">This {dateNoun} date has orders</h2>
+              <h2 id="pickup-blocked-title">This {dateNoun} window has orders</h2>
               <p id="pickup-blocked-copy">
                 You cannot remove{" "}
                 <strong>
                   {formatPickupDate(blockedPickupDateRemoval.pickupDate.date)}
                 </strong>{" "}
-                until you move all orders that have chosen this date to a
-                different {dateNoun} date.
+                until you move all orders that have chosen this window to a
+                different {dateNoun} window.
               </p>
               <p>
                 {blockedPickupDateRemoval.orderCount}{" "}
                 {blockedPickupDateRemoval.orderCount === 1
                   ? "order is"
                   : "orders are"}{" "}
-                currently using this {dateNoun} date.
+                currently using this {dateNoun} window.
               </p>
               <div className="admin-confirm-actions">
                 <button
@@ -2643,7 +2643,7 @@ export default function AdminDashboard() {
                 </label>
               </>
             )}
-            {(tab === "pickup dates" || tab === "delivery dates") && (
+            {(tab === "pickup windows" || tab === "delivery windows") && (
               <>
                 <input
                   id="pickup-modal-toggle"
@@ -2657,7 +2657,7 @@ export default function AdminDashboard() {
                   className="btn btn-dark admin-pickup-open"
                   htmlFor="pickup-modal-toggle"
                 >
-                  Add {dateNoun} date
+                  Add {dateNoun} window
                 </label>
               </>
             )}
@@ -3687,7 +3687,7 @@ export default function AdminDashboard() {
             )}
           </>
         )}
-        {(tab === "pickup dates" || tab === "delivery dates") && (
+        {(tab === "pickup windows" || tab === "delivery windows") && (
           <>
             {deliveryTab && cardSettings && !deliveryOn && (
               <p className="admin-sync-note admin-delivery-off-note" role="note">
@@ -3700,7 +3700,7 @@ export default function AdminDashboard() {
             )}
             <form className="admin-modal admin-add-date" onSubmit={addPickupDate} noValidate>
               <div className="admin-modal-header">
-                <h2>Add {dateNoun} date</h2>
+                <h2>Add {dateNoun} window</h2>
                 <label
                   className="btn btn-light admin-pickup-close"
                   htmlFor="pickup-modal-toggle"
@@ -3714,7 +3714,7 @@ export default function AdminDashboard() {
               </div>
               <div className="admin-modal-body" key={pickupFormKey}>
               <div className={`field${pickupFieldErrors.date ? " has-error" : ""}`}>
-                <label htmlFor="new-pickup-date">{deliveryTab ? "Delivery" : "Pickup"} date</label>
+                <label htmlFor="new-pickup-date">{deliveryTab ? "Delivery" : "Pickup"} window</label>
                 <DatePicker
                   id="new-pickup-date"
                   value={newPickupDate}
@@ -3761,7 +3761,7 @@ export default function AdminDashboard() {
                   {pickupDateStatus === "Saving..." && (
                     <span className="btn-spinner" aria-hidden="true" />
                   )}
-                  {pickupDateStatus === "Saving..." ? "Adding…" : `Add ${dateNoun} date`}
+                  {pickupDateStatus === "Saving..." ? "Adding…" : `Add ${dateNoun} window`}
                 </button>
                 {pickupDateStatus && pickupDateStatus !== "Saving..." && (
                   <span>{pickupDateStatus}</span>
@@ -3772,7 +3772,7 @@ export default function AdminDashboard() {
             <div
               className="admin-filter-tabs"
               role="tablist"
-              aria-label={`${deliveryTab ? "Delivery" : "Pickup"} date filters`}
+              aria-label={`${deliveryTab ? "Delivery" : "Pickup"} window filters`}
             >
               {(["all", "closed", "open"] as PickupFilter[]).map((filter) => (
                 <button
@@ -3803,7 +3803,7 @@ export default function AdminDashboard() {
                 <table className="table admin-pickup-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
+                      <th>Window</th>
                       <th>{deliveryTab ? "Delivery" : "Pickup"} window</th>
                       <th>Status</th>
                       <th>
@@ -3844,7 +3844,7 @@ export default function AdminDashboard() {
                       })
                     ) : (
                       <tr>
-                        <td colSpan={4}>No {dateNoun} dates</td>
+                        <td colSpan={4}>No {dateNoun} windows</td>
                       </tr>
                     )}
                   </tbody>

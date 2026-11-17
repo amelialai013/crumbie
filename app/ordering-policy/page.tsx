@@ -15,7 +15,7 @@ export default async function Policy() {
   const f = content?.fields || {};
   const removed = content?.removedFields || [];
   const sections = [
-    { key: "pickup", heading: f.pickupHeading || "Pickup", body: f.pickupCopy || "Club Crumbie currently offers pickup only from Ivanhoe, Victoria. Each item must be assigned to an available pickup date and its fixed collection window before checkout. The exact address is provided after successful payment in your confirmation email." },
+    { key: "pickup", heading: f.pickupHeading || "Pickup", body: f.pickupCopy || "Club Crumbie currently offers pickup only from Ivanhoe, Victoria. Each item must be assigned to an available pickup window and its fixed collection window before checkout. The exact address is provided after successful payment in your confirmation email." },
     { key: "deadline", heading: f.deadlineHeading || "Order deadlines", body: f.deadlineCopy || "Standard box orders close 72 hours before their pickup window. A date or individual product may be marked sold out earlier by Club Crumbie." },
     { key: "payment", heading: f.paymentHeading || "Payments", body: f.paymentCopy || "Standard orders are confirmed immediately after successful payment through Stripe. Prices are in Australian dollars and include GST where applicable." },
     { key: "cancellation", heading: f.cancellationHeading || "Cancellations and refunds", body: f.cancellationCopy || "Because products are made for scheduled pickup, paid orders are final and change-of-mind cancellations are not accepted. Nothing in this policy excludes rights or remedies available under Australian Consumer Law." },

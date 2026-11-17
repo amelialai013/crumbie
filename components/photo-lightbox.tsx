@@ -21,9 +21,19 @@ export default function PhotoLightbox({
   useEffect(() => {
     const el = dialog.current;
     if (!el) return;
-    if (open !== null && !el.open) el.showModal();
+    if (open !== null && !el.open) {
+      el.showModal();
+      el.focus({ preventScroll: true });
+    }
     if (open === null && el.open) el.close();
   }, [open]);
+
+  useEffect(() => {
+    if (open === null) return;
+    const root = document.documentElement;
+    root.classList.add("lightbox-open");
+    return () => root.classList.remove("lightbox-open");
+  }, [open === null]);
 
   const step = useCallback(
     (direction: -1 | 1) => {
@@ -50,6 +60,7 @@ export default function PhotoLightbox({
     <dialog
       ref={dialog}
       className="photo-lightbox"
+      tabIndex={-1}
       aria-label={`${name} photo viewer`}
       onClose={() => onOpenChange(null)}
       onKeyDown={onKeyDown}
@@ -74,7 +85,7 @@ export default function PhotoLightbox({
               unoptimized={!images[open].includes("images.unsplash.com")}
             />
           </div>
-          <button type="button" className="photo-lightbox-close" onClick={() => onOpenChange(null)} aria-label="Close photo viewer" autoFocus>
+          <button type="button" className="photo-lightbox-close" onClick={() => onOpenChange(null)} aria-label="Close photo viewer">
             <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9m0-9-9 9" /></svg>
           </button>
           {images.length > 1 && (

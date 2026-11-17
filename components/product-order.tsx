@@ -166,13 +166,13 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
           </div>
         )}
         <div className="field product-date">
-          <span className="field-label" id="date-label">{delivering ? "Delivery date" : "Pickup date"}</span>
+          <span className="field-label" id="date-label">{delivering ? "Delivery window" : "Pickup window"}</span>
           {delivering ? (
             <PremiumSelect
               labelId="date-label"
               value={chosenSlot?.id ?? ""}
               options={slotOptions.map((slot) => ({ value: slot.id, label: formatPickupDate(slot.date), detail: slot.window }))}
-              placeholder={slotOptions.length ? "Select a delivery date" : "No delivery dates currently available"}
+              placeholder={slotOptions.length ? "Select a delivery window" : "No delivery windows currently available"}
               disabled={slotOptions.length === 0}
               onChange={setSlotId}
             />
@@ -185,7 +185,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
               label: formatPickupDate(date.date),
               detail: date.window,
             }))}
-            placeholder={soldOut ? "No dates currently available" : "Select an available date"}
+            placeholder={soldOut ? "No windows currently available" : "Select an available window"}
             disabled={soldOut}
             onChange={setDateId}
           />
@@ -285,34 +285,26 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
       </div>
       {confirmation && typeof document !== "undefined" && createPortal(
         <div className="cart-toast-layer">
-          <div className="cart-toast-backstop" aria-hidden="true" />
           <div
-            className={`cart-confirmation${confirmationClosing ? " is-closing" : ""}`}
+            className={`cart-card${confirmationClosing ? " is-closing" : ""}`}
             role="status"
             aria-live="polite"
-            onAnimationEnd={(event) => {
-              if (event.animationName !== "cart-confirmation-out") return;
-              setConfirmation(null);
-              setConfirmationClosing(false);
-            }}
           >
-            <span className="cart-confirmation-check" aria-hidden="true">
-              <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" pathLength="1" /></svg>
-            </span>
-            <div className="cart-confirmation-text">
-              <strong>
-                <span className="cart-confirmation-full">Added to your cart</span>
-                <span className="cart-confirmation-short">Added to cart</span>
-              </strong>
-              <p>{confirmation.quantity} × {confirmation.variant} · {product.name}</p>
-            </div>
-            <Link className="cart-confirmation-link" href="/cart">
-              View cart
-              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4.5 5.5 5.5L7 15.5" /></svg>
-            </Link>
-            <button className="cart-confirmation-close" type="button" onClick={closeConfirmation} aria-label="Close">
+            <button className="cart-card-close" type="button" onClick={closeConfirmation} aria-label="Close">
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 5.5 9 9M14.5 5.5l-9 9" /></svg>
             </button>
+            <span className="cart-card-check" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" pathLength="1" /></svg>
+            </span>
+            <strong>Added to your cart</strong>
+            <p>{confirmation.quantity} × {confirmation.variant} · {product.name}</p>
+            <div className="cart-card-actions">
+              <button className="cart-card-keep" type="button" onClick={closeConfirmation}>Keep shopping</button>
+              <Link className="cart-card-view" href="/cart">
+                View cart
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4.5 5.5 5.5L7 15.5" /></svg>
+              </Link>
+            </div>
           </div>
         </div>,
         document.body,

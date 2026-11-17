@@ -231,6 +231,12 @@ html:has(.orb-intro:not(.is-leaving)) :is(.hero-content .hero-logo-heading, .her
   animation-play-state: paused;
 }
 
+/* On small screens the hero content is near the orb's centre, so it finished rising while the
+   orb still covered it. Start it once the orb is mostly clear. */
+@media (max-width: 900px) {
+  html:has(.orb-intro.is-leaving) .hero-content { --reveal-base: 600ms; }
+}
+
 /* Reduced motion: entrances become short cross-fades with no travel or stagger, and the
    other one-shot keyframes drop their transforms. */
 @media (prefers-reduced-motion: reduce) {

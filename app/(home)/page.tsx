@@ -50,7 +50,7 @@ export default async function Home() {
             </div>
             <div className="step">
               <h3>{f.stepTwoTitle || "Select pickup"}</h3>
-              <p>{f.stepTwoBody || "Choose an available pickup date and time in Ivanhoe, Victoria."}</p>
+              <p>{f.stepTwoBody || "Choose an available pickup window in Ivanhoe, Victoria."}</p>
             </div>
             <div className="step">
               <h3>{f.stepThreeTitle || "Pay securely"}</h3>

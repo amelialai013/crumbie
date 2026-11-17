@@ -37,7 +37,7 @@ export async function GET() {
 export async function DELETE(request: Request) {
 	if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	const id = new URL(request.url).searchParams.get("id");
-	if (!id) return NextResponse.json({ error: "Delivery date id is required" }, { status: 400 });
+	if (!id) return NextResponse.json({ error: "Delivery window id is required" }, { status: 400 });
 	try {
 		const deliveryDate = (await getDeliveryDates()).find((date) => date.id === id);
 		const orders = await listRecords<Order>("order");
@@ -48,7 +48,7 @@ export async function DELETE(request: Request) {
 			return NextResponse.json(
 				{
 					error:
-						"You cannot remove this delivery date until you move all orders that have chosen that date to a different date.",
+						"You cannot remove this delivery window until you move all orders that have chosen that window to a different window.",
 					orderCount,
 				},
 				{ status: 409 },
@@ -57,7 +57,7 @@ export async function DELETE(request: Request) {
 		await saveRecord("delivery-date", { id, date: "", window: "", removed: true });
 		return NextResponse.json({ ok: true });
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unable to remove delivery date";
+		const message = error instanceof Error ? error.message : "Unable to remove delivery window";
 		return NextResponse.json({ error: message }, { status: 503 });
 	}
 }
@@ -70,14 +70,14 @@ export async function POST(request: Request) {
 	}
 	const existing = await getDeliveryDates();
 	if (existing.some((date) => date.date === payload.date)) {
-		return NextResponse.json({ error: "That delivery date already exists." }, { status: 409 });
+		return NextResponse.json({ error: "That delivery window already exists." }, { status: 409 });
 	}
 	const record: PickupDate = { id: `delivery-${payload.date}`, date: payload.date, window: payload.window.trim() };
 	try {
 		await saveRecord("delivery-date", record);
 		return NextResponse.json(record, { status: 201 });
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unable to save delivery date";
+		const message = error instanceof Error ? error.message : "Unable to save delivery window";
 		return NextResponse.json({ error: message }, { status: 503 });
 	}
 }

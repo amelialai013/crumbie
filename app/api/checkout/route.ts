@@ -68,8 +68,8 @@ export async function POST(req: Request) {
 			const error = !product || !variant || product.soldOut
         ? unavailableMessage
         : !pickup || product.soldOutDates?.includes(pickup.id) || pickup.soldOut
-          ? `${product.name}: this pickup is no longer available. Please remove it and choose another pickup date.`
-          : `${product.name}: orders for ${pickup.date} (${pickup.window}) have closed. Orders close 72 hours before pickup. Please remove this item and choose an available pickup date.`;
+          ? `${product.name}: this pickup is no longer available. Please remove it and choose another pickup window.`
+          : `${product.name}: orders for ${pickup.date} (${pickup.window}) have closed. Orders close 72 hours before pickup. Please remove this item and choose an available pickup window.`;
       return NextResponse.json({ error }, { status: 409 });
 		}
 
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
 		for (const line of deliveryLines) {
 			const requested = line.deliverySlot;
 			const chosen = requested ? openSlots.find((slot) => slot.date === requested.date && slot.window === requested.window) : openSlots[0];
-			if (requested && !chosen) return NextResponse.json({ error: "That delivery date is no longer available. Please choose another." }, { status: 400 });
+			if (requested && !chosen) return NextResponse.json({ error: "That delivery window is no longer available. Please choose another." }, { status: 400 });
 			lineSlots.set(line, chosen ? { date: chosen.date, window: chosen.window } : null);
 		}
 		deliverySlot = lineSlots.get(deliveryLines[0]) ?? null;

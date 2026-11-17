@@ -3,7 +3,7 @@ export type Product = { id:string; slug:string; name:string; description:string;
 export function productSlugFromName(name: string) {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
-export const defaultProductIngredients = "Pickup dates close 72 hours before their scheduled start time, orders can be placed up until this time. Pickup is in Ivanhoe, Victoria. Exact address provided in your confirmation email after purchase.";
+export const defaultProductIngredients = "Pickup windows close 72 hours before their scheduled start time, orders can be placed up until this time. Pickup is in Ivanhoe, Victoria. Exact address provided in your confirmation email after purchase.";
 export const defaultProductAllergens = "Contains gluten, dairy, eggs and soy. Made in a kitchen that handles peanuts and tree nuts; cross-contact is possible.";
 export const pickupDates: PickupDate[] = [
   { id:"pickup-1", date:"2026-09-12", window:"10:00am–12:00pm" },
