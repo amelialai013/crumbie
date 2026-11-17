@@ -7214,3 +7214,6 @@ html:has(.cart-modal-overlay) .site-header {
 .co-alert-close svg,
 .cart-confirmation-close svg { width: 18px; height: 18px; }
 .cart-card-close { top: 10px; right: 10px; }
+
+.card-addon-count-row .card-addon-count { font-size: .85rem; line-height: 1.4; white-space: nowrap; opacity: .8; }
+.card-addon-step output { width: 64px; }
