@@ -5,7 +5,7 @@ import { motionDuration } from "@/lib/motion";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { isDateClosed, type PickupDate, type Product } from "@/lib/catalog";
+import { isDateClosed, productCardImage, type PickupDate, type Product } from "@/lib/catalog";
 import { formatPickupDate } from "@/lib/format-date";
 import { deliveryFeeFor, type DeliveryOption } from "@/lib/delivery";
 import type { CardOption } from "@/lib/card";
@@ -111,7 +111,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
       productId: product.id,
       productSlug: product.slug,
       productName: product.name,
-      image: product.images[0],
+      image: productCardImage(product) || product.images[0] || "",
       variantId: selectedVariant.id,
       variantLabel: selectedVariant.label,
       unitPrice: selectedVariant.price,

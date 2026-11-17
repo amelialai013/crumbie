@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motionDuration } from "@/lib/motion";
 import { useEffect, useRef, useState } from "react";
 import { useCart, type CartLine } from "@/components/cart-context";
 import QuantityControl from "@/components/quantity-control";
@@ -12,12 +13,42 @@ import { deliveryFeeFor, postcodeAllowed, type DeliveryOption } from "@/lib/deli
 type Mode = "pickup" | "delivery";
 const empty = { name: "", street: "", suburb: "", postcode: "" };
 
-export default function CheckoutView({ delivery, card }: { delivery: DeliveryOption; card: CardOption }) {
+export default function CheckoutView({ delivery, card, images }: { delivery: DeliveryOption; card: CardOption; images: Record<string, string> }) {
   const { lines, ready, remove, setQuantity, setLineCard } = useCart();
   const [form, setForm] = useState(empty);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [removingLast, setRemovingLast] = useState(false);
+  const [emptyAppearing, setEmptyAppearing] = useState(false);
+  const removeTimeout = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (removeTimeout.current !== null) window.clearTimeout(removeTimeout.current);
+  }, []);
+
+  useEffect(() => {
+    if (!emptyAppearing || lines.length > 0) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [emptyAppearing, lines.length]);
+
+  function removeLine(key: string) {
+    if (removeTimeout.current !== null) return;
+    const last = lines.length === 1;
+    if (!last) return remove(key);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setEmptyAppearing(true);
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      return remove(key);
+    }
+    setRemovingLast(true);
+    removeTimeout.current = window.setTimeout(() => {
+      remove(key);
+      setRemovingLast(false);
+      setEmptyAppearing(true);
+      removeTimeout.current = null;
+    }, motionDuration("panel", 460));
+  }
   const [suggestions, setSuggestions] = useState<Array<{ placeId: string; text: string }>>([]);
   const [active, setActive] = useState(-1);
   const placesOff = useRef(false);
@@ -136,7 +167,26 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
     }
   }
 
-  if (!ready || lines.length === 0) return null;
+  const emptyView = (
+    <div className={`cart-empty${emptyAppearing ? " is-appearing" : ""}`}>
+      <h2>No crumbs left</h2>
+      <Link className="btn btn-dark btn-arrow" href="/crumbs">
+        Explore crumbs
+        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+          <path d="m7 4.5 5.5 5.5L7 15.5" />
+        </svg>
+      </Link>
+    </div>
+  );
+
+  if (!ready || lines.length === 0) {
+    return (
+      <>
+        <section className="page-hero"><div className="shell"><h1 className="page-title">Your order</h1></div></section>
+        <section className="section cart-section"><div className="shell">{ready ? emptyView : null}</div></section>
+      </>
+    );
+  }
 
   const check = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M6 10.4l2.6 2.6L14 7.6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 
@@ -214,13 +264,13 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
       <li key={line.key} className="co-item-wrap">
         <div className="co-item">
           <Link href={href} aria-label={`View ${line.productName}`}>
-            {line.image ? <img className="checkout-thumb" src={line.image} alt="" /> : <i className="checkout-thumb" />}
+            {(images[line.productId] ?? line.image) ? <img className="checkout-thumb" src={images[line.productId] ?? line.image} alt="" /> : <i className="checkout-thumb" />}
           </Link>
           <div className="co-item-body">
             <strong><Link href={href}>{line.productName}</Link></strong>
             <p className="co-price">${(line.unitPrice * line.quantity).toFixed(2)} AUD</p>
             <small>{line.variantLabel}</small>
-            <button type="button" className="co-link co-remove" aria-label={`Remove ${line.productName}`} onClick={() => remove(line.key)}>Remove</button>
+            <button type="button" className="co-link co-remove" aria-label={`Remove ${line.productName}`} disabled={removingLast} onClick={() => removeLine(line.key)}>Remove</button>
           </div>
           <div className="co-actions">
             <QuantityControl value={line.quantity} inputId={`quantity-${line.key}`} inputAriaLabel={`Quantity for ${line.productName}`} onChange={(value) => setQuantity(line.key, value)} />
@@ -322,7 +372,7 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
       <section className="section cart-section">
         <div className="shell">
           {!ready ? null : lines.length === 0 ? (
-            <div className="cart-empty">
+            <div className={`cart-empty${emptyAppearing ? " is-appearing" : ""}`}>
               <h2>No crumbs left</h2>
               <Link className="btn btn-dark btn-arrow" href="/crumbs">
                 Explore crumbs
@@ -332,7 +382,7 @@ export default function CheckoutView({ delivery, card }: { delivery: DeliveryOpt
               </Link>
             </div>
           ) : (
-            <div className="checkout-a">{original}</div>
+            <div className={`checkout-a${removingLast ? " is-last-removing" : ""}`}>{original}</div>
           )}
         </div>
       </section>

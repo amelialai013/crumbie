@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import CheckoutView from "@/components/checkout-view";
-import { getCardOption, getDelivery } from "@/lib/catalog-store";
+import { productCardImage } from "@/lib/catalog";
+import { getCardOption, getDelivery, getProducts } from "@/lib/catalog-store";
 
 export const metadata: Metadata = { title: "Cart", robots: { index: false, follow: false } };
 
 export default async function Cart() {
   await connection();
-  const [delivery, card] = await Promise.all([getDelivery(), getCardOption()]);
-  return <CheckoutView delivery={delivery} card={card} />;
+  const [delivery, card, products] = await Promise.all([getDelivery(), getCardOption(), getProducts()]);
+  const images = Object.fromEntries(products.flatMap((product) => { const image = productCardImage(product) || product.images[0]; return image ? [[product.id, image]] : []; }));
+  return <CheckoutView delivery={delivery} card={card} images={images} />;
 }
