@@ -9,6 +9,8 @@ export type DeliveryOption = {
 	pickupDescription: string;
 	deliveryTitle: string;
 	deliveryDescription: string;
+	deliverableMessage: string;
+	undeliverableMessage: string;
 };
 
 export type DeliverySlot = { id: string; date: string; window: string };
@@ -19,6 +21,9 @@ export type DeliveryDetails = {
 	suburb: string;
 	postcode: string;
 };
+
+export const defaultDeliverableMessage = "Great, we deliver to {postcode}.";
+export const defaultUndeliverableMessage = "Sorry, we don't deliver to this postcode. Remove the delivery items to continue.";
 
 export const defaultDeliveryPostcodes = "3000-3099, 3101-3138, 3141-3196, 3204-3207";
 
@@ -40,6 +45,8 @@ export function deliveryFrom(fields: Record<string, string> | undefined, slots: 
 		pickupDescription: fields?.pickupDescription === undefined ? "Free · collect in Ivanhoe" : fields.pickupDescription.trim(),
 		deliveryTitle: fields?.deliveryTitle?.trim() || "Delivery",
 		deliveryDescription: fields?.deliveryDescription === undefined ? "" : fields.deliveryDescription.trim(),
+		deliverableMessage: fields?.deliverableMessage?.trim() || defaultDeliverableMessage,
+		undeliverableMessage: fields?.undeliverableMessage?.trim() || defaultUndeliverableMessage,
 	};
 }
 

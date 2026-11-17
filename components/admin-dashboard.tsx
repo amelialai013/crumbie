@@ -12,6 +12,7 @@ import { deliveryFrom } from "@/lib/delivery";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultCardOption, defaultUnavailableMessage } from "@/lib/card";
+import { defaultDeliverableMessage, defaultUndeliverableMessage } from "@/lib/delivery";
 import { VIC_POSTCODES } from "@/lib/vic-postcodes";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
@@ -634,7 +635,7 @@ function CardSettings({
 }) {
   const [fields, setFields] = useState<Record<string, string> | null>(initial);
   const [saved, setSaved] = useState(() =>
-    JSON.stringify([initial.cardEnabled, initial.cardPrice, initial.cardLabel, initial.cardDescription, initial.cardNamePlaceholder, initial.cardMessagePlaceholder, initial.galleryTitle, initial.galleryBody, initial.galleryImages, initial.exploreTitle, initial.exploreSubtext, initial.unavailableMessage]),
+    JSON.stringify([initial.cardEnabled, initial.cardPrice, initial.cardLabel, initial.cardDescription, initial.cardNamePlaceholder, initial.cardMessagePlaceholder, initial.galleryTitle, initial.galleryBody, initial.galleryImages, initial.exploreTitle, initial.exploreSubtext, initial.unavailableMessage, initial.deliverableMessage, initial.undeliverableMessage]),
   );
   const [status, setStatus] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
@@ -652,7 +653,7 @@ function CardSettings({
     }
   })();
   const setGalleryImages = (next: string[]) => setFields({ ...fields, galleryImages: JSON.stringify(next) });
-  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.cardLabel, fields.cardDescription, fields.cardNamePlaceholder, fields.cardMessagePlaceholder, fields.galleryTitle, fields.galleryBody, fields.galleryImages, fields.exploreTitle, fields.exploreSubtext, fields.unavailableMessage]) !== saved || galleryFiles.length > 0;
+  const changed = JSON.stringify([fields.cardEnabled, fields.cardPrice, fields.cardLabel, fields.cardDescription, fields.cardNamePlaceholder, fields.cardMessagePlaceholder, fields.galleryTitle, fields.galleryBody, fields.galleryImages, fields.exploreTitle, fields.exploreSubtext, fields.unavailableMessage, fields.deliverableMessage, fields.undeliverableMessage]) !== saved || galleryFiles.length > 0;
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -680,7 +681,7 @@ function CardSettings({
     if (response.ok) {
       setFields(nextFields);
       setGalleryFiles([]);
-      setSaved(JSON.stringify([nextFields.cardEnabled, nextFields.cardPrice, nextFields.cardLabel, nextFields.cardDescription, nextFields.cardNamePlaceholder, nextFields.cardMessagePlaceholder, nextFields.galleryTitle, nextFields.galleryBody, nextFields.galleryImages, nextFields.exploreTitle, nextFields.exploreSubtext, nextFields.unavailableMessage]));
+      setSaved(JSON.stringify([nextFields.cardEnabled, nextFields.cardPrice, nextFields.cardLabel, nextFields.cardDescription, nextFields.cardNamePlaceholder, nextFields.cardMessagePlaceholder, nextFields.galleryTitle, nextFields.galleryBody, nextFields.galleryImages, nextFields.exploreTitle, nextFields.exploreSubtext, nextFields.unavailableMessage, nextFields.deliverableMessage, nextFields.undeliverableMessage]));
       setStatus("");
       finish("Changes successfully saved");
       return;
@@ -870,6 +871,17 @@ function CardSettings({
             </div>
         </div>
         <h3 className="admin-promo-heading">Checkout alert</h3>
+        <h3 className="admin-promo-heading">Delivery postcode messages</h3>
+        <div className="field">
+          <label htmlFor="deliverable-message">Postcode is deliverable (use {"{postcode}"} to show it)</label>
+          <textarea id="deliverable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultDeliverableMessage} value={fields.deliverableMessage ?? ""} onChange={(event) => setFields({ ...fields, deliverableMessage: event.target.value })} />
+          <small className="admin-editor-count">{(fields.deliverableMessage ?? "").length} / 200</small>
+        </div>
+        <div className="field">
+          <label htmlFor="undeliverable-message">Postcode is outside the delivery area</label>
+          <textarea id="undeliverable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultUndeliverableMessage} value={fields.undeliverableMessage ?? ""} onChange={(event) => setFields({ ...fields, undeliverableMessage: event.target.value })} />
+          <small className="admin-editor-count">{(fields.undeliverableMessage ?? "").length} / 200</small>
+        </div>
         <div className="field">
           <label htmlFor="unavailable-message">Product or box size unavailable</label>
           <textarea id="unavailable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultUnavailableMessage} value={fields.unavailableMessage ?? ""} onChange={(event) => setFields({ ...fields, unavailableMessage: event.target.value })} />

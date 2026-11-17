@@ -14,12 +14,14 @@ type Mode = "pickup" | "delivery";
 const empty = { name: "", street: "", suburb: "", postcode: "" };
 
 export default function CheckoutView({ delivery, card, images }: { delivery: DeliveryOption; card: CardOption; images: Record<string, string> }) {
-  const { lines, ready, remove, setQuantity, setLineCard } = useCart();
+  const { lines, ready, remove, clear, setQuantity, setLineCard } = useCart();
   const [form, setForm] = useState(empty);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [removingLast, setRemovingLast] = useState(false);
+  const [removingKey, setRemovingKey] = useState<string | null>(null);
+  const [alertLeaving, setAlertLeaving] = useState(false);
   const [emptyAppearing, setEmptyAppearing] = useState(false);
   const removeTimeout = useRef<number | null>(null);
 
@@ -32,22 +34,27 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [emptyAppearing, lines.length]);
 
-  function removeLine(key: string) {
+  function removeLine(key: string | null) {
     if (removeTimeout.current !== null) return;
-    const last = lines.length === 1;
-    if (!last) return remove(key);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setEmptyAppearing(true);
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      return remove(key);
+    const last = key === null || lines.length === 1;
+    const drop = () => (key === null ? clear() : remove(key));
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      if (last) {
+        setEmptyAppearing(true);
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
+      return drop();
     }
-    setRemovingLast(true);
+    if (last) setRemovingLast(true);
+    else setRemovingKey(key);
     removeTimeout.current = window.setTimeout(() => {
-      remove(key);
+      drop();
       setRemovingLast(false);
-      setEmptyAppearing(true);
+      setRemovingKey(null);
+      if (last) setEmptyAppearing(true);
       removeTimeout.current = null;
-    }, motionDuration("panel", 460));
+    }, motionDuration(last ? "panel" : "exit", last ? 320 : 220));
   }
   const [suggestions, setSuggestions] = useState<Array<{ placeId: string; text: string }>>([]);
   const [active, setActive] = useState(-1);
@@ -57,9 +64,18 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
 
   useEffect(() => {
     if (!error) return;
-    const timer = setTimeout(() => setError(""), 8000);
+    setAlertLeaving(false);
+    const timer = setTimeout(dismissError, 8000);
     return () => clearTimeout(timer);
   }, [error]);
+
+  function dismissError() {
+    setAlertLeaving(true);
+    window.setTimeout(() => {
+      setError("");
+      setAlertLeaving(false);
+    }, motionDuration("exit", 220));
+  }
 
   function searchAddress(value: string) {
     setForm((current) => ({ ...current, street: value }));
@@ -188,6 +204,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
     );
   }
 
+  const cross = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="m7 7 6 6M13 7l-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
   const check = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M6 10.4l2.6 2.6L14 7.6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 
   const deliveryForm = (
@@ -245,8 +262,8 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
         {touched && !postcodeOk && <p className="field-error" role="alert">{postcodeFilled ? "Sorry, we don't deliver to this postcode" : "Enter postcode"}</p>}
         </div>
       </div>
-      {postcodeOk && <p className="checkout-status" role="status">{check}<span>Great, we deliver to {form.suburb.trim() || form.postcode}.</span></p>}
-      {outOfRange && <p className="checkout-status is-error" role="alert">{check}<span>Sorry, we don&apos;t deliver to this postcode. Remove the delivery items to continue.</span></p>}
+      {postcodeOk && <p className="checkout-status" role="status">{check}<span>{delivery.deliverableMessage.replaceAll("{postcode}", form.postcode.trim())}</span></p>}
+      {outOfRange && <p className="checkout-status is-error" role="alert">{cross}<span>{delivery.undeliverableMessage.replaceAll("{postcode}", form.postcode.trim())}</span></p>}
     </div>
   );
 
@@ -261,7 +278,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
     const lineCards = card.enabled ? line.cardMessages ?? [] : [];
     const href = `/crumbs/${productSlugFromName(line.productName)}`;
     return (
-      <li key={line.key} className="co-item-wrap">
+      <li key={line.key} className={`co-item-wrap${removingKey === line.key ? " is-removing" : ""}`}>
         <div className="co-item">
           <Link href={href} aria-label={`View ${line.productName}`}>
             {(images[line.productId] ?? line.image) ? <img className="checkout-thumb" src={images[line.productId] ?? line.image} alt="" /> : <i className="checkout-thumb" />}
@@ -349,7 +366,13 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
         {deliverPanel}
       </div>
       <aside className="checkout-aside">
-        <h2>Order summary</h2>
+        <div className="co-aside-head">
+          <h2>Order summary</h2>
+          <button type="button" className="co-link co-clear" disabled={removingLast} onClick={() => removeLine(null)}>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 5.5h13M7.5 5.5V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5M5 5.5l.7 10a1.5 1.5 0 0 0 1.5 1.4h5.6a1.5 1.5 0 0 0 1.5-1.4l.7-10M8.3 9v4.5M11.7 9v4.5" /></svg>
+            Clear cart
+          </button>
+        </div>
         {totals}
         {payRow}
       </aside>
@@ -359,9 +382,9 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
   return (
     <>
       {error && (
-        <div className="co-alert" role="alert">
+        <div className={`co-alert${alertLeaving ? " is-leaving" : ""}`} role="alert">
           <p>{error}</p>
-          <button type="button" className="btn btn-light co-alert-close" aria-label="Close" title="Close" onClick={() => setError("")}>
+          <button type="button" className="btn btn-light co-alert-close" aria-label="Close" title="Close" onClick={dismissError}>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
               <path d="m5 5 10 10M15 5 5 15" />
             </svg>
