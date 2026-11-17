@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { z } from "zod";
 import { isDateClosed } from "@/lib/catalog";
-import { addressError, addressExists, addressShapeOk } from "@/lib/address";
+import { addressExists, addressShapeOk } from "@/lib/address";
 import { deliveryFeeFor, postcodeAllowed } from "@/lib/delivery";
 import { getCardOption, getDelivery, getProducts, getPickupDates, getPromo, getUnavailableMessage } from "@/lib/catalog-store";
 import { setRecord } from "@/lib/store";
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "Sorry, we don't deliver to that postcode. Choose pickup or try another address." }, { status: 400 });
 		}
 		if (!addressShapeOk(delivery.street, delivery.suburb) || !(await addressExists(delivery.street, delivery.suburb, delivery.postcode))) {
-			return NextResponse.json({ error: addressError }, { status: 400 });
+			return NextResponse.json({ error: deliveryOption.addressErrorMessage, field: "street" }, { status: 400 });
 		}
 		const deliverySubtotal = deliveryLines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + (card ? card.price * card.quantity : 0);
 		deliveryFee = deliveryFeeFor(deliveryOption, deliverySubtotal);

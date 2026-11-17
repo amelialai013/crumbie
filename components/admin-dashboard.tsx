@@ -12,7 +12,7 @@ import { deliveryFrom } from "@/lib/delivery";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { defaultCardOption, defaultUnavailableMessage } from "@/lib/card";
-import { defaultDeliverableMessage, defaultUndeliverableMessage } from "@/lib/delivery";
+import { defaultAddressErrorMessage, defaultDeliverableMessage, defaultUndeliverableMessage } from "@/lib/delivery";
 import { VIC_POSTCODES } from "@/lib/vic-postcodes";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
@@ -1236,6 +1236,7 @@ function MessageSettings({
   const pick = (source: Record<string, string>) => ({
     deliverableMessage: source.deliverableMessage ?? "",
     undeliverableMessage: source.undeliverableMessage ?? "",
+    addressErrorMessage: source.addressErrorMessage ?? "",
     unavailableMessage: source.unavailableMessage ?? "",
   });
   const [fields, setFields] = useState(() => pick(initial));
@@ -1277,6 +1278,11 @@ function MessageSettings({
           <label htmlFor="undeliverable-message">Postcode is outside the delivery area</label>
           <textarea id="undeliverable-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultUndeliverableMessage} value={fields.undeliverableMessage ?? ""} onChange={(event) => setFields({ ...fields, undeliverableMessage: event.target.value })} />
           <small className="admin-editor-count">{(fields.undeliverableMessage ?? "").length} / 200</small>
+        </div>
+        <div className="field">
+          <label htmlFor="address-error-message">Delivery address not found</label>
+          <textarea id="address-error-message" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={200} placeholder={defaultAddressErrorMessage} value={fields.addressErrorMessage ?? ""} onChange={(event) => setFields({ ...fields, addressErrorMessage: event.target.value })} />
+          <small className="admin-editor-count">{(fields.addressErrorMessage ?? "").length} / 200</small>
         </div>
         <div className="field">
           <label htmlFor="unavailable-message">Product or box size unavailable</label>

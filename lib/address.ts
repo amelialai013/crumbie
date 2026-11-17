@@ -1,4 +1,4 @@
-export const addressError = "We couldn't find that address. Pick it from the suggestions or check the street, suburb and postcode.";
+export const addressError = "We couldn't find that address. Select an address from the suggestions or check the street, suburb and postcode.";
 
 // Basic shape check that runs in the browser and on the server.
 export const streetOk = (street: string) => /\d/.test(street) && /[a-z]{2}/i.test(street);

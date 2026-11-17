@@ -21,6 +21,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [addressFailure, setAddressFailure] = useState<{ message: string; key: string } | null>(null);
   const [removingLast, setRemovingLast] = useState(false);
   const [removingKey, setRemovingKey] = useState<string | null>(null);
   const [alertLeaving, setAlertLeaving] = useState(false);
@@ -159,6 +160,9 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
   const money = (value: number) => (value === 0 ? "Free" : `$${value.toFixed(2)}`);
   const optionTitle = (option: Mode) => (option === "pickup" ? delivery.pickupTitle : delivery.deliveryTitle);
 
+  const addressKey = `${form.street}|${form.suburb}|${form.postcode}`;
+  const addressNotFound = addressFailure && addressFailure.key === addressKey ? addressFailure.message : "";
+
   async function pay() {
     setTouched(true);
     if (blocked) {
@@ -173,6 +177,7 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
     }
     setBusy(true);
     setError("");
+    setAddressFailure(null);
     const slot = hasDelivery ? whenOf(groups.delivery.lines[0], "delivery") : undefined;
     try {
       const response = await fetch("/api/checkout", {
@@ -187,8 +192,16 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || typeof data.url !== "string") {
-        setError(data.error || "Checkout could not be started.");
         setBusy(false);
+        if (data.field !== "street") {
+          setError(data.error || "Checkout could not be started.");
+          return;
+        }
+        setAddressFailure({ message: data.error, key: addressKey });
+        const input = document.getElementById("delivery-street");
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        input?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+        input?.focus({ preventScroll: true });
         return;
       }
       window.location.assign(data.url);
@@ -280,7 +293,8 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
         {touched && !postcodeOk && <p className="field-error" role="alert">{postcodeFilled ? "Sorry, we don't deliver to this postcode" : "Enter postcode"}</p>}
         </div>
       </div>
-      {postcodeOk && <p className="checkout-status" role="status">{check}<span>{delivery.deliverableMessage.replaceAll("{postcode}", form.postcode.trim())}</span></p>}
+      {postcodeOk && !addressNotFound && !busy && <p className="checkout-status" role="status">{check}<span>{delivery.deliverableMessage.replaceAll("{postcode}", form.postcode.trim())}</span></p>}
+      {addressNotFound && <p className="checkout-status is-error" role="alert">{cross}<span>{addressNotFound} Still having issues? <Link href="/contact-us" className="co-alert-link">Send us an enquiry</Link></span></p>}
       {outOfRange && <p className="checkout-status is-error" role="alert">{cross}<span>{delivery.undeliverableMessage.replaceAll("{postcode}", form.postcode.trim())}</span></p>}
     </div>
   );
