@@ -171,6 +171,7 @@ html { scrollbar-gutter: stable; }
   .product-detail-heading p,
   .product-order-heading,
   .product-order-fields,
+  .product-order .card-addon,
   .product-order-total,
   .cookie-explorer,
   .product-gallery
@@ -212,7 +213,8 @@ html { scrollbar-gutter: stable; }
 .product-detail-heading p { --i: 1; }
 .product-order-heading { --i: 2; }
 .product-order-fields { --i: 3; }
-.product-order-total { --i: 4; }
+.product-order .card-addon { --i: 4; }
+.product-order-total { --i: 5; }
 .cookie-explorer,
 .product-gallery { --i: 1; }
 

@@ -218,28 +218,30 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
               <div className="card-addon-options">
                 {boxes > 1 && (
                   <>
-                <p>{cardCount} of {boxes} boxes · ${formatPrice(card.price)} each</p>
                 <div className="card-addon-seg" role="group" aria-label="Boxes with a card">
                   <button type="button" aria-pressed={mode === "all"} className={mode === "all" ? "is-on" : ""} onClick={() => setCard("all")}>Every box</button>
                   <button type="button" aria-pressed={mode === "some"} className={mode === "some" ? "is-on" : ""} onClick={() => setCard(mode === "some" ? cardCount : Math.max(1, Math.round(boxes / 2)))}>Some boxes</button>
                 </div>
                   </>
                 )}
+                <div className="card-addon-count-row">
+                <p className="card-addon-count">{cardCount} of {boxes} boxes · ${formatPrice(card.price)} each</p>
                 <div className={`card-addon-reveal${mode === "some" ? " is-open" : ""}`} aria-hidden={mode !== "some"}>
                   <div>
                     <div className="card-addon-step">
-                      <button type="button" aria-label="Fewer cards" tabIndex={mode === "some" ? 0 : -1} disabled={cardCount <= 1} onClick={() => setCard(Math.max(1, cardCount - 1))}>−</button>
-                      <input
-                        inputMode="numeric"
-                        aria-label="Number of cards"
-                        tabIndex={mode === "some" ? 0 : -1}
+                      <QuantityControl
                         value={cardCount}
-                        onChange={(event) => setCard(Math.min(boxes - 1, Math.max(1, parseInt(event.target.value.replace(/\D/g, ""), 10) || 1)))}
+                        inputId="card-count"
+                        inputAriaLabel="Number of cards"
+                        label={null}
+                        min={1}
+                        max={Math.max(1, boxes - 1)}
+                        tabIndex={mode === "some" ? 0 : -1}
+                        onChange={setCard}
                       />
-                      <button type="button" aria-label="More cards" tabIndex={mode === "some" ? 0 : -1} disabled={cardCount >= boxes - 1} onClick={() => setCard(Math.min(boxes - 1, cardCount + 1))}>+</button>
-                      <span>of {boxes} boxes</span>
                     </div>
                   </div>
+                </div>
                 </div>
                 <div className="card-addon-messages">
                   {Array.from({ length: cardCount }, (_, index) => (
