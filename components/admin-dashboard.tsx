@@ -1140,7 +1140,7 @@ function PromoSettings({
       setValues(next);
       setSaved(JSON.stringify(next));
       setStatus("");
-      finish("Promo saved");
+      finish("Changes successfully saved");
       return;
     }
     finish();
@@ -1463,67 +1463,68 @@ export default function AdminDashboard() {
     }
   }
 
+  async function fetchProductsWithRetry() {
+    let response = await fetch("/api/admin/products", { cache: "no-store" });
+    for (let attempt = 0; attempt < 3 && !response.ok && response.status !== 401; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+      response = await fetch("/api/admin/products", { cache: "no-store" });
+    }
+    return response;
+  }
+
+  async function loadAdminResources() {
+    const [
+      dashboardResult,
+      configResult,
+      pickupDatesResult,
+      deliveryDatesResult,
+      productsResult,
+      cardSettingsResult,
+    ] = await Promise.allSettled([
+      fetch("/api/admin/dashboard"),
+      fetch("/api/admin/config"),
+      fetch("/api/admin/pickup-dates"),
+      fetch("/api/admin/delivery-dates"),
+      fetchProductsWithRetry(),
+      fetch("/api/admin/content?module=settings"),
+    ]);
+
+    if (
+      dashboardResult.status === "fulfilled" &&
+      dashboardResult.value.ok
+    ) {
+      receiveDashboard(await dashboardResult.value.json());
+    }
+    if (configResult.status === "fulfilled" && configResult.value.ok) {
+      setConfig(await configResult.value.json());
+    }
+    if (
+      pickupDatesResult.status === "fulfilled" &&
+      pickupDatesResult.value.ok
+    ) {
+      setManagedPickupDates(await pickupDatesResult.value.json());
+    }
+    if (deliveryDatesResult.status === "fulfilled" && deliveryDatesResult.value.ok) {
+      setManagedDeliveryDates(await deliveryDatesResult.value.json());
+    }
+    if (productsResult.status === "fulfilled" && productsResult.value.ok) {
+      setManagedProducts(await productsResult.value.json());
+    }
+    setCardSettings(
+      normalizeCardSettings(
+        cardSettingsResult.status === "fulfilled" && cardSettingsResult.value.ok
+          ? await cardSettingsResult.value.json().catch(() => null)
+          : null,
+      ),
+    );
+    setProductsLoaded(true);
+    setCheckingSession(false);
+  }
+
   useEffect(() => {
-    async function fetchProductsWithRetry() {
-      let response = await fetch("/api/admin/products", { cache: "no-store" });
-      for (let attempt = 0; attempt < 3 && !response.ok && response.status !== 401; attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
-        response = await fetch("/api/admin/products", { cache: "no-store" });
-      }
-      return response;
-    }
-
-    async function loadAdminResources() {
-      const [
-        dashboardResult,
-        configResult,
-        pickupDatesResult,
-        deliveryDatesResult,
-        productsResult,
-        cardSettingsResult,
-      ] = await Promise.allSettled([
-        fetch("/api/admin/dashboard"),
-        fetch("/api/admin/config"),
-        fetch("/api/admin/pickup-dates"),
-        fetch("/api/admin/delivery-dates"),
-        fetchProductsWithRetry(),
-        fetch("/api/admin/content?module=settings"),
-      ]);
-
-      if (
-        dashboardResult.status === "fulfilled" &&
-        dashboardResult.value.ok
-      ) {
-        receiveDashboard(await dashboardResult.value.json());
-      }
-      if (configResult.status === "fulfilled" && configResult.value.ok) {
-        setConfig(await configResult.value.json());
-      }
-      if (
-        pickupDatesResult.status === "fulfilled" &&
-        pickupDatesResult.value.ok
-      ) {
-        setManagedPickupDates(await pickupDatesResult.value.json());
-      }
-      if (deliveryDatesResult.status === "fulfilled" && deliveryDatesResult.value.ok) {
-        setManagedDeliveryDates(await deliveryDatesResult.value.json());
-      }
-      if (productsResult.status === "fulfilled" && productsResult.value.ok) {
-        setManagedProducts(await productsResult.value.json());
-      }
-      setCardSettings(
-        normalizeCardSettings(
-          cardSettingsResult.status === "fulfilled" && cardSettingsResult.value.ok
-            ? await cardSettingsResult.value.json().catch(() => null)
-            : null,
-        ),
-      );
-      setProductsLoaded(true);
-      setCheckingSession(false);
-    }
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadAdminResources();
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasDashboard = data !== null;
@@ -1837,7 +1838,7 @@ export default function AdminDashboard() {
         return;
       }
       setPassword("");
-      await load();
+      await loadAdminResources();
     } catch {
       setError("Couldn't sign in. Check your connection and try again.");
     } finally {
