@@ -55,25 +55,35 @@ export async function saveRecord<T extends { id: string }>(kind: string, record:
 	await kv.lpush(key(kind, "all"), record.id);
 }
 
+const r2DevOrigin = /^https:\/\/pub-[a-z0-9]+\.r2\.dev(?=\/)/;
+
+// Serve media from our own domain (proxied by a /media rewrite) so content filters never see r2.dev.
+function firstPartyMedia<T>(value: T): T {
+	if (typeof value === "string") return value.replace(r2DevOrigin, "/media") as T;
+	if (Array.isArray(value)) return value.map(firstPartyMedia) as T;
+	if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, firstPartyMedia(v)])) as T;
+	return value;
+}
+
 export async function listRecords<T>(kind: string): Promise<T[]> {
 	if (!kv) {
 		if (!localStoreEnabled()) return [];
 		const store = await readLocalStore();
 		const ids = Array.isArray(store[key(kind, "all")]) ? (store[key(kind, "all")] as string[]) : [];
-		return ids.map((id) => store[key(kind, id)] as T | undefined).filter(isPresent);
+		return firstPartyMedia(ids.map((id) => store[key(kind, id)] as T | undefined).filter(isPresent));
 	}
 	const ids = await kv.lrange<string>(key(kind, "all"), 0, -1);
 	const rows = await Promise.all((ids || []).map((id) => kv.get<T>(key(kind, id))));
-	return rows.filter(isPresent);
+	return firstPartyMedia(rows.filter(isPresent));
 }
 
 export async function getRecord<T>(kind: string, id: string) {
 	if (!kv) {
 		if (!localStoreEnabled()) return null;
 		const store = await readLocalStore();
-		return (store[key(kind, id)] as T | undefined) ?? null;
+		return firstPartyMedia((store[key(kind, id)] as T | undefined) ?? null);
 	}
-	return kv.get<T>(key(kind, id));
+	return firstPartyMedia(await kv.get<T>(key(kind, id)));
 }
 
 export async function setRecord<T>(kind: string, id: string, value: T) {

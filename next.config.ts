@@ -6,6 +6,23 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
     qualities: [75, 100],
   },
+  async rewrites() {
+    const origin = (process.env.R2_MEDIA_ORIGIN || "https://pub-fea5209176ba412da081e64534c01cc7.r2.dev").replace(/\/$/, "");
+    return [{ source: "/media/:path*", destination: `${origin}/:path*` }];
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
   async redirects() {
     // Alternate domains permanently redirect to the canonical site so search engines index a single domain.
     const alternateHosts = ["www.clubcrumbie.com", "crumbie.com.au", "www.crumbie.com.au"].filter((host) => host !== new URL(siteUrl).host);

@@ -36,6 +36,7 @@ export default function Footer() {
           <Link href="/crumbs">Crumbs</Link>
           <Link href="/contact-us">Contact us</Link>
           <Link href="/ordering-policy">Ordering policy</Link>
+          <Link href="/privacy-policy">Privacy policy</Link>
         </div>
         <div>
           <div className="footer-socials">
