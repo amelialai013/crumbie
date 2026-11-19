@@ -5,7 +5,7 @@ import { motionDuration } from "@/lib/motion";
 import { useEffect, useRef, useState } from "react";
 import { useCart, type CartLine } from "@/components/cart-context";
 import QuantityControl from "@/components/quantity-control";
-import type { CardOption } from "@/lib/card";
+import { cardForProduct, type CardOption, type Promo } from "@/lib/card";
 import { isDateClosed, productSlugFromName } from "@/lib/catalog";
 import { formatPickupDate } from "@/lib/format-date";
 import { addressShapeOk, streetOk, suburbOk } from "@/lib/address";
@@ -15,7 +15,7 @@ type Mode = "pickup" | "delivery";
 type Suggestion = { placeId: string; text: string; street: string; suburb: string; postcode: string };
 const empty = { name: "", street: "", suburb: "", postcode: "" };
 
-export default function CheckoutView({ delivery, card, images }: { delivery: DeliveryOption; card: CardOption; images: Record<string, string> }) {
+export default function CheckoutView({ delivery, card, promo, images }: { delivery: DeliveryOption; card: CardOption; promo: Promo | null; images: Record<string, string> }) {
   const { lines, ready, remove, clear, setQuantity, setLineCard } = useCart();
   const [form, setForm] = useState(empty);
   const [touched, setTouched] = useState(false);
@@ -127,8 +127,9 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
   const openSlot = delivery.slots.find((slot) => !isDateClosed(slot));
   const modeOf = (line: CartLine): Mode => line.fulfilment ?? "pickup";
   const whenOf = (line: CartLine, option: Mode) => (option === "delivery" ? line.deliverySlot ?? openSlot : { date: line.pickupDate, window: line.pickupWindow });
+  const cardFor = (line: CartLine) => cardForProduct(card, promo, line.productId);
   const cardsOf = (line: CartLine) => (card.enabled ? line.cardMessages?.length ?? 0 : 0);
-  const amountOf = (line: CartLine) => line.unitPrice * line.quantity + cardsOf(line) * card.price;
+  const amountOf = (line: CartLine) => line.unitPrice * line.quantity + cardsOf(line) * cardFor(line).price;
 
   const groupOf = (option: Mode) => {
     const group = lines.filter((line) => modeOf(line) === option);
@@ -328,8 +329,8 @@ export default function CheckoutView({ delivery, card, images }: { delivery: Del
         {lineCards.length > 0 && (
           <div className="co-card-line">
             <div>
-              <strong>{card.label} × {lineCards.length}</strong>
-              <p className="co-price">${(card.price * lineCards.length).toFixed(2)} AUD</p>
+              <strong>{cardFor(line).label} × {lineCards.length}</strong>
+              <p className="co-price">{cardFor(line).price > 0 ? `$${(cardFor(line).price * lineCards.length).toFixed(2)} AUD` : "Free"}</p>
               {lineCards.map((message, i) => (
                 <small key={i}>{[line.cardNames?.[i]?.trim(), message.trim() ? `“${message.trim()}”` : "Blank Card"].filter(Boolean).join(" - ")}</small>
               ))}

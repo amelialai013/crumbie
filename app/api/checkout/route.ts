@@ -60,6 +60,7 @@ export async function POST(req: Request) {
 	const cardNames: string[] = [];
 	const cardProducts: string[] = [];
 	const cardProductIds = new Set<string>();
+	const cardPrices: number[] = [];
 	for (const line of parsed.data.lines) {
 		const product = products.find((item) => item.id === line.productId);
 		const variant = product?.variants.find((item) => item.id === line.variantId);
@@ -84,6 +85,7 @@ export async function POST(req: Request) {
 				cardNames.push(name);
 				cardMessages.push(message.trim().slice(0, cardOption.messageMaxLength));
 				cardProductIds.add(product.id);
+				cardPrices.push(promo && promo.productId === product.id ? promo.cardPrice : cardOption.price);
 				cardProducts.push(`${product.name} — ${variant.label}`);
 			}
 		}
@@ -104,7 +106,7 @@ export async function POST(req: Request) {
 	}
 
 	// Each line's cards are capped at its own box count, so a stale cart can't buy more cards than boxes.
-	const card = cardMessages.length > 0 ? { label: promo?.cardLabel && cardProductIds.size === 1 && cardProductIds.has(promo.productId) ? promo.cardLabel : cardOption.label, price: cardOption.price, quantity: cardMessages.length, names: cardNames, messages: cardMessages, products: cardProducts } : null;
+	const card = cardMessages.length > 0 ? { label: promo?.cardLabel && cardProductIds.size === 1 && cardProductIds.has(promo.productId) ? promo.cardLabel : cardOption.label, price: Math.round((cardPrices.reduce((sum, price) => sum + price, 0) / cardMessages.length) * 100) / 100, quantity: cardMessages.length, names: cardNames, messages: cardMessages, products: cardProducts } : null;
 
 	// Each line is either pickup or delivery; delivery lines are validated server-side and need an address.
 	const deliveryLines = clean.filter((line) => line.fulfilment === "delivery");
@@ -124,7 +126,7 @@ export async function POST(req: Request) {
 		if (!addressShapeOk(delivery.street, delivery.suburb) || !(await addressExists(delivery.street, delivery.suburb, delivery.postcode))) {
 			return NextResponse.json({ error: deliveryOption.addressErrorMessage, field: "street" }, { status: 400 });
 		}
-		const deliverySubtotal = deliveryLines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + (card ? card.price * card.quantity : 0);
+		const deliverySubtotal = deliveryLines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + cardPrices.reduce((sum, price) => sum + price, 0);
 		deliveryFee = deliveryFeeFor(deliveryOption, deliverySubtotal);
 		for (const line of deliveryLines) {
 			const requested = line.deliverySlot;
@@ -163,16 +165,20 @@ export async function POST(req: Request) {
 				},
 			},
 		}));
-		if (card && card.price > 0) {
-			lineItems.push({
-				quantity: card.quantity,
-				price_data: {
-					currency: "aud",
-					unit_amount: Math.round(card.price * 100),
-					tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
-					product_data: { name: card.label, tax_code: tax.enabled ? tax.productTaxCode : undefined },
-				},
-			});
+		if (card) {
+			const byPrice = new Map<number, number>();
+			for (const price of cardPrices) if (price > 0) byPrice.set(price, (byPrice.get(price) ?? 0) + 1);
+			for (const [price, quantity] of byPrice) {
+				lineItems.push({
+					quantity,
+					price_data: {
+						currency: "aud",
+						unit_amount: Math.round(price * 100),
+						tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
+						product_data: { name: card.label, tax_code: tax.enabled ? tax.productTaxCode : undefined },
+					},
+				});
+			}
 		}
 		if (delivery && deliveryFee > 0) {
 			lineItems.push({

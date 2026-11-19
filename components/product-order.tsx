@@ -234,7 +234,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
               {card.description && <small>{card.description}</small>}
             </span>
             <span className="card-addon-meta">
-              <em>{cardCount > 0 ? `+$${formatPrice(cardCount * card.price)}` : `+$${formatPrice(card.price)} each`}</em>
+              {card.price > 0 && <em>{cardCount > 0 ? `+$${formatPrice(cardCount * card.price)}` : `+$${formatPrice(card.price)} each`}</em>}
               <span className="card-addon-check" aria-hidden="true">
                 <svg viewBox="0 0 20 20"><path d="m5 10.5 3.2 3.2L15 6.8" /></svg>
               </span>
@@ -253,7 +253,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
                 )}
                 {boxes > 1 && (
                 <div className="card-addon-count-row">
-                <p className="card-addon-count">{cardCount} of {boxes} · ${formatPrice(card.price)} each</p>
+                <p className="card-addon-count">{cardCount} of {boxes}{card.price > 0 ? ` · $${formatPrice(card.price)} each` : ""}</p>
                 <div className={`card-addon-reveal${mode === "some" ? " is-open" : ""}`} aria-hidden={mode !== "some"}>
                   <div>
                     <div className="card-addon-step">

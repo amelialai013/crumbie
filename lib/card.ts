@@ -49,7 +49,7 @@ export function galleryImagesFrom(fields: Record<string, string> | undefined): s
 	}
 }
 
-export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string; cardLabel: string; cardDescription: string };
+export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string; cardLabel: string; cardDescription: string; cardPrice: number };
 
 // Crumbs-page promo banner, stored in the "settings" content module.
 export function promoFrom(fields: Record<string, string> | undefined): Promo | null {
@@ -62,13 +62,15 @@ export function promoFrom(fields: Record<string, string> | undefined): Promo | n
 		button: fields.promoButton?.trim() || "Order now",
 		cardLabel: fields.promoCardLabel?.trim() ?? "",
 		cardDescription: fields.promoCardDescription?.trim() ?? "",
+		// Leaving the hero card price empty makes the card free.
+		cardPrice: Number.isFinite(Number(fields.promoCardPrice)) && Number(fields.promoCardPrice) > 0 ? Math.round(Number(fields.promoCardPrice) * 100) / 100 : 0,
 	};
 }
 
 // The hero product can rename its card (e.g. "Christmas Crumbie Card"); other products keep the default.
 export function cardForProduct(card: CardOption, promo: Promo | null, productId: string): CardOption {
 	if (!promo || promo.productId !== productId) return card;
-	return { ...card, label: promo.cardLabel || card.label, description: promo.cardDescription || card.description };
+	return { ...card, label: promo.cardLabel || card.label, description: promo.cardDescription || card.description, price: promo.cardPrice };
 }
 
 // Closing banner at the bottom of each product page.

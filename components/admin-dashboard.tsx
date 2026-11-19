@@ -1116,6 +1116,7 @@ function PromoSettings({
     promoButton: source.promoButton ?? "Order now",
     promoCardLabel: source.promoCardLabel ?? "",
     promoCardDescription: source.promoCardDescription ?? "",
+    promoCardPrice: source.promoCardPrice ?? "",
   });
   const [values, setValues] = useState(() => pick(initial));
   const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
@@ -1207,6 +1208,10 @@ function PromoSettings({
                   <label htmlFor="promo-card-description">Card description (hero product only)</label>
                   <textarea id="promo-card-description" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
                   <small className="admin-editor-count">{values.promoCardDescription.length} / 200</small>
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-card-price">Card price in AUD (hero product only)</label>
+                  <input id="promo-card-price" inputMode="decimal" maxLength={8} placeholder="Leave empty for a free card" value={values.promoCardPrice} onChange={(event) => set("promoCardPrice", event.target.value.replace(/[^\d.]/g, ""))} />
                 </div>
               </div>
             </div>
@@ -1459,6 +1464,15 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
+    async function fetchProductsWithRetry() {
+      let response = await fetch("/api/admin/products", { cache: "no-store" });
+      for (let attempt = 0; attempt < 3 && !response.ok && response.status !== 401; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+        response = await fetch("/api/admin/products", { cache: "no-store" });
+      }
+      return response;
+    }
+
     async function loadAdminResources() {
       const [
         dashboardResult,
@@ -1472,7 +1486,7 @@ export default function AdminDashboard() {
         fetch("/api/admin/config"),
         fetch("/api/admin/pickup-dates"),
         fetch("/api/admin/delivery-dates"),
-        fetch("/api/admin/products"),
+        fetchProductsWithRetry(),
         fetch("/api/admin/content?module=settings"),
       ]);
 

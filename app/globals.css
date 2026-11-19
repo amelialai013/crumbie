@@ -4156,6 +4156,12 @@ body {
   .product-order .product-date {
     grid-column: auto;
   }
+  .product-order .product-postcode {
+    margin-bottom: 0;
+  }
+  .product-order .product-postcode + .product-date {
+    margin-top: 18px;
+  }
   .cart-confirmation {
     bottom: calc(12px + env(safe-area-inset-bottom));
     width: calc(100vw - 24px);
