@@ -7481,3 +7481,9 @@ html:has(.cart-modal-overlay) .site-header {
 .admin-editor .admin-card-pair.admin-card-even .field > .premium-select {
   width: 100%;
 }
+.co-group-head .co-title { align-items: center; }
+.co-group-head .co-title strong { line-height: 1.25; }
+.co-deliver > h2 { min-height: 32px; display: flex; align-items: center; line-height: 1.25; }
+@media (max-width: 640px) {
+  .co-item > .co-actions .quantity-stepper { width: 130px; grid-template-columns: minmax(0, 1fr) 86px; }
+}
