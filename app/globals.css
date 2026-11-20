@@ -7444,3 +7444,17 @@ html:has(.cart-modal-overlay) .site-header {
   line-height: 1;
   text-indent: 0;
 }
+
+@keyframes fulfil-field-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.product-order .product-postcode,
+.product-order .product-date {
+  animation: fulfil-field-in .4s cubic-bezier(.22, 1, .36, 1) both;
+}
+.product-order .product-date { animation-delay: .06s; }
+@media (prefers-reduced-motion: reduce) {
+  .product-order .product-postcode,
+  .product-order .product-date { animation: none; }
+}

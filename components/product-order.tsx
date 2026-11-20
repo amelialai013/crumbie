@@ -192,7 +192,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
             {showPostcodeError && !postcodeFilled && <p className="field-error" role="alert">Enter your postcode to check we deliver to you</p>}
           </div>
         )}
-        <div className="field product-date">
+        <div className="field product-date" key={delivering ? "delivery" : "pickup"}>
           <span className="field-label" id="date-label">{delivering ? "Delivery window" : "Pickup window"}</span>
           {delivering ? (
             <PremiumSelect
