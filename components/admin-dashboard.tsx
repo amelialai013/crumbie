@@ -9,6 +9,7 @@ import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
 import AdminSwitch from "@/components/admin-switch";
 import { deliveryFrom, postcodesWithinKm } from "@/lib/delivery";
+import { routeFromIvanhoe } from "@/lib/delivery-route";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { privacyBodyMaxChars, privacyDefaultTitle, privacyDefaults } from "@/lib/privacy";
@@ -47,6 +48,8 @@ type Order = {
   lines?: Array<{
     productName?: string;
     variantLabel?: string;
+    quantity?: number;
+    unitPrice?: number;
     pickupDateId?: string;
     pickupDate?: string;
     pickupWindow?: string;
@@ -314,6 +317,7 @@ type EmailTemplate = { key: string; name: string; description: string; subjectFi
 const adminTabs = [
   "orders",
   "pickup schedule",
+  "delivery schedule",
   "enquiries",
   "products",
   "pickup windows",
@@ -329,6 +333,7 @@ const pageContentModules: [string, string][] = [
   ["faqs", "FAQs"],
   ["terms of service", "Terms of service"],
   ["privacy policy", "Privacy policy"],
+  ["order confirmation", "Order confirmation"],
 ];
 const emailTemplates: EmailTemplate[] = [
   { key: "confirmation", name: "Order confirmation", description: "Sent immediately after a successful order.", subjectField: "confirmationSubject", bodyField: "confirmationBody" },
@@ -570,6 +575,21 @@ Club Crumbie`,
       fields: {
         pageTitle: privacyDefaultTitle,
         ...Object.fromEntries(privacyDefaults.flatMap((section, i) => [[`s${i + 1}Heading`, section.heading], [`s${i + 1}Copy`, section.body]])),
+      },
+    },
+  },
+  "order confirmation": {
+    fields: [
+      { key: "pageTitle", label: "Page heading", maxLength: 80 },
+      { key: "message", label: "Message", maxLength: 600, multiline: true },
+      { key: "buttonLabel", label: "Button label", maxLength: 40 },
+    ],
+    defaults: {
+      fields: {
+        pageTitle: "Your cookie order is received.",
+        message:
+          "We’ll send confirmation to the email used at checkout once payment is complete. Pickup is in Ivanhoe; until the final address is configured, exact pickup details will be provided separately.",
+        buttonLabel: "Back to crumbs",
       },
     },
   },
@@ -1818,6 +1838,7 @@ export default function AdminDashboard() {
   const [adminBusyMessage, setAdminBusyMessage] = useState("");
   const [pickupDatePendingRemoval, setPickupDatePendingRemoval] =
     useState<PickupDate | null>(null);
+  const [viewOrderId, setViewOrderId] = useState<string | null>(null);
   const [blockedPickupDateRemoval, setBlockedPickupDateRemoval] = useState<{
     pickupDate: PickupDate;
     orderCount: number;
@@ -2374,9 +2395,10 @@ export default function AdminDashboard() {
     }
   }
 
-  async function removePickupDate() {
-    if (!pickupDatePendingRemoval) return;
-    const { id } = pickupDatePendingRemoval;
+  async function removePickupDate(target?: PickupDate) {
+    const pending = target || pickupDatePendingRemoval;
+    if (!pending) return;
+    const { id } = pending;
     setRemovingPickupDateId(id);
     setPickupDateStatus("Removing...");
     beginAdminAction(`Removing ${dateNoun} window…`);
@@ -3159,6 +3181,57 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+        {viewOrderId && (() => {
+          const order = orders.find((item) => item.id === viewOrderId);
+          if (!order) return null;
+          return (
+            <div className="admin-confirm-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setViewOrderId(null); }}>
+              <div aria-labelledby="order-view-title" aria-modal="true" className="admin-confirm-modal admin-order-modal" role="dialog">
+                <h2 id="order-view-title">{order.customer?.name || "Order"}</h2>
+                <button className="btn btn-light admin-order-close" type="button" aria-label="Close modal" title="Close" onClick={() => setViewOrderId(null)}>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                    <path d="m5 5 10 10M15 5 5 15" />
+                  </svg>
+                </button>
+                <div className="admin-order-scroll">
+                <dl className="admin-order-details">
+                  <div><dt>Email</dt><dd>{order.customer?.email || "—"}</dd></div>
+                  <div><dt>Collection</dt><dd>{order.fulfilment === "delivery" ? "Delivery" : "Pickup"}</dd></div>
+                  {order.fulfilment === "delivery" && order.delivery ? (
+                    <>
+                      <div><dt>Delivery name</dt><dd>{order.delivery.name || "—"}</dd></div>
+                      <div><dt>Delivery address</dt><dd>{`${order.delivery.street}, ${order.delivery.suburb} VIC ${order.delivery.postcode}`}</dd></div>
+                    </>
+                  ) : null}
+                  <div><dt>Payment</dt><dd>{order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : "—"}</dd></div>
+                  <div><dt>Created</dt><dd>{order.createdAt?.slice(0, 10)}</dd></div>
+                  <div>
+                    <dt>Items</dt>
+                    <dd className="admin-order-items">
+                      {order.lines?.map((line, index) => (
+                        <div key={index}><strong>{line.quantity ?? 1} × {line.productName}</strong><span>{line.variantLabel}{typeof line.unitPrice === "number" ? ` · $${line.unitPrice.toFixed(2)} each` : ""}</span></div>
+                      ))}
+                      {order.card && (
+                        <div>
+                          <strong>{order.card.quantity ?? 1} × {order.card.label || "Club Crumbie Card"}</strong>
+                          {typeof order.card.price === "number" && <span>${order.card.price.toFixed(2)} each</span>}
+                          {(order.card.names?.some(Boolean) || order.card.messages?.some(Boolean)) && (
+                            <ol className="admin-card-messages">
+                              {(order.card.messages ?? []).map((message, index) => (
+                                <li key={index}>{order.card?.names?.[index] ? <strong>{order.card.names[index]}: </strong> : null}{message || <em>blank</em>}{order.card?.products?.[index] ? ` (${order.card.products[index]})` : ""}</li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
         {blockedPickupDateRemoval && (
           <div
             className="admin-confirm-overlay"
@@ -3177,12 +3250,12 @@ export default function AdminDashboard() {
             >
               <h2 id="pickup-blocked-title">This {dateNoun} window has orders</h2>
               <p id="pickup-blocked-copy">
-                You cannot remove{" "}
+                You are about to remove{" "}
                 <strong>
                   {formatPickupDate(blockedPickupDateRemoval.pickupDate.date)}
-                </strong>{" "}
-                until you move all orders that have chosen this window to a
-                different {dateNoun} window.
+                </strong>
+                . Existing orders keep this {dateNoun} window, but customers
+                will no longer be able to choose it.
               </p>
               <p>
                 {blockedPickupDateRemoval.orderCount}{" "}
@@ -3197,7 +3270,18 @@ export default function AdminDashboard() {
                   type="button"
                   onClick={() => setBlockedPickupDateRemoval(null)}
                 >
-                  Got it
+                  Keep window
+                </button>
+                <button
+                  className="btn btn-dark admin-confirm-danger"
+                  type="button"
+                  onClick={() => {
+                    const target = blockedPickupDateRemoval.pickupDate;
+                    setBlockedPickupDateRemoval(null);
+                    void removePickupDate(target);
+                  }}
+                >
+                  Remove anyway
                 </button>
               </div>
             </div>
@@ -3265,44 +3349,24 @@ export default function AdminDashboard() {
                 <th>Items</th>
                 <th>Payment</th>
                 <th>Created</th>
+                <th aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
               {orders.length ? (
                 orders.map((order) => (
                   <tr key={order.id}>
-                    <td data-label="Customer">
-                      {order.customer?.name}
-                      <br />
-                      <small>{order.customer?.email}</small>
-                      <br />
-                      <span className="status">{order.fulfilment === "delivery" ? "Delivery" : "Pickup"}</span>
-                      {order.fulfilment === "delivery" && order.delivery && (
-                        <small style={{ display: "block" }}>
-                          {order.delivery.name}, {order.delivery.street}, {order.delivery.suburb} VIC {order.delivery.postcode}
-                        </small>
-                      )}
+                    <td data-label="Customer" className="admin-order-customer">
+                      <strong>{order.customer?.name}</strong>
+                      <span>{order.customer?.email}</span>
                     </td>
-                    <td data-label="Items">
-                      {order.lines?.map((line, index) => (
-                        <div key={index}>
-                          {line.productName} · {line.variantLabel}{" "}
-                          <span className="status">{line.status}</span>
-                        </div>
-                      ))}
-                      {order.card && (
-                        <div>
-                          {order.card.quantity ?? 1} × {order.card.label || "Club Crumbie Card"}
-                          {typeof order.card.price === "number" ? ` · $${order.card.price.toFixed(2)} each` : ""}
-                          {(order.card.names?.some(Boolean) || order.card.messages?.some(Boolean)) && (
-                            <ol className="admin-card-messages">
-                              {(order.card.messages ?? []).map((message, index) => (
-                                <li key={index}>{order.card?.names?.[index] ? <strong>{order.card.names[index]}: </strong> : null}{message || <em>blank</em>}{order.card?.products?.[index] ? ` (${order.card.products[index]})` : ""}</li>
-                              ))}
-                            </ol>
-                          )}
-                        </div>
-                      )}
+                    <td data-label="Items" className="admin-order-items">
+                      <div>
+                        <strong>{order.lines?.[0] ? order.lines[0].productName : order.card ? "Club Crumbie Card" : "—"}</strong>
+                        {(order.lines?.length ?? 0) + (order.card && order.lines?.length ? 1 : 0) > 1 && (
+                          <span>+{(order.lines?.length ?? 0) + (order.card ? 1 : 0) - 1} more</span>
+                        )}
+                      </div>
                     </td>
                     <td data-label="Payment">
                       {order.paymentStatus
@@ -3310,12 +3374,15 @@ export default function AdminDashboard() {
                           order.paymentStatus.slice(1)
                         : ""}
                     </td>
-                    <td data-label="Created">{order.createdAt?.slice(0, 10)}</td>
+                    <td data-label="Created" className="admin-order-date">{order.createdAt?.slice(0, 10)}</td>
+                    <td className="admin-table-action">
+                      <button type="button" className="admin-text-button" onClick={() => setViewOrderId(order.id ?? null)}>View</button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4}>No orders yet</td>
+                  <td colSpan={5}>No orders yet</td>
                 </tr>
               )}
             </tbody>
@@ -3325,29 +3392,80 @@ export default function AdminDashboard() {
           <div>
             {pickupDates.map((date) => (
               <div
-                className="form-card"
+                className="admin-schedule-group"
                 key={date}
-                style={{ marginBottom: 14 }}
               >
-                <h2>{date}</h2>
-                {orders.flatMap((order) =>
-                  (order.lines || [])
-                    .filter((line) => line.pickupDate === date)
-                    .map((line, index) => (
-                      <p key={`${order.id}-${index}`}>
-                        {order.customer?.name} · {line.productName} ·{" "}
-                        {line.pickupWindow}
-                        {order.card && index === 0 ? ` · + ${order.card.quantity ?? 1} × ${order.card.label || "Club Crumbie Card"}` : ""}
-                      </p>
-                    )),
-                )}
-                <button className="btn btn-dark" disabled>
+                <h2>{formatPickupDate(date || "")}</h2>
+                <ul className="admin-schedule-list">
+                  {orders.flatMap((order) =>
+                    (order.lines || [])
+                      .filter((line) => line.pickupDate === date)
+                      .map((line, index) => (
+                        <li key={`${order.id}-${index}`}>
+                          <strong>{order.customer?.name}</strong>
+                          <span>
+                            {line.quantity ?? 1} × {line.productName}
+                            {order.card && index === 0 ? ` + ${order.card.quantity ?? 1} × ${order.card.label || "Club Crumbie Card"}` : ""}
+                          </span>
+                          <span>{line.pickupWindow}</span>
+                        </li>
+                      )),
+                  )}
+                </ul>
+                <button className="btn btn-light" disabled>
                   Bulk ready email (configure Resend)
                 </button>
               </div>
             ))}
           </div>
         )}
+        {tab === "delivery schedule" && (() => {
+          const deliveries = orders.filter((order) => order.fulfilment === "delivery" && order.delivery);
+          const dates = Array.from(new Set(deliveries.map((order) => order.deliverySlot?.date || ""))).sort();
+          if (!dates.length) return <p className="admin-sync-note" role="note">No delivery orders yet</p>;
+          return (
+            <div>
+              {dates.map((date) => {
+                const route = routeFromIvanhoe(
+                  deliveries.filter((order) => (order.deliverySlot?.date || "") === date),
+                  (order) => order.delivery?.postcode,
+                );
+                return (
+                  <div className="admin-schedule-group" key={date || "unscheduled"}>
+                    <h2>{date ? formatPickupDate(date) : "No delivery date"}</h2>
+                    <p className="admin-schedule-note">Route starts and ends in Ivanhoe, nearest stop first.</p>
+                    <table className="table admin-stack-table">
+                      <thead>
+                        <tr>
+                          <th>Stop</th>
+                          <th>Customer</th>
+                          <th>Delivery address</th>
+                          <th>Window</th>
+                          <th aria-label="Actions" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {route.map((order, index) => (
+                          <tr key={order.id ?? index}>
+                            <td data-label="Stop">{index + 1}</td>
+                            <td data-label="Customer" className="admin-order-customer">
+                              <strong>{order.delivery?.name || order.customer?.name}</strong>
+                            </td>
+                            <td data-label="Delivery address">{`${order.delivery?.street}, ${order.delivery?.suburb} VIC ${order.delivery?.postcode}`}</td>
+                            <td data-label="Window">{order.deliverySlot?.window || "—"}</td>
+                            <td className="admin-table-action">
+                              <button type="button" className="admin-text-button" onClick={() => setViewOrderId(order.id ?? null)}>View</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
         {tab === "enquiries" && !viewingEnquiryId && (() => {
           const typeOptions = Array.from(new Set(enquiries.filter((item) => item.id).map(enquiryTypeLabel))).sort();
           const visibleEnquiries = enquiries
@@ -4312,6 +4430,7 @@ export default function AdminDashboard() {
                         >
                           Remove
                         </button>
+                        {product.id === heroProductId && <span aria-hidden="true" className="admin-hero-tag admin-hero-tag-action">Hero</span>}
                       </td>
                     </tr>
                   ))

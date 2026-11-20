@@ -7444,6 +7444,16 @@ html:has(.cart-modal-overlay) .site-header {
   line-height: 1;
   text-indent: 0;
 }
+@media (min-width: 641px) {
+  .admin-product-table tbody tr { position: static; }
+  .admin-product-table td.admin-table-action { position: relative; }
+  .admin-product-name { padding-right: 0; }
+  .admin-product-table .admin-product-name .admin-hero-tag { display: none; }
+  .admin-product-table .admin-hero-tag-action { position: absolute; top: 16px; right: 0; margin: 0; }
+}
+@media (max-width: 640px) {
+  .admin-hero-tag-action { display: none; }
+}
 
 @keyframes fulfil-field-in {
   from { opacity: 0; }
@@ -7481,7 +7491,8 @@ html:has(.cart-modal-overlay) .site-header {
 .admin-editor .admin-card-pair.admin-card-even .field > .premium-select {
   width: 100%;
 }
-.co-group-head .co-title { align-items: center; }
+.co-group-head .co-title { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 12px; }
+.co-group-head .co-title h2 { order: -1; }
 .co-group-head .co-title strong { line-height: 1.25; }
 .co-deliver > h2 { min-height: 32px; display: flex; align-items: center; line-height: 1.25; }
 @media (max-width: 640px) {
@@ -7494,5 +7505,39 @@ html:has(.cart-modal-overlay) .site-header {
 .product-order .product-quantity .quantity-stepper input { padding: 0; height: 44px; }
 .co-dates { gap: 0; }
 .co-group .co-date { padding: 24px 0; border: 0; border-top: 1px solid #4a433a; border-radius: 0; }
+.co-stack > .co-group:first-child .co-date:first-child { border-top: 0; padding-top: 0; }
+.co-stack > .co-deliver { padding: 24px 0 0; border: 0; border-top: 1px solid #4a433a; border-radius: 0; }
 .co-group .co-items > li + li { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #4a433a; }
 @media (min-width: 821px) { .checkout-cols { column-gap: 48px; } }
+.admin-order-customer, .admin-order-items { vertical-align: top; }
+.admin-order-customer strong, .admin-order-items strong { display: block; font-weight: 500; font-size: 1rem; line-height: 1.4; color: #efcdaa; }
+.admin-order-customer span, .admin-order-items span { display: block; margin-top: 2px; font-size: .875rem; line-height: 1.45; color: #c9ad94; }
+.admin-order-items > div + div { margin-top: 14px; }
+.admin-order-items .admin-card-messages { margin: 6px 0 0; padding-left: 18px; font-size: .875rem; color: #c9ad94; }
+.admin-order-items .admin-card-messages strong { display: inline; font-size: inherit; color: #efcdaa; }
+.admin-order-date { white-space: nowrap; font-size: .9rem; }
+.admin-order-details { display: grid; gap: 0; margin: 24px 0 0; }
+.admin-order-details > div { display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #4a433a; }
+.admin-order-details dt { color: #c9ad94; font-size: .875rem; }
+.admin-order-details dd { margin: 0; line-height: 1.5; }
+.admin-order-modal { position: relative; overflow: hidden; }
+.admin-order-scroll { max-height: calc(100vh - 48px - 70px - 60px); overflow-y: auto; margin-right: -22px; padding-right: 12px; scrollbar-width: thin; scrollbar-color: rgba(201, 173, 148, .7) transparent; }
+.admin-order-modal h2 { padding-right: 64px; }
+.admin-order-modal .admin-order-close { position: absolute; top: 24px; right: 24px; width: 52px; min-width: 0; height: 52px; min-height: 0; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.admin-order-close svg { width: 22px; height: 22px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
+.admin-order-scroll::-webkit-scrollbar { width: 10px; }
+.admin-order-scroll::-webkit-scrollbar-track { background: transparent; }
+.admin-order-scroll::-webkit-scrollbar-thumb { border: 3px solid #1a140d; border-radius: 999px; background: rgba(201, 173, 148, .7); }
+.admin-order-modal h2 { font-size: 1.6rem; }
+@media (max-width: 520px) { .admin-order-details > div { grid-template-columns: 1fr; gap: 4px; } }
+.admin-text-button { padding: 0; border: 0; background: none; color: #efcdaa; font: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.admin-text-button:hover { color: #c9ad94; }
+.admin-schedule-group { margin: 0 0 40px; padding: 0; border: 0; background: none; box-shadow: none; }
+.admin-schedule-group h2 { margin: 0; padding-top: 32px; font-size: 1.5rem; font-weight: 400; }
+.admin-schedule-list { list-style: none; margin: 18px 0 22px; padding: 0; }
+.admin-schedule-list li { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr auto; gap: 16px; align-items: baseline; padding: 14px 0; border-top: 1px solid #4a433a; }
+.admin-schedule-list li strong { font-weight: 500; }
+.admin-schedule-list li span { color: #c9ad94; }
+.admin-schedule-list li span:last-child { white-space: nowrap; }
+@media (max-width: 640px) { .admin-schedule-list li { grid-template-columns: 1fr; gap: 2px; } }
+.admin-schedule-note { margin: 8px 0 16px; color: rgba(239, 205, 170, .7); font-size: .9rem; }

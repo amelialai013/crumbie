@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/session";
 import { type PickupDate } from "@/lib/catalog";
-import { listRecords, saveRecord } from "@/lib/store";
+import { saveRecord } from "@/lib/store";
 
 import { getDeliveryDates } from "@/lib/catalog-store";
-
-type Order = {
-	deliverySlot?: { date?: string };
-};
 
 function validDate(value: unknown): value is string {
 	return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T12:00:00`).getTime());
@@ -39,21 +35,6 @@ export async function DELETE(request: Request) {
 	const id = new URL(request.url).searchParams.get("id");
 	if (!id) return NextResponse.json({ error: "Delivery window id is required" }, { status: 400 });
 	try {
-		const deliveryDate = (await getDeliveryDates()).find((date) => date.id === id);
-		const orders = await listRecords<Order>("order");
-		const orderCount = orders.filter((order) =>
-			Boolean(deliveryDate?.date) && order.deliverySlot?.date === deliveryDate?.date,
-		).length;
-		if (orderCount > 0) {
-			return NextResponse.json(
-				{
-					error:
-						"You cannot remove this delivery window until you move all orders that have chosen that window to a different window.",
-					orderCount,
-				},
-				{ status: 409 },
-			);
-		}
 		await saveRecord("delivery-date", { id, date: "", window: "", removed: true });
 		return NextResponse.json({ ok: true });
 	} catch (error) {
