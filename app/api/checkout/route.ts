@@ -49,6 +49,13 @@ const integrationIdentifier = (() => {
 	return `clubcrumbie_${suffix}`;
 })();
 
+function prettyDate(iso: string) {
+	const d = new Date(`${iso}T00:00:00Z`);
+	if (Number.isNaN(d.getTime())) return iso;
+	const p = (o: Intl.DateTimeFormatOptions) => d.toLocaleDateString("en-AU", { timeZone: "UTC", ...o });
+	return `${p({ weekday: "long" })}, ${p({ day: "numeric" })} ${p({ month: "short" })} ${p({ year: "numeric" })}`;
+}
+
 export async function POST(req: Request) {
 	const [products, pickupDates, cardOption, promo, deliveryOption, unavailableMessage] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getPromo(), getDelivery(), getUnavailableMessage()]);
 	const parsed = schema.safeParse(await req.json().catch(() => null));
@@ -75,6 +82,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error }, { status: 409 });
 		}
 
+		let freeCards = 0;
 		if (cardOption.enabled) {
 			const lineMessages = (line.cardMessages ?? []).slice(0, line.quantity);
 			for (const [index, message] of lineMessages.entries()) {
@@ -85,7 +93,9 @@ export async function POST(req: Request) {
 				cardNames.push(name);
 				cardMessages.push(message.trim().slice(0, cardOption.messageMaxLength));
 				cardProductIds.add(product.id);
-				cardPrices.push(promo && promo.productId === product.id ? promo.cardPrice : cardOption.price);
+				const cardPrice = promo && promo.productId === product.id ? promo.cardPrice : cardOption.price;
+				if (cardPrice <= 0) freeCards++;
+				cardPrices.push(cardPrice);
 				cardProducts.push(`${product.name} — ${variant.label}`);
 			}
 		}
@@ -102,6 +112,7 @@ export async function POST(req: Request) {
 			pickupWindow: pickup.window,
 			fulfilment: (line.fulfilment ?? parsed.data.fulfilment) === "delivery" && deliveryOption.enabled ? ("delivery" as const) : ("pickup" as const),
 			deliverySlot: line.deliverySlot ?? parsed.data.deliverySlot,
+			freeCards,
 		});
 	}
 
@@ -160,7 +171,7 @@ export async function POST(req: Request) {
 				tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
 				product_data: {
 					name: `${line.productName} — ${line.variantLabel}`,
-					description: line.fulfilment === "delivery" ? (line.deliverySlot ? `Delivery ${line.deliverySlot.date}, ${line.deliverySlot.window}` : "Delivery") + (delivery ? ` to ${delivery.name}, ${delivery.street}, ${delivery.suburb} VIC ${delivery.postcode}` : "") : `Pickup ${line.pickupDate}, ${line.pickupWindow}`,
+					description: [line.fulfilment === "delivery" ? (line.deliverySlot ? `Delivery ${prettyDate(line.deliverySlot.date)}, ${line.deliverySlot.window}` : "") : `Pickup ${prettyDate(line.pickupDate)}, ${line.pickupWindow}`, line.freeCards > 0 ? (line.freeCards === 1 ? "Includes Free Club Crumbie Card" : `Includes ${line.freeCards} Free Club Crumbie Cards`) : ""].filter(Boolean).join(" · ") || undefined,
 					tax_code: tax.enabled ? tax.productTaxCode : undefined,
 				},
 			},
@@ -181,13 +192,13 @@ export async function POST(req: Request) {
 			}
 		}
 		if (delivery && deliveryFee > 0) {
-			lineItems.push({
+			lineItems.unshift({
 				quantity: 1,
 				price_data: {
 					currency: "aud",
 					unit_amount: Math.round(deliveryFee * 100),
 					tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
-					product_data: { name: "Delivery", tax_code: tax.enabled ? tax.productTaxCode : undefined },
+					product_data: { name: "Delivery", ...(delivery ? { description: `${delivery.name}, ${delivery.street}, ${delivery.suburb} VIC ${delivery.postcode}` } : {}), tax_code: tax.enabled ? tax.productTaxCode : undefined },
 				},
 			});
 		}
@@ -215,7 +226,6 @@ export async function POST(req: Request) {
 			success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${origin}/cart`,
 			metadata: { pendingId },
-			...(delivery ? { custom_text: { submit: { message: `Delivering to ${delivery.name}, ${delivery.street}, ${delivery.suburb} VIC ${delivery.postcode}${deliverySlot ? ` on ${deliverySlot.date}, ${deliverySlot.window}` : ""}.`.slice(0, 1200) } } } : {}),
 			payment_intent_data: {
 				metadata: { pendingId },
 				...(delivery ? { shipping: { name: delivery.name, address: { line1: delivery.street, city: delivery.suburb, state: "VIC", postal_code: delivery.postcode, country: "AU" } } } : {}),

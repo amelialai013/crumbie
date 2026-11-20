@@ -233,6 +233,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
     );
   }
 
+  const info = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M10 9v5M10 6.2v.1" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>;
   const cross = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="m7 7 6 6M13 7l-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
   const check = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M6 10.4l2.6 2.6L14 7.6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 
@@ -342,6 +343,8 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
     );
   };
 
+  const deliveryAddress = [form.name.trim(), form.street.trim(), [form.suburb.trim(), form.suburb.trim() || form.postcode ? "VIC" : "", form.postcode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+
   const totals = (
     <div className="co-totals">
       {(["pickup", "delivery"] as const).map((option) =>
@@ -349,8 +352,9 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
           <p key={option}><span>{optionTitle(option)} · {plural(groups[option].lines.length)}</span><span>${groups[option].sum.toFixed(2)}</span></p>
         ) : null,
       )}
-      {groups.pickup.lines.length > 0 && <p><span>Pickup fee</span><span>{money(pickupFee)}</span></p>}
+      {groups.pickup.lines.length > 0 && pickupFee > 0 && <p><span>Pickup fee</span><span>{money(pickupFee)}</span></p>}
       {hasDelivery && <p><span>Delivery fee</span><span>{money(deliveryFee)}</span></p>}
+      {hasDelivery && deliveryAddress && <p className="co-totals-note">{deliveryAddress}</p>}
     </div>
   );
 
@@ -375,6 +379,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
   const deliverPanel = hasDelivery && (
     <section className="co-deliver">
       <h2>Delivery information</h2>
+      {delivery.radiusKm && <p className="checkout-status co-radius-note" role="note">{info}<span>We deliver within {delivery.radiusKm} km of Melbourne CBD.</span></p>}
       {deliveryForm}
     </section>
   );

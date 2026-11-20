@@ -8,14 +8,13 @@ import PremiumSelect from "./premium-select";
 import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
 import AdminSwitch from "@/components/admin-switch";
-import { deliveryFrom } from "@/lib/delivery";
+import { deliveryFrom, postcodesWithinKm } from "@/lib/delivery";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { privacyBodyMaxChars, privacyDefaultTitle, privacyDefaults } from "@/lib/privacy";
 import { termsBodyMaxChars, termsDefaultTitle, termsDefaults } from "@/lib/terms";
 import { defaultCardOption, defaultUnavailableMessage } from "@/lib/card";
 import { defaultAddressErrorMessage, defaultDeliverableMessage, defaultUndeliverableMessage } from "@/lib/delivery";
-import { VIC_POSTCODES } from "@/lib/vic-postcodes";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
@@ -933,22 +932,6 @@ function CardSettings({
   );
 }
 
-function postcodesWithinKm(km: number) {
-  const [lat0, lng0] = [-37.8136, 144.9631];
-  const rad = Math.PI / 180;
-  const codes = VIC_POSTCODES.filter(([, lat, lng]) => {
-    const a = Math.sin(((lat - lat0) * rad) / 2) ** 2 + Math.cos(lat0 * rad) * Math.cos(lat * rad) * Math.sin(((lng - lng0) * rad) / 2) ** 2;
-    return 12742 * Math.asin(Math.sqrt(a)) <= km;
-  }).map(([code]) => code);
-  const ranges: string[] = [];
-  for (let i = 0; i < codes.length; ) {
-    let j = i;
-    while (j + 1 < codes.length && codes[j + 1] === codes[j] + 1) j++;
-    ranges.push(j > i ? `${codes[i]}-${codes[j]}` : `${codes[i]}`);
-    i = j + 1;
-  }
-  return ranges.join(", ");
-}
 
 function DeliverySettings({
   begin,
@@ -969,6 +952,7 @@ function DeliverySettings({
       pickupFee: option.pickupFee ? option.pickupFee.toFixed(2) : "",
       deliveryFreeOver: option.freeOver === null ? "" : option.freeOver.toFixed(2),
       deliveryPostcodes: option.postcodes,
+      deliveryRadiusKm: option.radiusKm,
       pickupTitle: initial.pickupTitle ?? "",
       pickupDescription: option.pickupDescription,
       deliveryTitle: initial.deliveryTitle ?? "",
@@ -976,7 +960,7 @@ function DeliverySettings({
     };
   };
   const [fields, setFields] = useState(() => pick(initial));
-  const [radius, setRadius] = useState("");
+  const [radius, setRadius] = useState(() => pick(initial).deliveryRadiusKm);
   const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -1084,13 +1068,13 @@ function DeliverySettings({
               <div className="admin-card-price-input"><input id="delivery-radius" inputMode="numeric" maxLength={3} placeholder="Radius in km, or blank for none" value={radius} onChange={(event) => {
                 const value = event.target.value.replace(/\D/g, "");
                 setRadius(value);
-                setFields({ ...fields, deliveryPostcodes: value ? postcodesWithinKm(Number(value)) : "" });
+                setFields({ ...fields, deliveryRadiusKm: value, deliveryPostcodes: value ? postcodesWithinKm(Number(value)) : "" });
               }} /></div>
             </div>
             </div>
             <div className="field">
               <label htmlFor="delivery-postcodes">Delivery postcodes</label>
-              <textarea id="delivery-postcodes" placeholder="Enter postcodes or ranges, separated by commas (e.g. 3000-3099, 3121)" className="admin-textarea-lines" style={{ "--lines": Math.max(2, Math.ceil(fields.deliveryPostcodes.length / 48)) } as React.CSSProperties} value={fields.deliveryPostcodes} onChange={(event) => setFields({ ...fields, deliveryPostcodes: event.target.value })} />
+              <textarea id="delivery-postcodes" placeholder="Enter postcodes or ranges, separated by commas (e.g. 3000-3099, 3121)" className="admin-textarea-lines" style={{ "--lines": Math.max(2, Math.ceil(fields.deliveryPostcodes.length / 48)) } as React.CSSProperties} value={fields.deliveryPostcodes} onChange={(event) => { setRadius(""); setFields({ ...fields, deliveryRadiusKm: "", deliveryPostcodes: event.target.value }); }} />
             </div>
             
           </>

@@ -7487,3 +7487,9 @@ html:has(.cart-modal-overlay) .site-header {
 @media (max-width: 640px) {
   .co-item > .co-actions .quantity-stepper { width: 130px; grid-template-columns: minmax(0, 1fr) 86px; }
 }
+.co-totals .co-totals-note { display: block; font-size: .82rem; opacity: .7; line-height: 1.4; margin-top: -2px; }
+.co-deliver .checkout-status.co-radius-note { border-color: #e6c35c; color: #e6c35c; margin: 0 0 4px; }
+.co-deliver .checkout-status.co-radius-note svg { color: #e6c35c; }
+.product-order .product-quantity > label { line-height: 18.72px; }
+.product-order .product-quantity .quantity-stepper { height: 44px; margin-bottom: 0; }
+.product-order .product-quantity .quantity-stepper input { padding: 0; height: 44px; }
