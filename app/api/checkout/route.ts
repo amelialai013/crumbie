@@ -160,7 +160,7 @@ export async function POST(req: Request) {
 				tax_behavior: tax.enabled ? tax.taxBehavior : undefined,
 				product_data: {
 					name: `${line.productName} — ${line.variantLabel}`,
-					description: line.fulfilment === "delivery" ? (line.deliverySlot ? `Delivery ${line.deliverySlot.date}, ${line.deliverySlot.window}` : "Delivery") : `Pickup ${line.pickupDate}, ${line.pickupWindow}`,
+					description: line.fulfilment === "delivery" ? (line.deliverySlot ? `Delivery ${line.deliverySlot.date}, ${line.deliverySlot.window}` : "Delivery") + (delivery ? ` to ${delivery.name}, ${delivery.street}, ${delivery.suburb} VIC ${delivery.postcode}` : "") : `Pickup ${line.pickupDate}, ${line.pickupWindow}`,
 					tax_code: tax.enabled ? tax.productTaxCode : undefined,
 				},
 			},
