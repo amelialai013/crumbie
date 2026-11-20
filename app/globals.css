@@ -1857,7 +1857,7 @@ section:has(#product-modal-toggle:checked) .admin-product-close {
   }
   .admin-product-table th.admin-table-action,
   .admin-product-table td.admin-table-action {
-    width: 160px;
+    width: 170px;
   }
   .admin-product-table .admin-product-description { max-width: none; }
 }
@@ -6659,12 +6659,12 @@ textarea.card-addon-input {
   transition: opacity .2s ease;
 }
 @media (min-width: 761px) {
-  .admin-pickup-table:not(.admin-template-table) {
+  .admin-pickup-table:not(.admin-template-table):not(.admin-product-table) {
     table-layout: fixed;
   }
-  .admin-pickup-table:not(.admin-template-table) th:nth-child(1) { width: 40%; }
-  .admin-pickup-table:not(.admin-template-table) th:nth-child(2) { width: 28%; }
-  .admin-pickup-table:not(.admin-template-table) th:nth-child(4) { width: 120px; }
+  .admin-pickup-table:not(.admin-template-table):not(.admin-product-table) th:nth-child(1) { width: 40%; }
+  .admin-pickup-table:not(.admin-template-table):not(.admin-product-table) th:nth-child(2) { width: 28%; }
+  .admin-pickup-table:not(.admin-template-table):not(.admin-product-table) th:nth-child(4) { width: 120px; }
 }
 .admin-sync-note.admin-delivery-off-note {
   margin-bottom: 0;
@@ -7268,7 +7268,7 @@ html:has(.cart-modal-overlay) .site-header {
   .cart-toast-layer .cart-card-close:hover { background: #efcdaa; color: #1a140d; }
 }
 .cart-card-item { display: flex; gap: 14px; align-items: center; padding: 12px; border: 1px solid #4a3d31; border-radius: 16px; }
-.cart-card-item img { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; flex: none; }
+.cart-card-item img { width: 72px; height: 72px; border-radius: 12px; object-fit: contain; flex: none; }
 .cart-toast-layer .cart-card-item strong { display: block; margin: 0; font-size: 1rem; font-weight: 500; letter-spacing: -.01em; }
 .cart-toast-layer .cart-card-item p { margin: 4px 0 0; font-size: .86rem; opacity: .7; }
 .cart-card-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: .92rem; }
@@ -7362,4 +7362,85 @@ html:has(.cart-modal-overlay) .site-header {
 @media (prefers-reduced-motion: reduce) {
   .admin-accordion::details-content,
   .admin-accordion summary svg { transition-duration: 1ms; transition-delay: 0ms; }
+}
+
+@media (max-width: 640px) {
+  .admin-editor .admin-card-pair.admin-card-stack .field input {
+    font-size: 16px;
+    text-overflow: ellipsis;
+  }
+}
+
+.admin-hero-tag {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 9px;
+  border: 1px solid #c9ad94;
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+.admin-product-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.admin-product-cell > div { min-width: 0; flex: 1; }
+.admin-product-cell .admin-drag-handle,
+.admin-drag-handle-spacer {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+.admin-product-table tr.is-dragging { opacity: 0.45; }
+
+.admin-number-stepper .admin-price-prefix {
+  line-height: 1;
+}
+
+.admin-card-pair.admin-card-even {
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 640px) {
+  .admin-card-pair.admin-card-even {
+    grid-template-columns: 1fr;
+  }
+}
+.admin-number-stepper .admin-price-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.admin-drag-handle { touch-action: none; }
+@media (max-width: 640px) {
+  .admin-product-table tr { position: relative; }
+  .admin-product-table tr.is-dragging { background: rgba(201, 173, 148, .08); }
+  .admin-product-cell .admin-drag-handle {
+    position: absolute;
+    top: 8px;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+  }
+  .admin-drag-handle-spacer { display: none; }
+  .admin-product-cell { gap: 0; }
+  .admin-product-name { padding-right: 44px; }
+  .admin-product-table .admin-hero-tag {
+    position: absolute;
+    top: 19px;
+    right: 0;
+    margin: 0;
+  }
+  .admin-product-name:has(.admin-hero-tag) { padding-right: 70px; }
+}
+.admin-hero-tag {
+  padding: 3px calc(9px - .08em) 3px 9px;
+  line-height: 1;
+  text-indent: 0;
 }

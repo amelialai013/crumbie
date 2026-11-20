@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/session";
 import { getProducts } from "@/lib/catalog-store";
 import { defaultProductAllergens, defaultProductIngredients, productSlugFromName } from "@/lib/catalog";
-import { getRecord, saveRecord } from "@/lib/store";
+import { getRecord, saveRecord, setRecord } from "@/lib/store";
 import { uploadMedia } from "@/lib/r2";
 import type { Product } from "@/lib/catalog";
 
@@ -78,6 +78,21 @@ export async function POST(request: Request) {
 		return NextResponse.json(product, { status: 201 });
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to save product";
+		return NextResponse.json({ error: message }, { status: 503 });
+	}
+}
+
+export async function PUT(request: Request) {
+	if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	const body = await request.json().catch(() => null);
+	const ids = Array.isArray(body?.ids) ? body.ids.filter((id: unknown): id is string => typeof id === "string") : null;
+	if (!ids) return NextResponse.json({ error: "Product order is required" }, { status: 400 });
+	try {
+		await setRecord("content", "product-order", { id: "product-order", ids });
+		refreshCatalogue();
+		return NextResponse.json({ ok: true });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Unable to save order";
 		return NextResponse.json({ error: message }, { status: 503 });
 	}
 }

@@ -16,7 +16,8 @@ export function cardOptionFrom(fields: Record<string, string> | undefined): Card
 	const price = Number(fields?.cardPrice);
 	return {
 		enabled: fields?.cardEnabled !== "false",
-		price: fields?.cardPrice?.trim() && Number.isFinite(price) && price >= 0 ? Math.round(price * 100) / 100 : defaultCardOption.price,
+		// Unset uses the default; a saved blank means the card is free.
+		price: fields?.cardPrice === undefined ? defaultCardOption.price : fields.cardPrice.trim() && Number.isFinite(price) && price >= 0 ? Math.round(price * 100) / 100 : 0,
 		label: fields?.cardLabel?.trim() || defaultCardOption.label,
 		// Unset uses the default; a saved blank hides the description.
 		namePlaceholder: fields?.cardNamePlaceholder === undefined ? defaultCardOption.namePlaceholder : fields.cardNamePlaceholder.trim(),

@@ -619,9 +619,19 @@ function firstSaturdayOfNextMonth() {
   return `${year}-${month}-${day}`;
 }
 
+function cleanPriceInput(value: string) {
+  const [whole, ...rest] = value.replace(/[^0-9.]/g, "").split(".");
+  return rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole;
+}
+
+function formatPriceInput(value: string) {
+  const amount = Number(value);
+  return value.trim() && Number.isFinite(amount) ? amount.toFixed(2) : "";
+}
+
 function normalizeCardSettings(data: { fields?: Record<string, string> } | null) {
   const next = { ...(data?.fields ?? {}) };
-  next.cardPrice = Number.isFinite(Number(next.cardPrice)) && next.cardPrice?.trim() ? Number(next.cardPrice).toFixed(2) : "3.00";
+  next.cardPrice = next.cardPrice === undefined ? "3.00" : Number.isFinite(Number(next.cardPrice)) && next.cardPrice.trim() ? Number(next.cardPrice).toFixed(2) : "";
   return next;
 }
 
@@ -719,12 +729,13 @@ function CardSettings({
           <div className={`field admin-card-price${fields.cardEnabled === "false" ? " is-disabled" : ""}`}>
             <label htmlFor="content-cardPrice">Card price (AUD)</label>
             <div className="admin-card-price-input">
-              <span aria-hidden="true">$</span>
+              {fields.cardPrice?.trim() && <span aria-hidden="true">$</span>}
               <input
                 id="content-cardPrice"
                 inputMode="decimal"
                 maxLength={8}
                 disabled={fields.cardEnabled === "false"}
+                placeholder="Free"
                 value={fields.cardPrice ?? ""}
                 onChange={(event) => {
                   const [whole, ...rest] = event.target.value.replace(/[^0-9.]/g, "").split(".");
@@ -733,7 +744,7 @@ function CardSettings({
                 }}
                 onBlur={() => {
                   const amount = Number(fields.cardPrice);
-                  setFields({ ...fields, cardPrice: Number.isFinite(amount) && fields.cardPrice?.trim() ? amount.toFixed(2) : "3.00" });
+                  setFields({ ...fields, cardPrice: Number.isFinite(amount) && fields.cardPrice?.trim() ? amount.toFixed(2) : "" });
                 }}
               />
             </div>
@@ -1040,11 +1051,11 @@ function DeliverySettings({
               </div>
               <div className="field admin-card-price">
                 <label htmlFor="delivery-free-over">Free delivery over (AUD)</label>
-                {plain("deliveryFreeOver", "delivery-free-over", "Enter an order total or leave blank for none")}
+                {plain("deliveryFreeOver", "delivery-free-over", "Order total, or blank for none")}
               </div>
               <div className="field admin-card-price">
                 <label htmlFor="pickup-fee">Pickup fee (AUD)</label>
-                {plain("pickupFee", "pickup-fee", "Enter the pickup fee or leave blank for free")}
+                {plain("pickupFee", "pickup-fee", "Pickup fee, or blank for free")}
               </div>
             </div>
 <div className="admin-card-pair admin-card-stack">
@@ -1054,7 +1065,7 @@ function DeliverySettings({
               </div>
               <div className="field">
                 <label htmlFor="opt-pickup-desc">Pickup card description</label>
-                <input id="opt-pickup-desc" placeholder="Leave blank to show pickup fee" maxLength={80} value={fields.pickupDescription} onChange={(event) => setFields({ ...fields, pickupDescription: event.target.value })} />
+                <input id="opt-pickup-desc" placeholder="Blank shows pickup fee" maxLength={80} value={fields.pickupDescription} onChange={(event) => setFields({ ...fields, pickupDescription: event.target.value })} />
               </div>
             </div>
             <div className="admin-card-pair admin-card-stack">
@@ -1064,13 +1075,13 @@ function DeliverySettings({
               </div>
               <div className="field">
                 <label htmlFor="opt-delivery-desc">Delivery card description</label>
-                <input id="opt-delivery-desc" placeholder="Leave blank to show delivery fee" maxLength={80} value={fields.deliveryDescription} onChange={(event) => setFields({ ...fields, deliveryDescription: event.target.value })} />
+                <input id="opt-delivery-desc" placeholder="Blank shows delivery fee" maxLength={80} value={fields.deliveryDescription} onChange={(event) => setFields({ ...fields, deliveryDescription: event.target.value })} />
               </div>
             </div>
             <div className="admin-card-pair admin-card-stack">
             <div className="field admin-card-price">
               <label htmlFor="delivery-radius">Delivery radius from Melbourne CBD (km)</label>
-              <div className="admin-card-price-input"><input id="delivery-radius" inputMode="numeric" maxLength={3} placeholder="Enter a radius to fill in the postcodes or leave blank to remove radius" value={radius} onChange={(event) => {
+              <div className="admin-card-price-input"><input id="delivery-radius" inputMode="numeric" maxLength={3} placeholder="Radius in km, or blank for none" value={radius} onChange={(event) => {
                 const value = event.target.value.replace(/\D/g, "");
                 setRadius(value);
                 setFields({ ...fields, deliveryPostcodes: value ? postcodesWithinKm(Number(value)) : "" });
@@ -1102,11 +1113,13 @@ function PromoSettings({
   initial,
   begin,
   finish,
+  onSaved,
 }: {
   products: Product[];
   initial: Record<string, string>;
   begin: (message: string) => void;
   finish: (message?: string) => void;
+  onSaved?: (previous: Record<string, string>, next: Record<string, string>) => void;
 }) {
   const pick = (source: Record<string, string>) => ({
     promoEnabled: source.promoEnabled === "true" ? "true" : "false",
@@ -1138,6 +1151,7 @@ function PromoSettings({
       body: JSON.stringify({ module: "settings", fields: { ...(current?.fields ?? {}), ...next } }),
     });
     if (response.ok) {
+      onSaved?.(JSON.parse(saved), next);
       setValues(next);
       setSaved(JSON.stringify(next));
       setStatus("");
@@ -1170,6 +1184,7 @@ function PromoSettings({
           <>
             <div className="enquiry-form admin-editor">
               <div className="admin-editor-fields">
+                <div className="admin-card-pair admin-card-even">
                 <div className="field">
                   <label id="promo-product-label">Product</label>
                   <PremiumSelect
@@ -1179,6 +1194,28 @@ function PromoSettings({
                     placeholder="Choose a product"
                     onChange={(value) => set("promoProductId", value)}
                   />
+                </div>
+                <div className="field admin-card-price">
+                  <label htmlFor="promo-card-price">Card price (AUD)</label>
+                  <div className="admin-card-price-input">
+                    {values.promoCardPrice.trim() && <span aria-hidden="true">$</span>}
+                    <input
+                      id="promo-card-price"
+                      inputMode="decimal"
+                      maxLength={8}
+                      placeholder="Free"
+                      value={values.promoCardPrice}
+                      onChange={(event) => {
+                        const [whole, ...rest] = event.target.value.replace(/[^0-9.]/g, "").split(".");
+                        set("promoCardPrice", rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole);
+                      }}
+                      onBlur={() => {
+                        const amount = Number(values.promoCardPrice);
+                        set("promoCardPrice", Number.isFinite(amount) && values.promoCardPrice.trim() ? amount.toFixed(2) : "");
+                      }}
+                    />
+                  </div>
+                </div>
                 </div>
                 <div className="field">
                   <label htmlFor="promo-label">Label</label>
@@ -1209,10 +1246,6 @@ function PromoSettings({
                   <label htmlFor="promo-card-description">Card description (hero product only)</label>
                   <textarea id="promo-card-description" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
                   <small className="admin-editor-count">{values.promoCardDescription.length} / 200</small>
-                </div>
-                <div className="field">
-                  <label htmlFor="promo-card-price">Card price in AUD (hero product only)</label>
-                  <input id="promo-card-price" inputMode="decimal" maxLength={8} placeholder="Leave empty for a free card" value={values.promoCardPrice} onChange={(event) => set("promoCardPrice", event.target.value.replace(/[^\d.]/g, ""))} />
                 </div>
               </div>
             </div>
@@ -2496,9 +2529,9 @@ export default function AdminDashboard() {
       description: product.description,
       ingredients: product.ingredients,
       allergens: product.allergens,
-      price4: String(product.variants.find((variant) => variant.quantity === 4)?.price || ""),
-      price6: String(product.variants.find((variant) => variant.quantity === 6)?.price || ""),
-      price12: String(product.variants.find((variant) => variant.quantity === 12)?.price || ""),
+      price4: formatPriceInput(String(product.variants.find((variant) => variant.quantity === 4)?.price || "")),
+      price6: formatPriceInput(String(product.variants.find((variant) => variant.quantity === 6)?.price || "")),
+      price12: formatPriceInput(String(product.variants.find((variant) => variant.quantity === 12)?.price || "")),
     };
     setEditingProductId(product.id);
     setProductFieldErrors({});
@@ -2535,6 +2568,52 @@ export default function AdminDashboard() {
     setGenerationStatus("");
   }
 
+  const heroProductId = cardSettings?.promoEnabled === "true" ? cardSettings.promoProductId : "";
+  const orderedProducts = managedProducts.some((product) => product.id === heroProductId)
+    ? [...managedProducts.filter((product) => product.id === heroProductId), ...managedProducts.filter((product) => product.id !== heroProductId)]
+    : managedProducts;
+
+  const [draggedProduct, setDraggedProduct] = useState<string | null>(null);
+  const orderedProductsRef = useRef(orderedProducts);
+  orderedProductsRef.current = orderedProducts;
+
+  const touchDragRef = useRef(false);
+
+  function moveProduct(id: string, targetId: string) {
+    const list = [...orderedProducts];
+    const from = list.findIndex((product) => product.id === id);
+    const to = list.findIndex((product) => product.id === targetId);
+    if (from < 0 || to < 0 || from === to || list[to].id === heroProductId || id === heroProductId) return;
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    setManagedProducts(list);
+  }
+
+  async function saveProductOrder() {
+    const response = await fetch("/api/admin/products", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: orderedProductsRef.current.map((product) => product.id) }),
+    });
+    if (!response.ok) setProductStatus((await response.json().catch(() => null))?.error || "Unable to save order");
+  }
+
+  function handlePromoSaved(previous: Record<string, string>, next: Record<string, string>) {
+    setCardSettings((current) => (current ? { ...current, ...next } : current));
+    const wasHero = previous.promoEnabled === "true" ? previous.promoProductId : "";
+    if (!wasHero || next.promoEnabled === "true") return;
+    const list = orderedProductsRef.current;
+    const former = list.find((product) => product.id === wasHero);
+    if (!former) return;
+    const reordered = [...list.filter((product) => product.id !== wasHero), former];
+    setManagedProducts(reordered);
+    fetch("/api/admin/products", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: reordered.map((product) => product.id) }),
+    });
+  }
+
   async function removeProduct(id: string) {
     setProductStatus("Removing...");
     beginAdminAction("Removing product…");
@@ -2561,7 +2640,7 @@ export default function AdminDashboard() {
     const current = Number(newProduct[field]) || 0;
     setNewProduct({
       ...newProduct,
-      [field]: String(Math.max(0, current + amount)),
+      [field]: Math.max(0, current + amount).toFixed(2),
     });
   }
 
@@ -3583,19 +3662,17 @@ export default function AdminDashboard() {
                 <div className={`field${productFieldErrors.price4 ? " has-error" : ""}`}>
                   <label htmlFor="product-price-4">Box of 4 price</label>
                   <div className="quantity-stepper admin-number-stepper">
+                    <div className="admin-price-wrap">
+                    {newProduct.price4.trim() && <span className="admin-price-prefix" aria-hidden="true">$</span>}
                     <input
                       id="product-price-4"
-                      type="number"
-                      min="0"
-                      step="0.01"
+                      inputMode="decimal"
+                      maxLength={8}
                       value={newProduct.price4}
-                      onChange={(event) =>
-                        setNewProduct({
-                          ...newProduct,
-                          price4: event.target.value,
-                        })
-                      }
+                      onChange={(event) => setNewProduct({ ...newProduct, price4: cleanPriceInput(event.target.value) })}
+                      onBlur={() => setNewProduct({ ...newProduct, price4: formatPriceInput(newProduct.price4) })}
                     />
+                    </div>
                     <div className="quantity-stepper-controls">
                       <button
                         type="button"
@@ -3625,19 +3702,17 @@ export default function AdminDashboard() {
                 <div className={`field${productFieldErrors.price6 ? " has-error" : ""}`}>
                   <label htmlFor="product-price-6">Box of 6 price</label>
                   <div className="quantity-stepper admin-number-stepper">
+                    <div className="admin-price-wrap">
+                    {newProduct.price6.trim() && <span className="admin-price-prefix" aria-hidden="true">$</span>}
                     <input
                       id="product-price-6"
-                      type="number"
-                      min="0"
-                      step="0.01"
+                      inputMode="decimal"
+                      maxLength={8}
                       value={newProduct.price6}
-                      onChange={(event) =>
-                        setNewProduct({
-                          ...newProduct,
-                          price6: event.target.value,
-                        })
-                      }
+                      onChange={(event) => setNewProduct({ ...newProduct, price6: cleanPriceInput(event.target.value) })}
+                      onBlur={() => setNewProduct({ ...newProduct, price6: formatPriceInput(newProduct.price6) })}
                     />
+                    </div>
                     <div className="quantity-stepper-controls">
                       <button
                         type="button"
@@ -3667,19 +3742,17 @@ export default function AdminDashboard() {
                 <div className={`field${productFieldErrors.price12 ? " has-error" : ""}`}>
                   <label htmlFor="product-price-12">Box of 12 price</label>
                   <div className="quantity-stepper admin-number-stepper">
+                    <div className="admin-price-wrap">
+                    {newProduct.price12.trim() && <span className="admin-price-prefix" aria-hidden="true">$</span>}
                     <input
                       id="product-price-12"
-                      type="number"
-                      min="0"
-                      step="0.01"
+                      inputMode="decimal"
+                      maxLength={8}
                       value={newProduct.price12}
-                      onChange={(event) =>
-                        setNewProduct({
-                          ...newProduct,
-                          price12: event.target.value,
-                        })
-                      }
+                      onChange={(event) => setNewProduct({ ...newProduct, price12: cleanPriceInput(event.target.value) })}
+                      onBlur={() => setNewProduct({ ...newProduct, price12: formatPriceInput(newProduct.price12) })}
                     />
+                    </div>
                     <div className="quantity-stepper-controls">
                       <button
                         type="button"
@@ -4121,13 +4194,101 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {managedProducts.length ? (
-                  managedProducts.map((product) => (
-                    <tr key={product.id}>
+                {orderedProducts.length ? (
+                  orderedProducts.map((product, rowIndex) => (
+                    <tr
+                      key={product.id}
+                      data-product-id={product.id}
+                      className={draggedProduct === product.id ? "is-dragging" : undefined}
+                      onDragOver={(event) => {
+                        if (!draggedProduct) return;
+                        event.preventDefault();
+                        moveProduct(draggedProduct, product.id);
+                      }}
+                      onDrop={(event) => event.preventDefault()}
+                    >
                       <td>
-                        <div className="admin-product-name">{product.name}</div>
-                        <div className="admin-product-description">
-                          {product.description}
+                        <div className="admin-product-cell">
+                          {product.id === heroProductId ? (
+                            <span className="admin-drag-handle-spacer" aria-hidden="true" />
+                          ) : (
+                            <button
+                              className="admin-drag-handle"
+                              type="button"
+                              draggable
+                              aria-label={`Reorder ${product.name}. Use arrow keys to move.`}
+                              onPointerDown={(event) => {
+                                if (event.pointerType === "mouse") return;
+                                touchDragRef.current = true;
+                                event.currentTarget.setPointerCapture(event.pointerId);
+                                setDraggedProduct(product.id);
+                              }}
+                              onPointerMove={(event) => {
+                                if (!touchDragRef.current) return;
+                                const row = document
+                                  .elementFromPoint(event.clientX, event.clientY)
+                                  ?.closest<HTMLElement>("tr[data-product-id]");
+                                const targetId = row?.dataset.productId;
+                                if (targetId) moveProduct(product.id, targetId);
+                              }}
+                              onPointerUp={() => {
+                                if (!touchDragRef.current) return;
+                                touchDragRef.current = false;
+                                setDraggedProduct(null);
+                                void saveProductOrder();
+                              }}
+                              onPointerCancel={() => {
+                                touchDragRef.current = false;
+                                setDraggedProduct(null);
+                              }}
+                              onDragStart={(event) => {
+                                if (touchDragRef.current) {
+                                  event.preventDefault();
+                                  return;
+                                }
+                                const row = event.currentTarget.closest("tr");
+                                if (row) event.dataTransfer.setDragImage(row, 24, row.offsetHeight / 2);
+                                event.dataTransfer.effectAllowed = "move";
+                                event.dataTransfer.setData("text/plain", product.id);
+                                setDraggedProduct(product.id);
+                              }}
+                              onDragEnd={() => {
+                                setDraggedProduct(null);
+                                void saveProductOrder();
+                              }}
+                              onKeyDown={(event) => {
+                                const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+                                if (!offset) return;
+                                event.preventDefault();
+                                const target = orderedProducts[rowIndex + offset];
+                                if (!target || target.id === heroProductId) return;
+                                const tbody = event.currentTarget.closest("tbody");
+                                moveProduct(product.id, target.id);
+                                requestAnimationFrame(() => {
+                                  tbody?.querySelectorAll<HTMLButtonElement>(".admin-drag-handle")[rowIndex - (heroProductId ? 1 : 0) + offset]?.focus();
+                                  void saveProductOrder();
+                                });
+                              }}
+                            >
+                              <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor">
+                                <circle cx="6" cy="4" r="1.1" />
+                                <circle cx="10" cy="4" r="1.1" />
+                                <circle cx="6" cy="8" r="1.1" />
+                                <circle cx="10" cy="8" r="1.1" />
+                                <circle cx="6" cy="12" r="1.1" />
+                                <circle cx="10" cy="12" r="1.1" />
+                              </svg>
+                            </button>
+                          )}
+                          <div>
+                            <div className="admin-product-name">
+                              {product.name}
+                              {product.id === heroProductId && <span className="admin-hero-tag">Hero</span>}
+                            </div>
+                            <div className="admin-product-description">
+                              {product.description}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       {[4, 6, 12].map((quantity) => {
@@ -4175,7 +4336,7 @@ export default function AdminDashboard() {
             )}
             {cardSettings && managedProducts.length > 0 && (
               <AdminAccordion title="Product layout">
-                <PromoSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} />
+                <PromoSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} onSaved={handlePromoSaved} />
               </AdminAccordion>
             )}
             {cardSettings && (

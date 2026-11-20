@@ -6,14 +6,35 @@ import { getRecord, listRecords } from "@/lib/store";
 
 type ProductRecord = Product & { removed?: boolean };
 
+/** Saved display order, with the promo (hero) product always first. */
+function orderProducts(products: Product[], order: string[], heroId?: string) {
+	const rank = new Map(order.map((id, index) => [id, index]));
+	const sorted = products
+		.map((product, index) => ({ product, index }))
+		.sort((a, b) => (rank.get(a.product.id) ?? order.length) - (rank.get(b.product.id) ?? order.length) || a.index - b.index)
+		.map((entry) => entry.product);
+	const hero = sorted.find((product) => product.id === heroId);
+	return hero ? [hero, ...sorted.filter((product) => product !== hero)] : sorted;
+}
+
+export async function getProductOrder(): Promise<string[]> {
+	const record = await getRecord<{ ids?: string[] }>("content", "product-order");
+	return Array.isArray(record?.ids) ? record.ids.filter((id): id is string => typeof id === "string") : [];
+}
+
 export async function getProducts(): Promise<Product[]> {
-	const stored = await listRecords<ProductRecord>("product");
+	const [stored, order, settings] = await Promise.all([
+		listRecords<ProductRecord>("product"),
+		getProductOrder(),
+		getRecord<{ fields?: Record<string, string> }>("content", "settings"),
+	]);
+	const heroId = promoFrom(settings?.fields)?.productId;
 	const products = new Map(catalogProducts.map((product) => [product.id, product]));
 	stored.forEach((product) => {
 		if (product.removed) products.delete(product.id);
 		else products.set(product.id, product);
 	});
-	return Array.from(products.values()).map((product) => ({
+	return orderProducts(Array.from(products.values()), order, heroId).map((product) => ({
 		...product,
 		slug: productSlugFromName(product.name),
 		imageMode:
