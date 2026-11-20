@@ -16,6 +16,12 @@ import QuantityControl from "./quantity-control";
 const check = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M6 10.4l2.6 2.6L14 7.6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 const cross = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="m7 7 6 6M13 7l-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
 
+function optionText(description: string, fee: number) {
+  const price = fee === 0 ? "Free" : `$${fee.toFixed(fee % 1 ? 2 : 0)}`;
+  const rest = description.replace(/^\s*(free|\$\s*\d+(\.\d+)?)\s*[•·\-–—:]?\s*/i, "").trim();
+  return rest ? `${price} • ${rest}` : price;
+}
+
 export default function ProductOrder({ product, pickupDates, card, delivery }: { product: Product; pickupDates: PickupDate[]; card: CardOption; delivery: DeliveryOption }) {
   const { add, total: cartTotal, count: cartCount } = useCart();
   const [cardSelected, setCard] = useState<CardChoice>(0);
@@ -178,7 +184,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
             {(["pickup", "delivery"] as const).map((option) => (
               <button key={option} type="button" role="radio" aria-checked={fulfilment === option} className={fulfilment === option ? "is-active" : ""} onClick={() => setFulfilment(option)}>
                 <strong>{option === "pickup" ? delivery.pickupTitle : delivery.deliveryTitle}</strong>
-                <small>{option === "pickup" ? delivery.pickupDescription || (delivery.pickupFee === 0 ? "Free" : `$${delivery.pickupFee.toFixed(delivery.pickupFee % 1 ? 2 : 0)}`) : delivery.deliveryDescription || `${delivery.fee === 0 ? "Free" : `$${delivery.fee.toFixed(delivery.fee % 1 ? 2 : 0)}`}`}</small>
+                <small>{option === "pickup" ? optionText(delivery.pickupDescription, delivery.pickupFee) : optionText(delivery.deliveryDescription, delivery.fee)}</small>
               </button>
             ))}
           </div>
