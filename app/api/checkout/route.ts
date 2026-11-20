@@ -215,6 +215,7 @@ export async function POST(req: Request) {
 			success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${origin}/cart`,
 			metadata: { pendingId },
+			...(delivery ? { custom_text: { submit: { message: `Delivering to ${delivery.name}, ${delivery.street}, ${delivery.suburb} VIC ${delivery.postcode}${deliverySlot ? ` on ${deliverySlot.date}, ${deliverySlot.window}` : ""}.`.slice(0, 1200) } } } : {}),
 			payment_intent_data: {
 				metadata: { pendingId },
 				...(delivery ? { shipping: { name: delivery.name, address: { line1: delivery.street, city: delivery.suburb, state: "VIC", postal_code: delivery.postcode, country: "AU" } } } : {}),
