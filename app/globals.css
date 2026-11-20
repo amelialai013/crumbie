@@ -7292,3 +7292,154 @@ html:has(.cart-modal-overlay) .site-header {
   .cart-toast-layer .cart-card.is-closing { opacity: 0; transform: none; }
   @starting-style { .cart-toast-layer .cart-card { opacity: 0; transform: none; } }
 }
+
+.admin-accordion-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  margin: 56px 0 12px;
+}
+
+.admin-accordion-controls + .admin-accordion {
+  margin-top: 0;
+}
+
+.admin-accordion-controls button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid #4a433a;
+  border-radius: 999px;
+  color: #efcdaa;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  gap: 8px;
+  line-height: 1;
+  min-height: 40px;
+  padding: 0 18px 0 14px;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.admin-accordion-controls button:hover {
+  background: rgba(239, 205, 170, 0.08);
+  border-color: #c9ad94;
+}
+
+.admin-accordion-controls button:focus-visible {
+  outline: 2px solid #c9ad94;
+  outline-offset: 2px;
+}
+
+.admin-accordion-controls button svg {
+  flex: none;
+  height: 16px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  width: 16px;
+}
+
+.faq-list {
+  display: grid;
+  gap: 12px;
+  max-width: 820px;
+}
+
+.faq-item {
+  border: 1px solid #4a433a;
+  border-radius: 20px;
+  transition: border-color 160ms ease;
+}
+
+.faq-item:hover,
+.faq-item[open] {
+  border-color: #c9ad94;
+}
+
+.faq-item summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  list-style: none;
+  padding: 22px 24px;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary:focus-visible {
+  border-radius: 20px;
+  outline: 2px solid #c9ad94;
+  outline-offset: -2px;
+}
+
+.faq-item summary h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.faq-item summary svg {
+  flex: none;
+  height: 18px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+  transition: transform 0.25s ease;
+  width: 18px;
+}
+
+.faq-item[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  padding: 0 24px 22px;
+}
+
+.faq-answer p {
+  line-height: 1.65;
+  margin: 0;
+  max-width: 62ch;
+}
+
+.faq-answer p + p {
+  margin-top: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-item,
+  .faq-item summary svg {
+    transition: none;
+  }
+}
+
+:root { interpolate-size: allow-keywords; }
+.admin-accordion::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size .5s cubic-bezier(.32, .72, 0, 1) var(--accordion-delay, 0ms),
+    opacity .35s ease var(--accordion-delay, 0ms),
+    content-visibility .5s allow-discrete var(--accordion-delay, 0ms);
+}
+.admin-accordion[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+.admin-accordion summary svg {
+  transition: transform .5s cubic-bezier(.32, .72, 0, 1) var(--accordion-delay, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-accordion::details-content,
+  .admin-accordion summary svg { transition-duration: 1ms; transition-delay: 0ms; }
+}

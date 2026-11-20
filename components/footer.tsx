@@ -35,8 +35,9 @@ export default function Footer() {
           <Link href="/about">About</Link>
           <Link href="/crumbs">Crumbs</Link>
           <Link href="/contact-us">Contact us</Link>
-          <Link href="/ordering-policy">Ordering policy</Link>
+          <Link href="/faqs">FAQs</Link>
           <Link href="/privacy-policy">Privacy policy</Link>
+          <Link href="/terms-of-service">Terms of service</Link>
         </div>
         <div>
           <div className="footer-socials">
@@ -52,7 +53,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="shell footer-bottom"><span>© {new Date().getFullYear()} Club Crumbie. All rights reserved.</span></div>
+      <div className="shell footer-bottom"><span>© {new Date().getFullYear()} Club Crumbie · ABN 60 930 191 685. All rights reserved.</span></div>
     </footer>
   );
 }

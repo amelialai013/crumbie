@@ -39,6 +39,7 @@ const nextConfig: NextConfig = {
       { source: "/cookies/:slug", destination: "/crumbs/:slug", permanent: true },
       { source: "/crumb-selection", destination: "/crumbs", permanent: true },
       { source: "/crumb-selection/:slug", destination: "/crumbs/:slug", permanent: true },
+      { source: "/ordering-policy", destination: "/faqs", permanent: true },
     ];
   },
 };

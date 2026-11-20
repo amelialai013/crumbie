@@ -11,6 +11,8 @@ import AdminSwitch from "@/components/admin-switch";
 import { deliveryFrom } from "@/lib/delivery";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
+import { privacyBodyMaxChars, privacyDefaultTitle, privacyDefaults } from "@/lib/privacy";
+import { termsBodyMaxChars, termsDefaultTitle, termsDefaults } from "@/lib/terms";
 import { defaultCardOption, defaultUnavailableMessage } from "@/lib/card";
 import { defaultAddressErrorMessage, defaultDeliverableMessage, defaultUndeliverableMessage } from "@/lib/delivery";
 import { VIC_POSTCODES } from "@/lib/vic-postcodes";
@@ -317,12 +319,17 @@ const adminTabs = [
   "products",
   "pickup windows",
   "delivery windows",
-  "homepage",
-  "about",
-  "contact us",
-  "policy",
+  "page content",
   "email templates",
   "settings",
+];
+const pageContentModules: [string, string][] = [
+  ["homepage", "Homepage"],
+  ["about", "About"],
+  ["contact us", "Contact us"],
+  ["faqs", "FAQs"],
+  ["terms of service", "Terms of service"],
+  ["privacy policy", "Privacy policy"],
 ];
 const emailTemplates: EmailTemplate[] = [
   { key: "confirmation", name: "Order confirmation", description: "Sent immediately after a successful order.", subjectField: "confirmationSubject", bodyField: "confirmationBody" },
@@ -411,79 +418,43 @@ const contentModules: Record<string, ContentModule> = {
       },
     },
   },
-  policy: {
+  faqs: {
     fields: [
       { key: "pageTitle", label: "Page heading", maxLength: 80 },
-      { key: "pickupHeading", label: "Section 1 heading", maxLength: 80 },
-      {
-        key: "pickupCopy",
-        label: "Section 1 body copy",
-        maxLength: policyBodyMaxChars,
-        body: true,
-        multiline: true,
-      },
-      { key: "deadlineHeading", label: "Section 2 heading", maxLength: 80 },
-      {
-        key: "deadlineCopy",
-        label: "Section 2 body copy",
-        maxLength: policyBodyMaxChars,
-        body: true,
-        multiline: true,
-      },
-      { key: "paymentHeading", label: "Section 3 heading", maxLength: 80 },
-      {
-        key: "paymentCopy",
-        label: "Section 3 body copy",
-        maxLength: policyBodyMaxChars,
-        body: true,
-        multiline: true,
-      },
-      { key: "cancellationHeading", label: "Section 4 heading", maxLength: 80 },
-      {
-        key: "cancellationCopy",
-        label: "Section 4 body copy",
-        maxLength: policyBodyMaxChars,
-        body: true,
-        multiline: true,
-      },
-      { key: "allergenHeading", label: "Section 5 heading", maxLength: 80 },
-      {
-        key: "allergenCopy",
-        label: "Section 5 body copy",
-        maxLength: policyBodyMaxChars,
-        body: true,
-        multiline: true,
-      },
-      { key: "enquiryHeading", label: "Section 6 heading", maxLength: 80 },
-      {
-        key: "enquiryCopy",
-        label: "Section 6 body copy",
-        maxLength: policyBodyMaxChars,
-        body: true,
-        multiline: true,
-      },
+      { key: "pickupHeading", label: "Question 1", maxLength: 80 },
+      { key: "pickupCopy", label: "Answer 1", maxLength: policyBodyMaxChars, body: true, multiline: true },
+      { key: "deadlineHeading", label: "Question 2", maxLength: 80 },
+      { key: "deadlineCopy", label: "Answer 2", maxLength: policyBodyMaxChars, body: true, multiline: true },
+      { key: "paymentHeading", label: "Question 3", maxLength: 80 },
+      { key: "paymentCopy", label: "Answer 3", maxLength: policyBodyMaxChars, body: true, multiline: true },
+      { key: "cancellationHeading", label: "Question 4", maxLength: 80 },
+      { key: "cancellationCopy", label: "Answer 4", maxLength: policyBodyMaxChars, body: true, multiline: true },
+      { key: "allergenHeading", label: "Question 5", maxLength: 80 },
+      { key: "allergenCopy", label: "Answer 5", maxLength: policyBodyMaxChars, body: true, multiline: true },
+      { key: "enquiryHeading", label: "Question 6", maxLength: 80 },
+      { key: "enquiryCopy", label: "Answer 6", maxLength: policyBodyMaxChars, body: true, multiline: true },
     ],
     defaults: {
       fields: {
-        pageTitle: "Crumbie policies",
-        pickupHeading: "Pickup",
+        pageTitle: "FAQs",
+        pickupHeading: "Where do I pick up my order?",
         pickupCopy:
-          "Club Crumbie currently offers pickup only from Ivanhoe, Victoria. Each item must be assigned to an available pickup window and its fixed collection window before checkout. The exact address is provided after successful payment in your confirmation email.",
-        deadlineHeading: "Order deadlines",
+          "Club Crumbie currently offers pickup only from Ivanhoe, Victoria. Choose a pickup window at checkout. The exact address is sent in your confirmation email after payment.",
+        deadlineHeading: "When do orders close?",
         deadlineCopy:
-          "Standard box orders close 72 hours before their pickup window. A window or individual product may be marked sold out earlier by Club Crumbie.",
-        paymentHeading: "Payments",
+          "Standard box orders close 72 hours before their pickup window. A window or individual product may sell out earlier.",
+        paymentHeading: "How do I pay?",
         paymentCopy:
-          "Standard orders are confirmed immediately after successful payment through Stripe. Prices are in Australian dollars and include GST where applicable.",
-        cancellationHeading: "Cancellations and refunds",
+          "Payment is taken securely by Stripe at checkout and your order is confirmed straight away. Prices are in Australian dollars and include GST where applicable.",
+        cancellationHeading: "Can I cancel or get a refund?",
         cancellationCopy:
-          "Because products are made for scheduled pickup, paid orders are final and change-of-mind cancellations are not accepted. Nothing in this policy excludes rights or remedies available under Australian Consumer Law.",
-        allergenHeading: "Allergens",
+          "Every order is made for its scheduled pickup, so change-of-mind cancellations aren't accepted. If something is wrong with your order, get in touch. Nothing here limits your rights under Australian Consumer Law.",
+        allergenHeading: "Do your products contain allergens?",
         allergenCopy:
-          "Club Crumbie handles gluten, dairy, eggs, soy, peanuts and tree nuts. Cross-contact is possible, and we cannot accommodate allergy requests for standard boxes.",
-        enquiryHeading: "Custom enquiries",
+          "Yes. Club Crumbie handles gluten, dairy, eggs, soy, peanuts and tree nuts, and cross-contact is possible. We can't accommodate allergy requests for standard boxes.",
+        enquiryHeading: "Does a custom enquiry confirm my order?",
         enquiryCopy:
-          "A custom-order form submission is an enquiry only. It does not confirm availability, pricing or an order.",
+          "No. Submitting the custom-order form is an enquiry only. It doesn't confirm availability, pricing or an order until we reply.",
       },
       sections: [],
       removedFields: [],
@@ -572,6 +543,36 @@ Club Crumbie`,
       { key: "cardEnabled", label: "Card add-on enabled", maxLength: 5 },
       { key: "cardPrice", label: "Card price (AUD)", maxLength: 8 },
     ],
+  },
+  "terms of service": {
+    fields: [
+      { key: "pageTitle", label: "Page heading", maxLength: 80 },
+      ...termsDefaults.flatMap((_, i) => [
+        { key: `s${i + 1}Heading`, label: `Section ${i + 1} heading`, maxLength: 80 },
+        { key: `s${i + 1}Copy`, label: `Section ${i + 1} body copy`, maxLength: termsBodyMaxChars, multiline: true },
+      ]),
+    ],
+    defaults: {
+      fields: {
+        pageTitle: termsDefaultTitle,
+        ...Object.fromEntries(termsDefaults.flatMap((section, i) => [[`s${i + 1}Heading`, section.heading], [`s${i + 1}Copy`, section.body]])),
+      },
+    },
+  },
+  "privacy policy": {
+    fields: [
+      { key: "pageTitle", label: "Page heading", maxLength: 80 },
+      ...privacyDefaults.flatMap((_, i) => [
+        { key: `s${i + 1}Heading`, label: `Section ${i + 1} heading`, maxLength: 80 },
+        { key: `s${i + 1}Copy`, label: `Section ${i + 1} body copy`, maxLength: privacyBodyMaxChars, multiline: true },
+      ]),
+    ],
+    defaults: {
+      fields: {
+        pageTitle: privacyDefaultTitle,
+        ...Object.fromEntries(privacyDefaults.flatMap((section, i) => [[`s${i + 1}Heading`, section.heading], [`s${i + 1}Copy`, section.body]])),
+      },
+    },
   },
 };
 
@@ -1318,6 +1319,428 @@ function AdminAccordion({ title, children }: { title: string; children: React.Re
   );
 }
 
+function ContentEditor({
+  moduleName,
+  begin,
+  finish,
+}: {
+  moduleName: string;
+  begin: (message: string) => void;
+  finish: (message?: string) => void;
+}) {
+  const [content, setContent] = useState<Content>(() => emptyContent(moduleName));
+  const [savedContent, setSavedContent] = useState(() => JSON.stringify(emptyContent(moduleName)));
+  const [contentStatus, setContentStatus] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [draggedEnquiryType, setDraggedEnquiryType] = useState<number | null>(null);
+  const contentChanged = JSON.stringify(content) !== savedContent;
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const response = await fetch(`/api/admin/content?module=${encodeURIComponent(moduleName)}`).catch(() => null);
+      const saved = response?.ok ? await response.json().catch(() => null) : null;
+      if (!active) return;
+      const next: Content = saved?.fields
+        ? {
+            ...mergeContent(moduleName, saved.fields),
+            sections: saved.sections || emptyContent(moduleName).sections,
+            removedFields: saved.removedFields || emptyContent(moduleName).removedFields,
+          }
+        : emptyContent(moduleName);
+      setContent(next);
+      setSavedContent(JSON.stringify(next));
+      setLoaded(true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [moduleName]);
+
+  const optionalPolicySections = [
+    { number: 5, headingKey: "allergenHeading", bodyKey: "allergenCopy" },
+    { number: 6, headingKey: "enquiryHeading", bodyKey: "enquiryCopy" },
+  ] as const;
+
+  function renderContentField(field: ContentField) {
+    const value = content.fields[field.key] || "";
+    const id = `content-${moduleName.replace(/\s+/g, "-")}-${field.key}`;
+    const update = (next: string) => setContent({ ...content, fields: { ...content.fields, [field.key]: next } });
+
+    return (
+      <div className="field" key={field.key}>
+        <label htmlFor={id}>{field.label}</label>
+        {field.multiline ? (
+          <textarea
+            id={id}
+            rows={field.rows ?? 5}
+            className={field.rows ? "admin-textarea-compact" : "admin-textarea-lines"}
+            style={field.rows ? undefined : ({ "--lines": Math.min(8, Math.max(2, Math.ceil(field.maxLength / 90))) } as React.CSSProperties)}
+            maxLength={field.maxLength}
+            value={value}
+            onChange={(event) => update(event.target.value)}
+          />
+        ) : (
+          <input id={id} maxLength={field.maxLength} value={value} onChange={(event) => update(event.target.value)} />
+        )}
+        <small className="admin-editor-count">{`${value.length} / ${field.maxLength}`}</small>
+      </div>
+    );
+  }
+
+  async function saveContent(event: React.FormEvent) {
+    event.preventDefault();
+    const contentModule = contentModules[moduleName];
+    if (
+      contentModule.fields.some((field) => (content.fields[field.key] || "").length > field.maxLength) ||
+      (moduleName === "faqs" && (content.sections || []).some((section) => section.body.length > policyBodyMaxChars))
+    ) {
+      setContentStatus("Shorten the highlighted field before saving");
+      return;
+    }
+    setContentStatus("Saving...");
+    begin("Saving changes…");
+    const response = await fetch("/api/admin/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        module: moduleName,
+        fields: content.fields,
+        sections: content.sections,
+        removedFields: content.removedFields,
+      }),
+    });
+    if (response.ok) {
+      setSavedContent(JSON.stringify(content));
+      setContentStatus("");
+      finish("Changes successfully saved");
+      return;
+    }
+    finish();
+    setContentStatus((await response.json().catch(() => null))?.error || "Unable to save");
+  }
+
+  if (!loaded) return <p className="admin-sync-note">Loading…</p>;
+
+  return (
+          <form className="enquiry-form admin-editor" onSubmit={saveContent}>
+            <div className="admin-editor-fields">
+              {contentModules[moduleName].fields
+                .filter(
+                  (field) =>
+                    !(moduleName === "faqs" &&
+                    (content.removedFields || []).includes(field.key)) &&
+                    !(moduleName === "faqs" &&
+                    optionalPolicySections.some(
+                      (section) =>
+                        field.key === section.headingKey ||
+                        field.key === section.bodyKey,
+                    )),
+                )
+                .map(renderContentField)}
+              {moduleName === "contact us" && (() => {
+                const types = (content.fields.enquiryTypes ?? defaultEnquiryTypes.join("\n")).split("\n");
+                const setTypes = (next: string[]) =>
+                  setContent({ ...content, fields: { ...content.fields, enquiryTypes: next.join("\n") } });
+                const moveType = (from: number, to: number) => {
+                  if (from === to || to < 0 || to >= types.length) return;
+                  const next = [...types];
+                  const [moved] = next.splice(from, 1);
+                  next.splice(to, 0, moved);
+                  setTypes(next);
+                };
+                return (
+                  <div className="admin-enquiry-types">
+                    <div className="admin-enquiry-types-heading">
+                      <h3>Enquiry types</h3>
+                      <button
+                        className="text-button admin-add-text-button"
+                        type="button"
+                        onClick={(event) => {
+                          const container = event.currentTarget.closest(".admin-enquiry-types");
+                          setTypes([...types, ""]);
+                          requestAnimationFrame(() => {
+                            const inputs = container?.querySelectorAll<HTMLInputElement>("tbody input");
+                            const input = inputs?.[inputs.length - 1];
+                            if (!input) return;
+                            input.scrollIntoView({ behavior: "smooth", block: "center" });
+                            input.focus({ preventScroll: true });
+                          });
+                        }}
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" /></svg>
+                        Add enquiry type
+                      </button>
+                    </div>
+                    <table className="table admin-enquiry-table">
+                      <tbody>
+                        {types.map((type, index) => (
+                          <tr
+                            key={`enquiry-type-${index}`}
+                            className={draggedEnquiryType === index ? "is-dragging" : undefined}
+                            onDragOver={(event) => {
+                              if (draggedEnquiryType === null) return;
+                              event.preventDefault();
+                              if (draggedEnquiryType !== index) {
+                                moveType(draggedEnquiryType, index);
+                                setDraggedEnquiryType(index);
+                              }
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              setDraggedEnquiryType(null);
+                            }}
+                          >
+                            <td className="admin-enquiry-handle-cell">
+                              <button
+                                className="admin-drag-handle"
+                                type="button"
+                                draggable
+                                aria-label={`Reorder ${type || "enquiry type"}. Use arrow keys to move.`}
+                                disabled={types.length <= 1}
+                                onDragStart={(event) => {
+                                  const row = event.currentTarget.closest("tr");
+                                  if (row) event.dataTransfer.setDragImage(row, 24, row.offsetHeight / 2);
+                                  event.dataTransfer.effectAllowed = "move";
+                                  event.dataTransfer.setData("text/plain", String(index));
+                                  setDraggedEnquiryType(index);
+                                }}
+                                onDragEnd={() => setDraggedEnquiryType(null)}
+                                onKeyDown={(event) => {
+                                  const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+                                  if (!offset) return;
+                                  event.preventDefault();
+                                  const target = index + offset;
+                                  if (target < 0 || target >= types.length) return;
+                                  const tbody = event.currentTarget.closest("tbody");
+                                  moveType(index, target);
+                                  requestAnimationFrame(() =>
+                                    tbody?.querySelectorAll<HTMLButtonElement>(".admin-drag-handle")[target]?.focus(),
+                                  );
+                                }}
+                              >
+                                <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor">
+                                  <circle cx="6" cy="4" r="1.1" />
+                                  <circle cx="10" cy="4" r="1.1" />
+                                  <circle cx="6" cy="8" r="1.1" />
+                                  <circle cx="10" cy="8" r="1.1" />
+                                  <circle cx="6" cy="12" r="1.1" />
+                                  <circle cx="10" cy="12" r="1.1" />
+                                </svg>
+                              </button>
+                            </td>
+                            <td>
+                              <input
+                                aria-label={`Enquiry type ${index + 1}`}
+                                maxLength={enquiryTypeMaxLength}
+                                placeholder="Enquiry type name"
+                                value={type}
+                                onBlur={(event) => {
+                                  if (!event.target.value.trim() && types.length > 1) {
+                                    setTypes(types.filter((_, itemIndex) => itemIndex !== index));
+                                  }
+                                }}
+                                onChange={(event) =>
+                                  setTypes(types.map((item, itemIndex) => (itemIndex === index ? event.target.value.replace(/\n/g, " ") : item)))
+                                }
+                              />
+                            </td>
+                            <td className="admin-enquiry-tag-cell">
+                              {index === 0 ? <span className="admin-default-tag">Default</span> : null}
+                            </td>
+                            <td className="admin-table-action">
+                              <button
+                                className="text-button"
+                                type="button"
+                                disabled={types.length <= 1}
+                                onClick={() => setTypes(types.filter((_, itemIndex) => itemIndex !== index))}
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+              {moduleName === "faqs" &&
+                optionalPolicySections
+                  .filter(
+                    (section) =>
+                      !(content.removedFields || []).includes(section.headingKey) &&
+                      !(content.removedFields || []).includes(section.bodyKey),
+                  )
+                  .map((section) => {
+                    const headingField = contentModules.faqs.fields.find(
+                      (field) => field.key === section.headingKey,
+                    );
+                    const bodyField = contentModules.faqs.fields.find(
+                      (field) => field.key === section.bodyKey,
+                    );
+                    if (!headingField || !bodyField) return null;
+                    return (
+                      <section
+                        className="admin-policy-editor-section"
+                        key={`policy-section-${section.number}`}
+                      >
+                        <div className="admin-policy-editor-section-heading">
+                          <h3>Question {section.number}</h3>
+                          <button
+                            className="text-button"
+                            type="button"
+                            onClick={() =>
+                              setContent({
+                                ...content,
+                                removedFields: [
+                                  ...(content.removedFields || []),
+                                  section.headingKey,
+                                  section.bodyKey,
+                                ],
+                              })
+                            }
+                          >
+                            Remove question
+                          </button>
+                        </div>
+                        {renderContentField(headingField)}
+                        {renderContentField(bodyField)}
+                      </section>
+                    );
+                  })}
+              {moduleName === "faqs" && (
+                <div className="admin-modal admin-policy-sections">
+                  <div className="admin-policy-sections-heading">
+                    <div className="admin-modal-header">
+                      <h2>Add question</h2>
+                      <label
+                        className="btn btn-light admin-policy-close"
+                        htmlFor="policy-modal-toggle"
+                        aria-label="Close modal"
+                        title="Close"
+                      >
+                          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                            <path d="m5 5 10 10M15 5 5 15" />
+                          </svg>
+                      </label>
+                    </div>
+                    </div>
+                  {(content.sections && content.sections.length
+                    ? content.sections
+                    : [{ heading: "", body: "" }]
+                  ).map((section, index) => (
+                    <div
+                      className="admin-policy-section"
+                      key={`policy-section-${index}`}
+                    >
+                      <h3>Question {index + 7}</h3>
+                      <div className="field">
+                        <label htmlFor={`policy-section-heading-${index}`}>
+                          Question
+                        </label>
+                        <input
+                          id={`policy-section-heading-${index}`}
+                          maxLength={80}
+                          value={section.heading}
+                          onChange={(event) =>
+                            setContent({
+                              ...content,
+                              sections: (content.sections &&
+                              content.sections.length
+                                ? content.sections
+                                : [{ heading: "", body: "" }]
+                              ).map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, heading: event.target.value }
+                                  : item,
+                              ),
+                            })
+                          }
+                        />
+                        <small className="admin-editor-count">
+                          {section.heading.length} / 80
+                        </small>
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`policy-section-body-${index}`}>
+                          Answer
+                        </label>
+                        <textarea
+                          id={`policy-section-body-${index}`}
+                          rows={5}
+                          className="admin-textarea-body"
+                          maxLength={policyBodyMaxChars}
+                          value={section.body}
+                          onChange={(event) =>
+                            setContent({
+                              ...content,
+                              sections: (content.sections &&
+                              content.sections.length
+                                ? content.sections
+                                : [{ heading: "", body: "" }]
+                              ).map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, body: event.target.value }
+                                  : item,
+                              ),
+                            })
+                          }
+                        />
+                        <small className="admin-editor-count">
+                          {section.body.length} / {policyBodyMaxChars}
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="admin-modal-actions">
+                    <button
+                      className="btn btn-dark"
+                      type="button"
+                      onClick={() =>
+                        setContent({
+                          ...content,
+                          sections: [
+                            ...(content.sections || []),
+                            { heading: "", body: "" },
+                          ],
+                        })
+                      }
+                    >
+                      Add another question
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="admin-editor-actions">
+              <button
+                className={`btn btn-light${
+                  contentStatus === "Saving..." ? " btn-loading" : ""
+                }`}
+                disabled={contentStatus === "Saving..." || !contentChanged}
+              >
+                {contentStatus === "Saving..." && (
+                  <span className="btn-spinner" aria-hidden="true" />
+                )}
+                {contentStatus === "Saving..." ? "Saving…" : "Save changes"}
+              </button>
+              {contentStatus && contentStatus !== "Saving..." && (
+                <span>{contentStatus}</span>
+              )}
+              {moduleName === "faqs" && (
+                <>
+                  <input id="policy-modal-toggle" type="checkbox" hidden />
+                  <label className="btn btn-dark admin-policy-open" htmlFor="policy-modal-toggle">
+                    Add question
+                  </label>
+                </>
+              )}
+            </div>
+          </form>
+  );
+}
+
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -1329,7 +1752,6 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState("orders");
   const [content, setContent] = useState<Content>({ fields: {} });
   const [savedContent, setSavedContent] = useState(() => JSON.stringify({ fields: {} }));
-  const [draggedEnquiryType, setDraggedEnquiryType] = useState<number | null>(null);
   const [contentStatus, setContentStatus] = useState("");
   const [config, setConfig] = useState<Config | null>(null);
   const [dashboardError, setDashboardError] = useState("");
@@ -1348,6 +1770,27 @@ export default function AdminDashboard() {
   const [adminNotice, setAdminNotice] = useState("");
   const [dismissedEnquiryIds, setDismissedEnquiryIds] = useState<Set<string> | null>(readDismissedEnquiryIds);
   const knownEnquiryIds = useRef<Set<string> | null>(null);
+  const pageContentRef = useRef<HTMLDivElement>(null);
+  const [accordionsAllOpen, setAccordionsAllOpen] = useState(false);
+  const syncAccordionsOpen = () => {
+    const items = Array.from(pageContentRef.current?.querySelectorAll<HTMLDetailsElement>("details.admin-accordion") || []);
+    setAccordionsAllOpen(items.length > 0 && items.every((d) => d.open));
+  };
+  const toggleAccordions = () => {
+    const items = Array.from(pageContentRef.current?.querySelectorAll<HTMLDetailsElement>("details.admin-accordion") || []);
+    items.forEach((d, i) => {
+      d.style.setProperty("--accordion-delay", `${i * 55}ms`);
+      d.open = !accordionsAllOpen;
+    });
+    window.setTimeout(() => items.forEach((d) => d.style.removeProperty("--accordion-delay")), items.length * 55 + 600);
+    syncAccordionsOpen();
+  };
+  useEffect(() => {
+    const node = pageContentRef.current;
+    if (!node) return;
+    node.addEventListener("toggle", syncAccordionsOpen, true);
+    return () => node.removeEventListener("toggle", syncAccordionsOpen, true);
+  }, [tab]);
   const tabRef = useRef(tab);
   const [adminNoticeLeaving, setAdminNoticeLeaving] = useState(false);
   const [adminBusyMessage, setAdminBusyMessage] = useState("");
@@ -2230,58 +2673,6 @@ export default function AdminDashboard() {
     setDescriptionStatus("");
   }
 
-  const optionalPolicySections = [
-    { number: 5, headingKey: "allergenHeading", bodyKey: "allergenCopy" },
-    { number: 6, headingKey: "enquiryHeading", bodyKey: "enquiryCopy" },
-  ] as const;
-
-  function renderContentField(field: ContentField) {
-    const value = content.fields[field.key] || "";
-    const id = `content-${field.key}`;
-
-    return (
-      <div className="field" key={field.key}>
-        <label htmlFor={id}>
-          {field.label}
-        </label>
-        {field.multiline ? (
-          <textarea
-            id={id}
-            rows={field.rows ?? 5}
-            className={field.rows ? "admin-textarea-compact" : field.body || field.maxLength > 400 ? "admin-textarea-body" : "admin-textarea-lines"}
-            style={!field.rows && !field.body && field.maxLength <= 400 ? ({ "--lines": Math.max(2, Math.ceil(field.maxLength / 75)) } as React.CSSProperties) : undefined}
-            maxLength={field.maxLength}
-            value={value}
-            onChange={(event) =>
-              setContent({
-                ...content,
-                fields: {
-                  ...content.fields,
-                  [field.key]: event.target.value,
-                },
-              })
-            }
-          />
-        ) : (
-          <input
-            id={id}
-            maxLength={field.maxLength}
-            value={value}
-            onChange={(event) =>
-              setContent({
-                ...content,
-                fields: { ...content.fields, [field.key]: event.target.value },
-              })
-            }
-          />
-        )}
-        <small className="admin-editor-count">
-          {`${value.length} / ${field.maxLength}`}
-        </small>
-      </div>
-    );
-  }
-
   async function selectTab(nextTab: string) {
     setTab(nextTab);
     tabRef.current = nextTab;
@@ -2332,7 +2723,7 @@ export default function AdminDashboard() {
         (field) =>
           (content.fields[field.key] || "").length > field.maxLength,
       ) ||
-      (tab === "policy" &&
+      (tab === "faqs" &&
         (content.sections || []).some(
           (section) => section.body.length > policyBodyMaxChars,
         ))
@@ -2776,17 +3167,6 @@ export default function AdminDashboard() {
                   htmlFor="pickup-modal-toggle"
                 >
                   Add {dateNoun} window
-                </label>
-              </>
-            )}
-            {tab === "policy" && (
-              <>
-                <input id="policy-modal-toggle" type="checkbox" hidden />
-                <label
-                  className="btn btn-dark admin-policy-open"
-                  htmlFor="policy-modal-toggle"
-                >
-                  Add policy section
                 </label>
               </>
             )}
@@ -4028,315 +4408,22 @@ export default function AdminDashboard() {
             <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !contentChanged}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save changes"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
           </form>;
         })()}
-        {contentModules[tab] && tab !== "email templates" && (
-          <form className="enquiry-form admin-editor" onSubmit={saveContent}>
-            <div className="admin-editor-fields">
-              {contentModules[tab].fields
-                .filter(
-                  (field) =>
-                    !(tab === "policy" &&
-                    (content.removedFields || []).includes(field.key)) &&
-                    !(tab === "policy" &&
-                    optionalPolicySections.some(
-                      (section) =>
-                        field.key === section.headingKey ||
-                        field.key === section.bodyKey,
-                    )),
-                )
-.filter((field) => !(tab === "settings" && field.key.startsWith("card")))
-                .map(renderContentField)}
-              {tab === "contact us" && (() => {
-                const types = (content.fields.enquiryTypes ?? defaultEnquiryTypes.join("\n")).split("\n");
-                const setTypes = (next: string[]) =>
-                  setContent({ ...content, fields: { ...content.fields, enquiryTypes: next.join("\n") } });
-                const moveType = (from: number, to: number) => {
-                  if (from === to || to < 0 || to >= types.length) return;
-                  const next = [...types];
-                  const [moved] = next.splice(from, 1);
-                  next.splice(to, 0, moved);
-                  setTypes(next);
-                };
-                return (
-                  <div className="admin-enquiry-types">
-                    <div className="admin-enquiry-types-heading">
-                      <h3>Enquiry types</h3>
-                      <button
-                        className="text-button admin-add-text-button"
-                        type="button"
-                        onClick={(event) => {
-                          const container = event.currentTarget.closest(".admin-enquiry-types");
-                          setTypes([...types, ""]);
-                          requestAnimationFrame(() => {
-                            const inputs = container?.querySelectorAll<HTMLInputElement>("tbody input");
-                            const input = inputs?.[inputs.length - 1];
-                            if (!input) return;
-                            input.scrollIntoView({ behavior: "smooth", block: "center" });
-                            input.focus({ preventScroll: true });
-                          });
-                        }}
-                      >
-                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" /></svg>
-                        Add enquiry type
-                      </button>
-                    </div>
-                    <table className="table admin-enquiry-table">
-                      <tbody>
-                        {types.map((type, index) => (
-                          <tr
-                            key={`enquiry-type-${index}`}
-                            className={draggedEnquiryType === index ? "is-dragging" : undefined}
-                            onDragOver={(event) => {
-                              if (draggedEnquiryType === null) return;
-                              event.preventDefault();
-                              if (draggedEnquiryType !== index) {
-                                moveType(draggedEnquiryType, index);
-                                setDraggedEnquiryType(index);
-                              }
-                            }}
-                            onDrop={(event) => {
-                              event.preventDefault();
-                              setDraggedEnquiryType(null);
-                            }}
-                          >
-                            <td className="admin-enquiry-handle-cell">
-                              <button
-                                className="admin-drag-handle"
-                                type="button"
-                                draggable
-                                aria-label={`Reorder ${type || "enquiry type"}. Use arrow keys to move.`}
-                                disabled={types.length <= 1}
-                                onDragStart={(event) => {
-                                  const row = event.currentTarget.closest("tr");
-                                  if (row) event.dataTransfer.setDragImage(row, 24, row.offsetHeight / 2);
-                                  event.dataTransfer.effectAllowed = "move";
-                                  event.dataTransfer.setData("text/plain", String(index));
-                                  setDraggedEnquiryType(index);
-                                }}
-                                onDragEnd={() => setDraggedEnquiryType(null)}
-                                onKeyDown={(event) => {
-                                  const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-                                  if (!offset) return;
-                                  event.preventDefault();
-                                  const target = index + offset;
-                                  if (target < 0 || target >= types.length) return;
-                                  const tbody = event.currentTarget.closest("tbody");
-                                  moveType(index, target);
-                                  requestAnimationFrame(() =>
-                                    tbody?.querySelectorAll<HTMLButtonElement>(".admin-drag-handle")[target]?.focus(),
-                                  );
-                                }}
-                              >
-                                <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor">
-                                  <circle cx="6" cy="4" r="1.1" />
-                                  <circle cx="10" cy="4" r="1.1" />
-                                  <circle cx="6" cy="8" r="1.1" />
-                                  <circle cx="10" cy="8" r="1.1" />
-                                  <circle cx="6" cy="12" r="1.1" />
-                                  <circle cx="10" cy="12" r="1.1" />
-                                </svg>
-                              </button>
-                            </td>
-                            <td>
-                              <input
-                                aria-label={`Enquiry type ${index + 1}`}
-                                maxLength={enquiryTypeMaxLength}
-                                placeholder="Enquiry type name"
-                                value={type}
-                                onBlur={(event) => {
-                                  if (!event.target.value.trim() && types.length > 1) {
-                                    setTypes(types.filter((_, itemIndex) => itemIndex !== index));
-                                  }
-                                }}
-                                onChange={(event) =>
-                                  setTypes(types.map((item, itemIndex) => (itemIndex === index ? event.target.value.replace(/\n/g, " ") : item)))
-                                }
-                              />
-                            </td>
-                            <td className="admin-enquiry-tag-cell">
-                              {index === 0 ? <span className="admin-default-tag">Default</span> : null}
-                            </td>
-                            <td className="admin-table-action">
-                              <button
-                                className="text-button"
-                                type="button"
-                                disabled={types.length <= 1}
-                                onClick={() => setTypes(types.filter((_, itemIndex) => itemIndex !== index))}
-                              >
-                                Remove
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                );
-              })()}
-              {tab === "policy" &&
-                optionalPolicySections
-                  .filter(
-                    (section) =>
-                      !(content.removedFields || []).includes(section.headingKey) &&
-                      !(content.removedFields || []).includes(section.bodyKey),
-                  )
-                  .map((section) => {
-                    const headingField = contentModules.policy.fields.find(
-                      (field) => field.key === section.headingKey,
-                    );
-                    const bodyField = contentModules.policy.fields.find(
-                      (field) => field.key === section.bodyKey,
-                    );
-                    if (!headingField || !bodyField) return null;
-                    return (
-                      <section
-                        className="admin-policy-editor-section"
-                        key={`policy-section-${section.number}`}
-                      >
-                        <div className="admin-policy-editor-section-heading">
-                          <h3>Section {section.number}</h3>
-                          <button
-                            className="text-button"
-                            type="button"
-                            onClick={() =>
-                              setContent({
-                                ...content,
-                                removedFields: [
-                                  ...(content.removedFields || []),
-                                  section.headingKey,
-                                  section.bodyKey,
-                                ],
-                              })
-                            }
-                          >
-                            Remove section
-                          </button>
-                        </div>
-                        {renderContentField(headingField)}
-                        {renderContentField(bodyField)}
-                      </section>
-                    );
-                  })}
-              {tab === "policy" && (
-                <div className="admin-modal admin-policy-sections">
-                  <div className="admin-policy-sections-heading">
-                    <div className="admin-modal-header">
-                      <h2>Add policy section</h2>
-                      <label
-                        className="btn btn-light admin-policy-close"
-                        htmlFor="policy-modal-toggle"
-                        aria-label="Close modal"
-                        title="Close"
-                      >
-                          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
-                            <path d="m5 5 10 10M15 5 5 15" />
-                          </svg>
-                      </label>
-                    </div>
-                    </div>
-                  {(content.sections && content.sections.length
-                    ? content.sections
-                    : [{ heading: "", body: "" }]
-                  ).map((section, index) => (
-                    <div
-                      className="admin-policy-section"
-                      key={`policy-section-${index}`}
-                    >
-                      <h3>Section {index + 7}</h3>
-                      <div className="field">
-                        <label htmlFor={`policy-section-heading-${index}`}>
-                          Heading
-                        </label>
-                        <input
-                          id={`policy-section-heading-${index}`}
-                          maxLength={80}
-                          value={section.heading}
-                          onChange={(event) =>
-                            setContent({
-                              ...content,
-                              sections: (content.sections &&
-                              content.sections.length
-                                ? content.sections
-                                : [{ heading: "", body: "" }]
-                              ).map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, heading: event.target.value }
-                                  : item,
-                              ),
-                            })
-                          }
-                        />
-                        <small className="admin-editor-count">
-                          {section.heading.length} / 80
-                        </small>
-                      </div>
-                      <div className="field">
-                        <label htmlFor={`policy-section-body-${index}`}>
-                          Body copy
-                        </label>
-                        <textarea
-                          id={`policy-section-body-${index}`}
-                          rows={5}
-                          className="admin-textarea-body"
-                          maxLength={policyBodyMaxChars}
-                          value={section.body}
-                          onChange={(event) =>
-                            setContent({
-                              ...content,
-                              sections: (content.sections &&
-                              content.sections.length
-                                ? content.sections
-                                : [{ heading: "", body: "" }]
-                              ).map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, body: event.target.value }
-                                  : item,
-                              ),
-                            })
-                          }
-                        />
-                        <small className="admin-editor-count">
-                          {section.body.length} / {policyBodyMaxChars}
-                        </small>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="admin-modal-actions">
-                    <button
-                      className="btn btn-dark"
-                      type="button"
-                      onClick={() =>
-                        setContent({
-                          ...content,
-                          sections: [
-                            ...(content.sections || []),
-                            { heading: "", body: "" },
-                          ],
-                        })
-                      }
-                    >
-                      Add another policy section
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="admin-editor-actions">
-              <button
-                className={`btn btn-light${
-                  contentStatus === "Saving..." ? " btn-loading" : ""
-                }`}
-                disabled={contentStatus === "Saving..." || !contentChanged}
-              >
-                {contentStatus === "Saving..." && (
-                  <span className="btn-spinner" aria-hidden="true" />
-                )}
-                {contentStatus === "Saving..." ? "Saving…" : "Save changes"}
+        {tab === "page content" && (
+          <div ref={pageContentRef}>
+            <div className="admin-accordion-controls">
+              <button type="button" onClick={toggleAccordions}>
+                <svg aria-hidden="true" viewBox="0 0 16 16" fill="none">
+                  <path d={accordionsAllOpen ? "m4 10 4-4 4 4" : "m4 6 4 4 4-4"} />
+                </svg>
+                {accordionsAllOpen ? "Collapse all" : "Expand all"}
               </button>
-              {contentStatus && contentStatus !== "Saving..." && (
-                <span>{contentStatus}</span>
-              )}
             </div>
-          </form>
+            {pageContentModules.map(([key, title]) => (
+              <AdminAccordion key={key} title={title}>
+                <ContentEditor moduleName={key} begin={beginAdminAction} finish={finishAdminAction} />
+              </AdminAccordion>
+            ))}
+          </div>
         )}
         {tab === "settings" && config && (
           <div className="admin-config-grid">

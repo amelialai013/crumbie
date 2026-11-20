@@ -13,7 +13,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		...products.map((product) => `/crumbs/${product.slug}`),
 		"/about",
 		"/contact-us",
-		"/ordering-policy",
+		"/faqs",
 		"/privacy-policy",
+		"/terms-of-service",
 	].map((path) => ({ url: absoluteUrl(path), lastModified }));
 }
