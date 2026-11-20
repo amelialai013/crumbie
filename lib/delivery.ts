@@ -9,6 +9,7 @@ export type DeliveryOption = {
 	postcodes: string;
 	radiusKm: string;
 	slots: DeliverySlot[];
+	info: string;
 	pickupTitle: string;
 	pickupDescription: string;
 	deliveryTitle: string;
@@ -30,6 +31,8 @@ export type DeliveryDetails = {
 export const defaultDeliverableMessage = "Great, we deliver to {postcode}.";
 export const defaultUndeliverableMessage = "Sorry, we don't deliver to this postcode. Please order this product through pickup.";
 
+export const defaultDeliveryInfo = "We deliver within {km} km of Melbourne CBD.";
+
 export const defaultAddressErrorMessage = addressError;
 
 export const defaultDeliveryPostcodes = "3000-3099, 3101-3138, 3141-3196, 3204-3207";
@@ -41,14 +44,17 @@ function money(value: string | undefined) {
 
 // Delivery settings live in the "settings" content module as strings. Delivery is off until switched on.
 export function deliveryFrom(fields: Record<string, string> | undefined, slots: DeliverySlot[] = []): DeliveryOption {
+	const radiusKm = /^\d{1,3}$/.test(fields?.deliveryRadiusKm ?? "") ? fields!.deliveryRadiusKm : fields?.deliveryPostcodes ? radiusFromPostcodes(fields.deliveryPostcodes) : "";
+	const infoTemplate = fields?.deliveryInfo?.trim() || (radiusKm ? defaultDeliveryInfo : "");
 	return {
 		enabled: fields?.deliveryEnabled === "true",
 		fee: money(fields?.deliveryFee) ?? 10,
 		pickupFee: money(fields?.pickupFee) ?? 0,
 		freeOver: money(fields?.deliveryFreeOver),
 		postcodes: fields?.deliveryPostcodes?.trim() || defaultDeliveryPostcodes,
-		radiusKm: /^\d{1,3}$/.test(fields?.deliveryRadiusKm ?? "") ? fields!.deliveryRadiusKm : fields?.deliveryPostcodes ? radiusFromPostcodes(fields.deliveryPostcodes) : "",
+		radiusKm,
 		slots,
+		info: infoTemplate.replaceAll("{km}", radiusKm),
 		pickupTitle: fields?.pickupTitle?.trim() || "Pickup",
 		pickupDescription: fields?.pickupDescription === undefined ? "Free · collect in Ivanhoe" : fields.pickupDescription.trim(),
 		deliveryTitle: fields?.deliveryTitle?.trim() || "Delivery",

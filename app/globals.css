@@ -7488,8 +7488,11 @@ html:has(.cart-modal-overlay) .site-header {
   .co-item > .co-actions .quantity-stepper { width: 130px; grid-template-columns: minmax(0, 1fr) 86px; }
 }
 .co-totals .co-totals-note { display: block; font-size: .82rem; opacity: .7; line-height: 1.4; margin-top: -2px; }
-.co-deliver .checkout-status.co-radius-note { border-color: #e6c35c; color: #e6c35c; margin: 0 0 4px; }
-.co-deliver .checkout-status.co-radius-note svg { color: #e6c35c; }
+.co-deliver .co-deliver-info { margin: -6px 0 4px; color: #c9ad94; font-size: .95rem; line-height: 1.5; }
 .product-order .product-quantity > label { line-height: 18.72px; }
 .product-order .product-quantity .quantity-stepper { height: 44px; margin-bottom: 0; }
 .product-order .product-quantity .quantity-stepper input { padding: 0; height: 44px; }
+.co-dates { gap: 0; }
+.co-group .co-date { padding: 24px 0; border: 0; border-top: 1px solid #4a433a; border-radius: 0; }
+.co-group .co-items > li + li { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #4a433a; }
+@media (min-width: 821px) { .checkout-cols { column-gap: 48px; } }

@@ -233,7 +233,6 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
     );
   }
 
-  const info = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M10 9v5M10 6.2v.1" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>;
   const cross = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="m7 7 6 6M13 7l-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
   const check = <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M6 10.4l2.6 2.6L14 7.6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 
@@ -379,7 +378,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
   const deliverPanel = hasDelivery && (
     <section className="co-deliver">
       <h2>Delivery information</h2>
-      {delivery.radiusKm && <p className="checkout-status co-radius-note" role="note">{info}<span>We deliver within {delivery.radiusKm} km of Melbourne CBD.</span></p>}
+      {delivery.info && <p className="co-deliver-info">{delivery.info}</p>}
       {deliveryForm}
     </section>
   );

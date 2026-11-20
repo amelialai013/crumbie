@@ -14,7 +14,7 @@ import { policyBodyMaxChars } from "@/lib/text-limits";
 import { privacyBodyMaxChars, privacyDefaultTitle, privacyDefaults } from "@/lib/privacy";
 import { termsBodyMaxChars, termsDefaultTitle, termsDefaults } from "@/lib/terms";
 import { defaultCardOption, defaultUnavailableMessage } from "@/lib/card";
-import { defaultAddressErrorMessage, defaultDeliverableMessage, defaultUndeliverableMessage } from "@/lib/delivery";
+import { defaultAddressErrorMessage, defaultDeliverableMessage, defaultDeliveryInfo, defaultUndeliverableMessage } from "@/lib/delivery";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
@@ -957,6 +957,7 @@ function DeliverySettings({
       pickupDescription: option.pickupDescription,
       deliveryTitle: initial.deliveryTitle ?? "",
       deliveryDescription: initial.deliveryDescription ?? "",
+      deliveryInfo: initial.deliveryInfo ?? "",
     };
   };
   const [fields, setFields] = useState(() => pick(initial));
@@ -1061,6 +1062,10 @@ function DeliverySettings({
                 <label htmlFor="opt-delivery-desc">Delivery card description</label>
                 <input id="opt-delivery-desc" placeholder="Blank shows delivery fee" maxLength={80} value={fields.deliveryDescription} onChange={(event) => setFields({ ...fields, deliveryDescription: event.target.value })} />
               </div>
+            </div>
+            <div className="field">
+              <label htmlFor="opt-delivery-info">Delivery information text (use {"{km}"} for the radius)</label>
+              <input id="opt-delivery-info" placeholder={defaultDeliveryInfo} maxLength={200} value={fields.deliveryInfo} onChange={(event) => setFields({ ...fields, deliveryInfo: event.target.value })} />
             </div>
             <div className="admin-card-pair admin-card-stack">
             <div className="field admin-card-price">
