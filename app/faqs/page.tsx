@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import { sharedKitchenWarning } from "@/lib/catalog";
 import SectionReveal from "@/components/section-reveal";
@@ -30,19 +31,14 @@ export default async function Faqs() {
           <h1 className="page-title">{f.pageTitle || "FAQs"}</h1>
         </div>
       </section>
-      <SectionReveal className="section policy-section" itemSelector=".faq-list > *">
+      <SectionReveal className="section policy-section" itemSelector=".policy-content > *">
         <div className="shell">
-          <div className="faq-list">
+          <div className="prose policy-content">
             {[...items, ...extra].map((item) => (
-              <details className="faq-item" key={item.key}>
-                <summary>
-                  <h2>{item.question}</h2>
-                  <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m4 6 4 4 4-4" /></svg>
-                </summary>
-                <div className="faq-answer">
-                  {paragraphs(item.answer).map((text, i) => <p key={i}>{text}</p>)}
-                </div>
-              </details>
+              <Fragment key={item.key}>
+                <h2>{item.question}</h2>
+                {paragraphs(item.answer).map((text, i) => <p key={i}>{text}</p>)}
+              </Fragment>
             ))}
           </div>
         </div>
