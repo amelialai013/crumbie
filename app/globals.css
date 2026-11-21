@@ -7716,5 +7716,4 @@ html:has(.orb-intro:not(.is-leaving)) :is(.feature-hero-copy > *, .feature-hero-
   .feature-hero-main:hover img { transform: none; }
 }
 
-.feature-hero-copy { padding-top: clamp(32px, 8vh, 96px); }
 @media (max-width: 900px) { .feature-hero-copy { padding-top: 24px; } }
