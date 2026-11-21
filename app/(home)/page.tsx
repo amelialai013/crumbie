@@ -5,6 +5,7 @@ import PromoBanner from "@/components/promo-banner";
 import { getProducts, getPromo } from "@/lib/catalog-store";
 import whiteLogo from "@/brand/latest-logos/new-text-logo/text-white.png";
 import whiteVerticalLogo from "@/brand/latest-logos/new-text-logo/white-vertical-logo.png";
+import FeatureHeroGate from "@/components/feature-hero-gate";
 import HeroMedia from "@/components/hero-media";
 import ProductCookieImage from "@/components/product-cookie-image";
 import SectionReveal from "@/components/section-reveal";
@@ -19,9 +20,55 @@ export default async function Home() {
   const catalogHeading = f.catalogHeading && f.catalogHeading !== "Crumbs for every craving" ? f.catalogHeading : null;
   const logoProps = { alt: "Club Crumbie", quality: 100 };
   const { props: desktopLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "640px" });
+  const { props: featureLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "(max-width: 900px) 480px, 640px" });
   const { props: mobileLogo } = getImageProps({ ...logoProps, src: whiteVerticalLogo, sizes: "340px" });
+  const mainPhoto = featured?.heroMode === "carousel" ? featured.heroImages?.[0] : undefined;
+  const cardPhoto = featured && productCardIsPhoto(featured) ? productCardImage(featured) : undefined;
+  const landing = promo?.landing && featured && mainPhoto ? { promo, product: featured, mainPhoto, cardPhoto } : null;
   return (
     <>
+      {landing ? (
+        <section className="feature-hero" id="feature-hero" data-gate="pending">
+          <FeatureHeroGate targetId="feature-hero" />
+          <div className="feature-hero-inner">
+            <div className="feature-hero-copy">
+              <h1 className="feature-hero-logo">
+                {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is in desktopLogo */}
+                <img {...featureLogo} className="hero-logo" loading="eager" fetchPriority="high" />
+              </h1>
+              <h2>{landing.promo.headline || landing.product.name}</h2>
+              <p>{landing.promo.blurb || landing.product.description}</p>
+              <div className="actions">
+                <Link className="btn btn-dark btn-arrow" href={`/crumbs/${landing.product.slug}`}>
+                  {landing.promo.button}
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                    <path d="m7 4.5 5.5 5.5L7 15.5" />
+                  </svg>
+                </Link>
+                <Link className="btn btn-light" href="/crumbs">{f.heroPrimaryLabel || "Explore all crumbs"}</Link>
+              </div>
+            </div>
+            <div className={`feature-hero-collage${landing.cardPhoto ? "" : " is-single"}`}>
+              <Link className="feature-hero-photo feature-hero-main" href={`/crumbs/${landing.product.slug}`} aria-label={landing.product.name}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={landing.mainPhoto} alt={landing.product.name} fetchPriority="high" />
+              </Link>
+              {landing.cardPhoto && (
+                <div className="feature-hero-photo feature-hero-card">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={landing.cardPhoto} alt="" />
+                </div>
+              )}
+              {(landing.promo.note || landing.promo.noteSub) && (
+                <div className="feature-hero-note">
+                  {landing.promo.note && <strong>{landing.promo.note}</strong>}
+                  {landing.promo.noteSub && <span>{landing.promo.noteSub}</span>}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      ) : (
       <section className="hero">
         <HeroMedia />
         <div className="hero-content">
@@ -43,6 +90,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
+      )}
 
       <SectionReveal className="section how-it-works">
         <div className="shell">

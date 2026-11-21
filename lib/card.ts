@@ -50,7 +50,7 @@ export function galleryImagesFrom(fields: Record<string, string> | undefined): s
 	}
 }
 
-export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string; cardLabel: string; cardDescription: string; cardPrice: number };
+export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string; cardLabel: string; cardDescription: string; cardPrice: number; landing: boolean; note: string; noteSub: string };
 
 // Crumbs-page promo banner, stored in the "settings" content module.
 export function promoFrom(fields: Record<string, string> | undefined): Promo | null {
@@ -63,6 +63,9 @@ export function promoFrom(fields: Record<string, string> | undefined): Promo | n
 		button: fields.promoButton?.trim() || "Order now",
 		cardLabel: fields.promoCardLabel?.trim() ?? "",
 		cardDescription: fields.promoCardDescription?.trim() ?? "",
+		landing: fields.promoLanding !== "false",
+		note: fields.promoNote?.trim() ?? "Limited edition",
+		noteSub: fields.promoNoteSub?.trim() ?? "Baked to order · Pickup in Ivanhoe",
 		// Leaving the hero card price empty makes the card free.
 		cardPrice: Number.isFinite(Number(fields.promoCardPrice)) && Number(fields.promoCardPrice) > 0 ? Math.round(Number(fields.promoCardPrice) * 100) / 100 : 0,
 	};

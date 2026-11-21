@@ -1137,6 +1137,9 @@ function PromoSettings({
     promoHeadline: source.promoHeadline ?? "",
     promoBlurb: source.promoBlurb ?? "",
     promoButton: source.promoButton ?? "Order now",
+    promoLanding: source.promoLanding === "false" ? "false" : "true",
+    promoNote: source.promoNote ?? "Limited edition",
+    promoNoteSub: source.promoNoteSub ?? "Baked to order · Pickup in Ivanhoe",
     promoCardLabel: source.promoCardLabel ?? "",
     promoCardDescription: source.promoCardDescription ?? "",
     promoCardPrice: source.promoCardPrice ?? "",
@@ -1256,6 +1259,28 @@ function PromoSettings({
                   <textarea id="promo-card-description" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
                   <small className="admin-editor-count">{values.promoCardDescription.length} / 200</small>
                 </div>
+                <label className={`${switchStyles.root} admin-promo-row`}>
+                  <span>
+                    <strong>Feature on landing page hero</strong>
+                    <small>Shows this product in the homepage hero with its photos. Off keeps the video hero.</small>
+                  </span>
+                  <input type="checkbox" role="switch" checked={values.promoLanding === "true"} onChange={(event) => set("promoLanding", event.target.checked ? "true" : "false")} />
+                  <span className={switchStyles.track} aria-hidden="true" />
+                </label>
+                {values.promoLanding === "true" && (
+                  <>
+                <div className="field">
+                  <label htmlFor="promo-note">Hero note title</label>
+                  <input id="promo-note" maxLength={40} placeholder="Leave blank to hide the note" value={values.promoNote} onChange={(event) => set("promoNote", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoNote.length} / 40</small>
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-note-sub">Hero note text</label>
+                  <input id="promo-note-sub" maxLength={60} value={values.promoNoteSub} onChange={(event) => set("promoNoteSub", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoNoteSub.length} / 60</small>
+                </div>
+                  </>
+                )}
               </div>
             </div>
           </>

@@ -91,7 +91,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </nav>
       <div className="shell product-detail-layout">
         {product.heroMode === "carousel" && (product.heroImages?.length ?? 0) > 0 ? (
-          <HeroCarousel key={product.slug} images={product.heroImages ?? []} name={product.name} />
+          <HeroCarousel key={product.slug} images={product.cardImage ? [product.cardImage, ...(product.heroImages ?? []).filter((image) => image !== product.cardImage)] : product.heroImages ?? []} name={product.name} />
         ) : product.imageMode !== "gallery" && (product.id === "product-signature" || product.id === "product-seasonal") ? (
           <CookieExplorer
             key={product.slug}
