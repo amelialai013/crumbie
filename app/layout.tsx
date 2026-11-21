@@ -25,9 +25,9 @@ export const metadata: Metadata = {
 		description: siteDescription,
 		type: "website",
 		locale: "en_AU",
-		images: [{ url: "/hero-poster.webp", width: 1920, height: 1080, alt: "Club Crumbie cookie boxes" }],
+		images: [{ url: "/og-image.jpg", width: 1200, height: 700, alt: "Club Crumbie cookie boxes" }],
 	},
-	twitter: { card: "summary_large_image", images: ["/hero-poster.webp"] },
+	twitter: { card: "summary_large_image", images: ["/og-image.jpg"] },
 };
 
 const organizationJsonLd = {
@@ -36,7 +36,7 @@ const organizationJsonLd = {
 	name: siteName,
 	url: siteUrl,
 	description: siteDescription,
-	image: `${siteUrl}/hero-poster.webp`,
+	image: `${siteUrl}/og-image.jpg`,
 	servesCuisine: "Cookies",
 	areaServed: "Melbourne, Victoria, Australia",
 	priceRange: "$$",
