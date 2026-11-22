@@ -8224,3 +8224,13 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .orb-core {
   background: radial-gradient(circle, rgba(186, 112, 70, .95) 0%, rgba(132, 70, 42, .8) 32%, rgba(84, 44, 24, .45) 60%, transparent 80%);
 }
+
+/* Card row absorbs spare height so the flavour list always ends level with the main photo. */
+@media (min-width: 901px) {
+  .feature-hero-collage:not(.is-single) { grid-template-rows: minmax(150px, 1fr) auto; }
+  .feature-hero-collage:not(.is-single) .feature-hero-note.fh-tri-list { align-self: end; }
+}
+
+@media (max-width: 640px) {
+  .feature-hero-logo { width: 130px; margin-bottom: 20px; }
+}
