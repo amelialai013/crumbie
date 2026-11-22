@@ -22,6 +22,7 @@ export default async function Home() {
   const logoProps = { alt: "Club Crumbie", quality: 100 };
   const { props: desktopLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "640px" });
   const { props: featureLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "(max-width: 900px) 480px, 640px" });
+  const { props: featureMobileLogo } = getImageProps({ ...logoProps, src: whiteVerticalLogo, sizes: "340px" });
   const { props: mobileLogo } = getImageProps({ ...logoProps, src: whiteVerticalLogo, sizes: "340px" });
   const countdownEnded = countdown.active && countdown.enabled && countdown.target <= Date.now() && allProducts.some((product) => product.id === countdown.nextProductId);
   const landingProduct = allProducts.find((product) => product.id === (countdownEnded ? countdown.nextProductId : landingSettings.productId));
@@ -45,7 +46,10 @@ export default async function Home() {
   const logo = (
     <h1 className="feature-hero-logo">
       {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is in featureLogo */}
-      <img {...featureLogo} className="hero-logo" loading="eager" fetchPriority="high" />
+      <picture>
+        <source media="(max-width: 640px)" srcSet={featureMobileLogo.srcSet} sizes={featureMobileLogo.sizes} />
+        <img {...featureLogo} className="hero-logo" loading="eager" fetchPriority="high" />
+      </picture>
     </h1>
   );
   const title = landing ? landing.promo.headline || landing.product.name : "";
@@ -115,7 +119,10 @@ export default async function Home() {
             <div className="feature-hero-copy">
               <h1 className="feature-hero-logo">
                 {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is in desktopLogo */}
-                <img {...featureLogo} className="hero-logo" loading="eager" fetchPriority="high" />
+                <picture>
+                  <source media="(max-width: 640px)" srcSet={featureMobileLogo.srcSet} sizes={featureMobileLogo.sizes} />
+                  <img {...featureLogo} className="hero-logo" loading="eager" fetchPriority="high" />
+                </picture>
               </h1>
               <h2>{landing.promo.headline || landing.product.name}</h2>
               <p>{landing.promo.blurb || landing.product.description}</p>
