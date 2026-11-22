@@ -7650,7 +7650,7 @@ html:has(.orb-intro:not(.is-leaving)) :is(.feature-hero-copy > *, .feature-hero-
 @media (max-width: 900px) {
   .feature-hero { min-height: 0; padding: 96px 0 48px; }
   .feature-hero-inner { grid-template-columns: 1fr; gap: 36px; width: min(100% - 40px, 640px); }
-  .feature-hero-logo { width: min(150px, 70%); margin-bottom: 24px; }
+  .feature-hero-logo { width: min(240px, 70%); margin-bottom: 28px; }
   .feature-hero-copy h2 { font-size: clamp(2.1rem, 8vw, 3.4rem); }
   .feature-hero-copy p { font-size: clamp(.95rem, 2.6vw, 1.05rem); }
   .feature-hero-collage { height: auto; min-height: 0; aspect-ratio: auto; gap: 12px; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
@@ -7665,7 +7665,7 @@ html:has(.orb-intro:not(.is-leaving)) :is(.feature-hero-copy > *, .feature-hero-
   .feature-hero-note span { font-size: clamp(.78rem, 2.8vw, .95rem); }
 }
 @media (max-width: 640px) {
-  .feature-hero-logo { width: min(110px, 46%); margin-bottom: 18px; }
+  .feature-hero-logo { width: min(180px, 60%); margin-bottom: 22px; }
   .feature-hero-copy .actions { flex-direction: column; align-items: stretch; }
   .feature-hero-copy .actions .btn { width: 100%; }
 }
