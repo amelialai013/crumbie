@@ -8202,3 +8202,25 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 @media (max-width: 640px) {
   .feature-hero-copy .actions { margin-bottom: 20px; }
 }
+
+/* Centre hero content between the header and the bottom of the section: equal top/bottom space, fade confined to the bottom padding. */
+.feature-hero {
+  padding: 104px 0 104px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 90px), rgba(0,0,0,.6) calc(100% - 50px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 90px), rgba(0,0,0,.6) calc(100% - 50px), transparent);
+}
+@media (max-width: 900px) {
+  .feature-hero { padding: 96px 0 96px; }
+}
+
+@media (min-width: 901px) {
+  .feature-hero:not(.fh-split):not(.fh-tri) .feature-hero-inner { grid-template-columns: minmax(0, .95fr) minmax(0, 1.7fr); }
+}
+
+/* Loading orb uses the same warm brown / maroon palette as the landing page orbs. */
+.orb-halo {
+  background: radial-gradient(circle, rgba(120, 62, 36, .6) 0%, rgba(84, 44, 24, .3) 35%, rgba(66, 32, 30, .12) 55%, transparent 70%);
+}
+.orb-core {
+  background: radial-gradient(circle, rgba(186, 112, 70, .95) 0%, rgba(132, 70, 42, .8) 32%, rgba(84, 44, 24, .45) 60%, transparent 80%);
+}
