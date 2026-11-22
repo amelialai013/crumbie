@@ -8038,7 +8038,7 @@ section.hero::before, section.hero::after {
   left: 0;
   width: clamp(480px, 70vw, 1000px);
   aspect-ratio: 1;
-  background: radial-gradient(circle, rgba(246,200,140,.32), rgba(246,200,140,.1) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(122,92,62,.34), rgba(122,92,62,.12) 45%, transparent 70%);
   animation: hero-orb-a 15s ease-in-out infinite;
 }
 .feature-hero::before, section.hero::before {
@@ -8046,7 +8046,7 @@ section.hero::before, section.hero::after {
   left: 0;
   width: clamp(440px, 62vw, 900px);
   aspect-ratio: 1;
-  background: radial-gradient(circle, rgba(214,150,130,.26), transparent 68%);
+  background: radial-gradient(circle, rgba(96,64,44,.34), transparent 68%);
   animation: hero-orb-b 19s ease-in-out -6s infinite;
 }
 section.hero::before, section.hero::after { z-index: 1; mix-blend-mode: screen; }
@@ -8098,12 +8098,54 @@ section.hero::before, section.hero::after { z-index: 1; mix-blend-mode: screen; 
 }
 .feature-hero { padding-bottom: 170px; }
 
-.admin-editor .admin-field-note { margin: -8px 0 0; font-size: .82rem; line-height: 1.4; opacity: .65; }
+.admin-editor .admin-field-note { margin: -8px 0 0; font-size: .74rem; line-height: 1.4; opacity: .65; }
 
-.hero-countdown { margin-top: 56px; display: grid; justify-items: center; gap: 18px; }
+.hero-countdown { margin: 56px 0 0; display: grid; justify-items: center; gap: 18px; }
 .hero-countdown-label { margin: 0; font-size: 1rem; opacity: .85; }
 .hero-countdown-grid { display: flex; gap: clamp(28px, 5vw, 64px); justify-content: center; }
 .hero-countdown-grid div { display: grid; gap: 8px; justify-items: center; }
 .hero-countdown-grid strong { font-size: clamp(52px, 8vw, 88px); font-weight: 300; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; text-shadow: 0 2px 30px rgba(0,0,0,.45); }
-.hero-countdown-grid span { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
-@media (max-width: 520px) { .hero-countdown { margin-top: 40px; } .hero-countdown-grid { gap: 20px; } .hero-countdown-grid strong { font-size: 44px; } }
+.hero-countdown-grid span { font-size: 1rem; opacity: .85; }
+@media (max-width: 520px) { .hero-countdown { margin: 40px 0 0; } .hero-countdown-grid { gap: 20px; } .hero-countdown-grid strong { font-size: 44px; } }
+section.hero-countdown-layout > .hero-content { position: static; }
+section.hero-countdown-layout .hero-countdown { position: absolute; left: 0; right: 0; bottom: clamp(24px, 5vh, 56px); margin: 0; z-index: 2; }
+@media (max-width: 520px) { section.hero-countdown-layout .hero-countdown { margin: 0; bottom: 24px; } }
+/* Simple hero: fade only the background layers so the countdown stays crisp on top. */
+section.hero-countdown-layout { -webkit-mask-image: none; mask-image: none; }
+section.hero-countdown-layout .hero-media, section.hero-countdown-layout::before, section.hero-countdown-layout::after {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 300px), rgba(0,0,0,.92) calc(100% - 240px), rgba(0,0,0,.7) calc(100% - 180px), rgba(0,0,0,.42) calc(100% - 120px), rgba(0,0,0,.18) calc(100% - 60px), rgba(0,0,0,.05) calc(100% - 20px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 300px), rgba(0,0,0,.92) calc(100% - 240px), rgba(0,0,0,.7) calc(100% - 180px), rgba(0,0,0,.42) calc(100% - 120px), rgba(0,0,0,.18) calc(100% - 60px), rgba(0,0,0,.05) calc(100% - 20px), transparent);
+}
+@media (max-width: 640px) {
+  section.hero-countdown-layout .hero-media::after {
+    background:
+      linear-gradient(to bottom, #1a140d 0%, rgba(26,20,13,.82) 4%, rgba(26,20,13,.55) 9%, rgba(26,20,13,.28) 15%, rgba(26,20,13,.1) 21%, rgba(26,20,13,0) 28%),
+      linear-gradient(to bottom, rgba(26,20,13,.5) 0%, rgba(26,20,13,.5) 30%, rgba(26,20,13,.72) 48%, rgba(26,20,13,.88) 62%, #1a140d 78%, #1a140d 100%);
+  }
+}
+/* Fixed-width columns so changing digits never shift the layout. */
+.hero-countdown { --cd-num: clamp(52px, 8vw, 88px); }
+.hero-countdown-grid { display: grid; grid-template-columns: repeat(4, calc(var(--cd-num) * 1.4)); gap: clamp(6px, 1.5vw, 20px); }
+.hero-countdown-grid strong { font-size: var(--cd-num); font-feature-settings: "tnum" 1; }
+@media (max-width: 520px) { .hero-countdown { --cd-num: 44px; } .hero-countdown-grid { gap: 4px; } }
+.admin-editor .field:has(+ .admin-card-pair) { margin-bottom: 0; }
+.admin-editor .field + .admin-card-pair { margin-top: -1px; }
+.admin-editor .admin-promo-group .admin-card-pair .field { padding-bottom: 14px; }
+section.hero-countdown-on > .hero-content { position: relative; }
+section.hero-countdown-on .hero-countdown { position: static; margin: 0 0 40px; }
+section.hero-countdown-on .hero-logo-heading { order: -1; margin: 0 0 20px; }
+section.hero-countdown-on .hero-logo { width: clamp(110px, 14vw, 170px); height: auto; }
+section.hero-countdown-on .hero-logo-heading { width: clamp(110px, 14vw, 170px); }
+section.hero-countdown-on .hero-logo { width: 100%; }
+section.hero-countdown-on .hero-countdown { margin-bottom: 16px; }
+section.hero-countdown-on .hero-logo-heading { width: clamp(220px, 30vw, 340px); margin-bottom: 28px; }
+section.hero-countdown-on .hero-logo-heading { width: clamp(300px, 44vw, 500px); }
+section.hero-countdown-on .hero-logo-heading { margin-bottom: 4px; }
+section.hero-countdown-on .hero-countdown { margin-bottom: 4px; gap: 10px; }
+section.hero-countdown-on .hero-countdown { gap: 0; }
+section.hero-countdown-on .hero-countdown { gap: 6px; }
+section.hero-countdown-on .hero-logo-heading { margin-bottom: 16px; }
+section.hero-countdown-on .hero-countdown { gap: 14px; }
+section.hero-countdown-on .hero-countdown-label { font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; font-weight: 500; opacity: .9; }
+section.hero-countdown-on .hero-logo-heading { width: min(clamp(300px, 54vw, 560px), 82vw); }
+.admin-editor .field + .admin-field-note { margin: 10px 0 16px; }

@@ -23,7 +23,8 @@ export default async function Home() {
   const { props: desktopLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "640px" });
   const { props: featureLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "(max-width: 900px) 480px, 640px" });
   const { props: mobileLogo } = getImageProps({ ...logoProps, src: whiteVerticalLogo, sizes: "340px" });
-  const landingProduct = allProducts.find((product) => product.id === landingSettings.productId);
+  const countdownEnded = countdown.active && countdown.enabled && countdown.target <= Date.now() && allProducts.some((product) => product.id === countdown.nextProductId);
+  const landingProduct = allProducts.find((product) => product.id === (countdownEnded ? countdown.nextProductId : landingSettings.productId));
   const mainPhoto = landingProduct?.heroMode === "carousel" ? landingProduct.heroImages?.[0] : undefined;
   const cardPhoto = landingProduct && productCardIsPhoto(landingProduct) ? productCardImage(landingProduct) : undefined;
   const sharesCopy = promo?.productId === landingProduct?.id;
@@ -35,7 +36,7 @@ export default async function Home() {
     pill: landingSettings.pill,
     items: landingSettings.items,
   };
-  const landing = landingSettings.enabled && landingProduct && mainPhoto ? { promo: landingCopy, product: landingProduct, mainPhoto, cardPhoto } : null;
+  const landing = (landingSettings.enabled || countdownEnded) && landingProduct && mainPhoto ? { promo: landingCopy, product: landingProduct, mainPhoto, cardPhoto } : null;
   const arrow = (
     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
       <path d="m7 4.5 5.5 5.5L7 15.5" />
@@ -148,7 +149,7 @@ export default async function Home() {
           </div>
         </section>
       ) : (
-      <section className="hero">
+      <section className={`hero${countdown.active && countdown.enabled ? " hero-countdown-on" : ""}${countdown.active ? " hero-countdown-layout" : ""}`}>
         <HeroMedia image={heroImage} />
         <div className="hero-content">
           <h1 className="hero-logo-heading">
@@ -158,6 +159,7 @@ export default async function Home() {
               <img {...desktopLogo} className="hero-logo" fetchPriority="high" />
             </picture>
           </h1>
+          {countdown.active && countdown.enabled && <HeroCountdown refreshOnEnd={!!countdown.nextProductId} target={countdown.target} label={countdown.label} />}
           <div className="actions">
             <Link className="btn btn-dark btn-arrow" href="/crumbs">
               {f.heroPrimaryLabel || "Explore crumbs"}
@@ -167,7 +169,6 @@ export default async function Home() {
             </Link>
             <Link className="btn btn-light" href="/contact-us">{f.heroSecondaryLabel || "Make an enquiry"}</Link>
           </div>
-          {countdown.enabled && <HeroCountdown target={countdown.target} label={countdown.label} />}
         </div>
       </section>
       )}

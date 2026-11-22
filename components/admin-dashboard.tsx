@@ -1338,13 +1338,14 @@ function LandingHeroSettings({
     landingProductId: source.landingProductId || (source.promoEnabled === "true" ? source.promoProductId ?? "" : ""),
     promoLanding: source.promoLanding === "false" ? "false" : "true",
     promoPill: source.promoPill ?? "Pickup in Ivanhoe",
-    promoLayout: source.promoLayout === "split" || source.promoLayout === "triptych" ? source.promoLayout : "collage",
+    promoLayout: source.promoLayout === "split" || source.promoLayout === "triptych" || source.promoLayout === "countdown" ? source.promoLayout : "collage",
     promoList: source.promoList ?? "",
     heroImage: source.heroImage ?? "",
     countdownEnabled: source.countdownEnabled === "true" ? "true" : "false",
     countdownDate: source.countdownDate ?? "",
     countdownTime: source.countdownTime ?? "09:00",
     countdownLabel: source.countdownLabel ?? "Next collection drops in",
+    countdownNextProductId: source.countdownNextProductId ?? "",
   });
   const [heroFile, setHeroFile] = useState<File | null>(null);
   const heroPreview = useMemo(() => (heroFile ? URL.createObjectURL(heroFile) : ""), [heroFile]);
@@ -1411,28 +1412,21 @@ function LandingHeroSettings({
                   <label id="promo-layout-label">Landing page hero layout</label>
                   <PremiumSelect
                     labelId="promo-layout-label"
-                    value={values.promoLanding === "false" ? "video" : values.promoLayout}
+                    value={values.promoLanding === "false" ? (values.promoLayout === "countdown" ? "countdown" : "video") : values.promoLayout}
                     options={[
                       { value: "video", label: "Simple logo" },
+                      { value: "countdown", label: "Countdown" },
                       { value: "collage", label: "Photo collage" },
                       { value: "split", label: "Split" },
                       { value: "triptych", label: "Centred triptych" },
                     ]}
                     placeholder="Choose a layout"
-                    onChange={(layout) => setValues((current) => layout === "video" ? { ...current, promoLanding: "false" } : { ...current, promoLanding: "true", promoLayout: layout })}
+                    onChange={(layout) => setValues((current) => layout === "video" ? { ...current, promoLanding: "false", promoLayout: "collage" } : layout === "countdown" ? { ...current, promoLanding: "false", promoLayout: "countdown" } : { ...current, promoLanding: "true", promoLayout: layout })}
                   />
                 </div>
-                {values.promoLanding === "false" && (
+                {values.promoLanding === "false" && values.promoLayout === "countdown" && (
                 <>
-                <label className={`${switchStyles.root} admin-promo-row`}>
-                  <span>
-                    <strong>Countdown</strong>
-                    <small>Shown under the buttons on the landing page</small>
-                  </span>
-                  <input type="checkbox" role="switch" checked={values.countdownEnabled === "true"} onChange={(event) => set("countdownEnabled", event.target.checked ? "true" : "false")} />
-                  <span className={switchStyles.track} aria-hidden="true" />
-                </label>
-                {values.countdownEnabled === "true" && (
+                {(
                   <>
                     <div className="field">
                       <label htmlFor="countdown-label">Countdown label</label>
@@ -1448,6 +1442,16 @@ function LandingHeroSettings({
                         <label htmlFor="countdown-time">Release time (Melbourne)</label>
                         <TimePicker id="countdown-time" label="Release time" value={values.countdownTime} onChange={(value) => set("countdownTime", value)} />
                       </div>
+                    </div>
+                    <div className="field">
+                      <label id="countdown-next-label">Landing page after countdown</label>
+                      <PremiumSelect
+                        labelId="countdown-next-label"
+                        value={values.countdownNextProductId}
+                        options={[{ value: "", label: "Stay on the countdown" }, ...products.map((product) => ({ value: product.id, label: product.name }))]}
+                        placeholder="Choose a product"
+                        onChange={(value) => set("countdownNextProductId", value)}
+                      />
                     </div>
                   </>
                 )}

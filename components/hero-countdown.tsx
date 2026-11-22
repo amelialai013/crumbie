@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 function parts(ms: number) {
@@ -12,7 +13,7 @@ function parts(ms: number) {
   ] as const;
 }
 
-export default function HeroCountdown({ target, label }: { target: number; label: string }) {
+export default function HeroCountdown({ target, label, refreshOnEnd }: { target: number; label: string; refreshOnEnd?: boolean }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     setNow(Date.now());
@@ -20,6 +21,11 @@ export default function HeroCountdown({ target, label }: { target: number; label
     return () => clearInterval(timer);
   }, []);
   const remaining = target - (now ?? 0);
+  const router = useRouter();
+  const ended = now !== null && remaining <= 0;
+  useEffect(() => {
+    if (ended && refreshOnEnd) router.refresh();
+  }, [ended, refreshOnEnd, router]);
   if (now !== null && remaining <= 0) return null;
   return (
     <div className="hero-countdown" role="timer" aria-label={label || "Countdown"}>

@@ -98,7 +98,7 @@ export function countdownFrom(fields: Record<string, string> | undefined) {
 		const [m, d, y, h, mi] = shown.match(/\d+/g)!.map(Number);
 		target = guess - (Date.UTC(y, m - 1, d, h, mi) - guess);
 	}
-	return { enabled: fields?.countdownEnabled === "true" && target > 0, target, label: fields?.countdownLabel?.trim() ?? "Next collection drops in" };
+	return { active: fields?.promoLanding === "false" && fields?.promoLayout === "countdown", enabled: target > 0, target, nextProductId: fields?.countdownNextProductId ?? "", label: fields?.countdownLabel?.trim() ?? "Next collection drops in" };
 }
 
 // The hero product can rename its card (e.g. "Christmas Crumbie Card"); other products keep the default.
