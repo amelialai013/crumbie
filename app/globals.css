@@ -8020,3 +8020,51 @@ html:has(.orb-intro:not(.is-leaving)) .fh-item { animation-play-state: paused; }
 @media (max-width: 900px) {
   .fh-tri-side > p { text-align: center; }
 }
+
+/* Drifting orb glow behind every landing hero layout. */
+.feature-hero, section.hero { position: relative; overflow: hidden; isolation: isolate; }
+.feature-hero::before, .feature-hero::after,
+section.hero::before, section.hero::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+  will-change: transform, opacity;
+}
+.feature-hero::after, section.hero::after {
+  top: -18%;
+  right: -8%;
+  width: clamp(320px, 48vw, 720px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(246,200,140,.32), rgba(246,200,140,.1) 45%, transparent 70%);
+  animation: hero-orb-a 14s ease-in-out infinite;
+}
+.feature-hero::before, section.hero::before {
+  bottom: -26%;
+  left: 6%;
+  width: clamp(280px, 42vw, 620px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(214,150,130,.26), transparent 68%);
+  animation: hero-orb-b 18s ease-in-out -6s infinite;
+}
+section.hero::before, section.hero::after { z-index: 1; mix-blend-mode: screen; }
+.feature-hero-inner, .hero-content { position: relative; z-index: 2; }
+@keyframes hero-orb-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: .8; }
+  20% { transform: translate3d(-18%, 14%, 0) scale(1.16); opacity: 1; }
+  40% { transform: translate3d(-40%, 8%, 0) scale(1.02); opacity: .85; }
+  60% { transform: translate3d(-46%, -2%, 0) scale(.92); opacity: 1; }
+  80% { transform: translate3d(-20%, -8%, 0) scale(1.1); opacity: .85; }
+}
+@keyframes hero-orb-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: .7; }
+  25% { transform: translate3d(30%, -14%, 0) scale(1.2); opacity: 1; }
+  50% { transform: translate3d(70%, -22%, 0) scale(1); opacity: .8; }
+  75% { transform: translate3d(30%, -8%, 0) scale(.9); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feature-hero::before, .feature-hero::after,
+  section.hero::before, section.hero::after { animation: none; }
+}
