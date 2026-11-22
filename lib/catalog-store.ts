@@ -103,3 +103,10 @@ export async function getUnavailableMessage() {
   const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
   return unavailableMessageFrom(settings?.fields);
 }
+
+export const defaultSearchImage = "/hero-poster.webp";
+
+export async function getSearchImage() {
+  const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
+  return settings?.fields?.searchImage?.trim() || defaultSearchImage;
+}

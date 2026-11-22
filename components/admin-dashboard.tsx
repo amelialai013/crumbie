@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { DatePicker } from "./date-picker";
@@ -657,6 +657,7 @@ function normalizeCardSettings(data: { fields?: Record<string, string> } | null)
 const CARD_KEYS = ["cardEnabled", "cardPrice", "cardLabel", "cardDescription", "cardNamePlaceholder", "cardNameMaxLength", "cardMessagePlaceholder", "cardMessageMaxLength"];
 const PAGE_KEYS = ["galleryTitle", "galleryBody", "galleryImages"];
 const BANNER_KEYS = ["exploreTitle", "exploreSubtext"];
+const SEARCH_KEYS = ["searchImage"];
 
 function CardSettings({
   part,
@@ -664,17 +665,19 @@ function CardSettings({
   finish,
   initial,
 }: {
-  part: "card" | "page" | "banner";
+  part: "card" | "page" | "banner" | "search";
   begin: (message: string) => void;
   finish: (message?: string) => void;
   initial: Record<string, string>;
 }) {
-  const keys = part === "card" ? CARD_KEYS : part === "banner" ? BANNER_KEYS : PAGE_KEYS;
+  const keys = part === "card" ? CARD_KEYS : part === "banner" ? BANNER_KEYS : part === "search" ? SEARCH_KEYS : PAGE_KEYS;
   const [fields, setFields] = useState<Record<string, string> | null>(initial);
   const [saved, setSaved] = useState(() => JSON.stringify(keys.map((key) => initial[key])));
   const [status, setStatus] = useState("");
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [galleryDragActive, setGalleryDragActive] = useState(false);
+  const [searchFile, setSearchFile] = useState<File | null>(null);
+  const searchPreview = useMemo(() => (searchFile ? URL.createObjectURL(searchFile) : ""), [searchFile]);
   const addGalleryFiles = (picked: File[]) =>
     setGalleryFiles((current) => [...current, ...picked.filter((file) => file.type.startsWith("image/"))]);
 
@@ -688,7 +691,7 @@ function CardSettings({
     }
   })();
   const setGalleryImages = (next: string[]) => setFields({ ...fields, galleryImages: JSON.stringify(next) });
-  const changed = JSON.stringify(keys.map((key) => fields[key])) !== saved || galleryFiles.length > 0;
+  const changed = JSON.stringify(keys.map((key) => fields[key])) !== saved || galleryFiles.length > 0 || searchFile !== null;
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -707,6 +710,18 @@ function CardSettings({
       }
       nextFields = { ...nextFields, galleryImages: JSON.stringify([...galleryImages, ...(result?.urls ?? [])]) };
     }
+    if (searchFile) {
+      const upload = new FormData();
+      upload.append("files", (await compressReferenceImages([searchFile]))[0]);
+      const uploaded = await fetch("/api/admin/gallery", { method: "POST", body: upload });
+      const result = await uploaded.json().catch(() => null);
+      if (!uploaded.ok || !result?.urls?.[0]) {
+        finish();
+        setStatus(result?.error || "Unable to upload photo");
+        return;
+      }
+      nextFields = { ...nextFields, searchImage: result.urls[0] };
+    }
     const latest = await fetch("/api/admin/content?module=settings").then((r) => (r.ok ? r.json() : null)).catch(() => null);
     const response = await fetch("/api/admin/content", {
       method: "PUT",
@@ -716,6 +731,7 @@ function CardSettings({
     if (response.ok) {
       setFields(nextFields);
       setGalleryFiles([]);
+      setSearchFile(null);
       setSaved(JSON.stringify(keys.map((key) => nextFields[key])));
       setStatus("");
       finish("Changes successfully saved");
@@ -922,6 +938,38 @@ function CardSettings({
               onImagesChange={setGalleryImages}
               onFilesChange={setGalleryFiles}
             />
+          )}
+        </div>
+        </>)}
+        {part === "search" && (<>
+        <div className="field admin-gallery-field">
+          <label htmlFor="content-searchImage">Search &amp; sharing image</label>
+          <p>The thumbnail shown beside your site in Google results and when the link is shared. Google can take days or weeks to refresh it.</p>
+          <label className="admin-reference-dropzone admin-gallery-dropzone" htmlFor="content-searchImage" tabIndex={0}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              const file = Array.from(event.dataTransfer.files).find((item) => item.type.startsWith("image/"));
+              if (file) setSearchFile(file);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                document.getElementById("content-searchImage")?.click();
+              }
+            }}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
+            </svg>
+            <span>Click to upload a photo</span>
+            <small>or drag and drop · JPG, PNG or WebP</small>
+            <input id="content-searchImage" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) setSearchFile(file); event.target.value = ""; }} />
+          </label>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={searchPreview || fields.searchImage || "/hero-poster.webp"} alt="Search thumbnail" style={{ width: "100%", maxWidth: 320, aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 12, marginTop: 12 }} />
+          {(fields.searchImage || searchFile) && (
+            <button type="button" className="text-button" onClick={() => { setSearchFile(null); setFields({ ...fields, searchImage: "" }); }}>Reset to default</button>
           )}
         </div>
         </>)}
@@ -1138,6 +1186,9 @@ function PromoSettings({
     promoBlurb: source.promoBlurb ?? "",
     promoButton: source.promoButton ?? "Order now",
     promoLanding: source.promoLanding === "false" ? "false" : "true",
+    promoLayout: source.promoLayout === "split" || source.promoLayout === "triptych" ? source.promoLayout : "collage",
+    promoPill: source.promoPill ?? "Pickup in Ivanhoe",
+    promoList: source.promoList ?? "",
     promoNote: source.promoNote ?? "Limited edition",
     promoNoteSub: source.promoNoteSub ?? "Baked to order · Pickup in Ivanhoe",
     promoCardLabel: source.promoCardLabel ?? "",
@@ -1259,14 +1310,21 @@ function PromoSettings({
                   <textarea id="promo-card-description" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
                   <small className="admin-editor-count">{values.promoCardDescription.length} / 200</small>
                 </div>
-                <label className={`${switchStyles.root} admin-promo-row`}>
-                  <span>
-                    <strong>Feature on landing page hero</strong>
-                    <small>Shows this product in the homepage hero with its photos. Off keeps the video hero.</small>
-                  </span>
-                  <input type="checkbox" role="switch" checked={values.promoLanding === "true"} onChange={(event) => set("promoLanding", event.target.checked ? "true" : "false")} />
-                  <span className={switchStyles.track} aria-hidden="true" />
-                </label>
+                <div className="field">
+                  <label id="promo-layout-label">Landing page hero layout</label>
+                  <PremiumSelect
+                    labelId="promo-layout-label"
+                    value={values.promoLanding === "false" ? "video" : values.promoLayout}
+                    options={[
+                      { value: "video", label: "Video hero" },
+                      { value: "collage", label: "Photo collage" },
+                      { value: "split", label: "Split" },
+                      { value: "triptych", label: "Centred triptych" },
+                    ]}
+                    placeholder="Choose a layout"
+                    onChange={(layout) => setValues((current) => layout === "video" ? { ...current, promoLanding: "false" } : { ...current, promoLanding: "true", promoLayout: layout })}
+                  />
+                </div>
                 {values.promoLanding === "true" && (
                   <>
                 <div className="field">
@@ -1279,6 +1337,20 @@ function PromoSettings({
                   <input id="promo-note-sub" maxLength={60} value={values.promoNoteSub} onChange={(event) => set("promoNoteSub", event.target.value)} />
                   <small className="admin-editor-count">{values.promoNoteSub.length} / 60</small>
                 </div>
+                {values.promoLayout === "triptych" && (
+                  <>
+                <div className="field">
+                  <label htmlFor="promo-pill">Photo label</label>
+                  <input id="promo-pill" maxLength={40} placeholder="Leave blank to hide the label" value={values.promoPill} onChange={(event) => set("promoPill", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoPill.length} / 40</small>
+                </div>
+                <div className="field">
+                  <label htmlFor="promo-list">List items (one per line)</label>
+                  <textarea id="promo-list" className="admin-textarea-lines" style={{ "--lines": 5 } as React.CSSProperties} maxLength={400} placeholder="Leave blank to list the product's box sizes" value={values.promoList} onChange={(event) => set("promoList", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoList.length} / 400</small>
+                </div>
+                  </>
+                )}
                   </>
                 )}
               </div>
@@ -4475,6 +4547,11 @@ export default function AdminDashboard() {
             {cardSettings && (
               <AdminAccordion title="Product gallery">
                 <CardSettings part="page" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
+              </AdminAccordion>
+            )}
+            {cardSettings && (
+              <AdminAccordion title="Search image">
+                <CardSettings part="search" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
               </AdminAccordion>
             )}
             {cardSettings && (

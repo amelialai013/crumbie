@@ -5,6 +5,7 @@ import "./motion.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { CartProvider } from "@/components/cart-context";
+import { defaultSearchImage, getSearchImage } from "@/lib/catalog-store";
 import { siteDescription, siteName, siteUrl } from "@/lib/site";
 
 // A full page load or refresh always starts at the top; in-app back/forward still restores scroll.
@@ -13,30 +14,34 @@ const scrollTopOnLoadScript = `try{if(!location.hash){history.scrollRestoration=
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#1a140d" };
-export const metadata: Metadata = {
-	metadataBase: new URL(siteUrl),
-	title: { default: "Club Crumbie", template: "%s | Club Crumbie" },
-	description: siteDescription,
-	applicationName: siteName,
-	alternates: { canonical: "./" },
-	openGraph: {
-		siteName,
-		title: "Club Crumbie",
+export async function generateMetadata(): Promise<Metadata> {
+	const image = await getSearchImage();
+	const size = image === defaultSearchImage ? { width: 1920, height: 1080 } : {};
+	return {
+		metadataBase: new URL(siteUrl),
+		title: { default: "Club Crumbie", template: "%s | Club Crumbie" },
 		description: siteDescription,
-		type: "website",
-		locale: "en_AU",
-		images: [{ url: "/og-image.jpg", width: 1200, height: 700, alt: "Club Crumbie cookie boxes" }],
-	},
-	twitter: { card: "summary_large_image", images: ["/og-image.jpg"] },
-};
+		applicationName: siteName,
+		alternates: { canonical: "./" },
+		openGraph: {
+			siteName,
+			title: "Club Crumbie",
+			description: siteDescription,
+			type: "website",
+			locale: "en_AU",
+			images: [{ url: image, ...size, alt: "Club Crumbie cookie boxes" }],
+		},
+		twitter: { card: "summary_large_image", images: [image] },
+	};
+}
 
-const organizationJsonLd = {
+const organizationJsonLd = (image: string) => ({
 	"@context": "https://schema.org",
 	"@type": "Bakery",
 	name: siteName,
 	url: siteUrl,
 	description: siteDescription,
-	image: `${siteUrl}/og-image.jpg`,
+	image: new URL(image, siteUrl).href,
 	servesCuisine: "Cookies",
 	areaServed: "Melbourne, Victoria, Australia",
 	priceRange: "$$",
@@ -46,7 +51,7 @@ const organizationJsonLd = {
 	potentialAction: { "@type": "OrderAction", target: `${siteUrl}/crumbs`, deliveryMethod: ["http://purl.org/goodrelations/v1#DeliveryModePickUp", "http://purl.org/goodrelations/v1#DeliveryModeOwnFleet"] },
 	address: { "@type": "PostalAddress", addressLocality: "Ivanhoe", addressRegion: "VIC", addressCountry: "AU" },
 	sameAs: ["https://instagram.com/clubcrumbie", "https://tiktok.com/@clubcrumbie", "https://facebook.com/clubcrumbie"],
-};
+});
 
 const websiteJsonLd = {
 	"@context": "https://schema.org",
@@ -56,12 +61,13 @@ const websiteJsonLd = {
 	url: siteUrl,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+	const searchImage = await getSearchImage();
 	return (
 		<html lang="en" className={dmSans.variable} data-scroll-behavior="smooth">
 			<head>
 				<script dangerouslySetInnerHTML={{ __html: scrollTopOnLoadScript }} />
-				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd(searchImage)) }} />
 				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
 			</head>
 			<body>

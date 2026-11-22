@@ -25,9 +25,85 @@ export default async function Home() {
   const mainPhoto = featured?.heroMode === "carousel" ? featured.heroImages?.[0] : undefined;
   const cardPhoto = featured && productCardIsPhoto(featured) ? productCardImage(featured) : undefined;
   const landing = promo?.landing && featured && mainPhoto ? { promo, product: featured, mainPhoto, cardPhoto } : null;
+  const arrow = (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+      <path d="m7 4.5 5.5 5.5L7 15.5" />
+    </svg>
+  );
+  const logo = (
+    <h1 className="feature-hero-logo">
+      {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is in featureLogo */}
+      <img {...featureLogo} className="hero-logo" loading="eager" fetchPriority="high" />
+    </h1>
+  );
+  const title = landing ? landing.promo.headline || landing.product.name : "";
+  const blurb = landing ? landing.promo.blurb || landing.product.description : "";
+  const noteParts = landing ? landing.promo.noteSub.split("·").map((part) => part.trim()).filter(Boolean) : [];
   return (
     <>
-      {landing ? (
+      {landing && landing.promo.layout === "split" ? (
+        <section className="feature-hero fh-split" id="feature-hero" data-gate="pending">
+          <FeatureHeroGate targetId="feature-hero" />
+          <div className="feature-hero-inner">
+            <div className="feature-hero-copy">
+              {logo}
+              <h2>{title}</h2>
+              <p>{blurb}</p>
+              <div className="actions">
+                <Link className="btn btn-dark btn-arrow" href={`/crumbs/${landing.product.slug}`}>{landing.promo.button}{arrow}</Link>
+                <Link className="btn btn-light" href="/crumbs">{f.heroPrimaryLabel || "Explore all crumbs"}</Link>
+              </div>
+            </div>
+            <div className="fh-split-pic fh-item">
+              <Link className="fh-split-main" href={`/crumbs/${landing.product.slug}`} aria-label={landing.product.name}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={landing.mainPhoto} alt={landing.product.name} fetchPriority="high" />
+              </Link>
+              {landing.cardPhoto && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="fh-split-card" src={landing.cardPhoto} alt="" />
+              )}
+            </div>
+          </div>
+        </section>
+      ) : landing && landing.promo.layout === "triptych" ? (
+        <section className="feature-hero fh-tri" id="feature-hero" data-gate="pending">
+          <FeatureHeroGate targetId="feature-hero" />
+          <div className="feature-hero-inner">
+            <div className="feature-hero-copy">
+              {logo}
+              <h2>{title}</h2>
+            </div>
+            <div className="fh-tri-grid">
+              <div className="fh-tri-side fh-item">
+                <p>{blurb}</p>
+                <div className="actions">
+                  <Link className="btn btn-dark btn-arrow" href={`/crumbs/${landing.product.slug}`}>{landing.promo.button}{arrow}</Link>
+                  <Link className="btn btn-light" href="/contact-us">{f.heroSecondaryLabel || "Make an enquiry"}</Link>
+                </div>
+              </div>
+              <Link className="fh-tri-mid fh-item" href={`/crumbs/${landing.product.slug}`} aria-label={landing.product.name}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={landing.mainPhoto} alt={landing.product.name} fetchPriority="high" />
+                {landing.promo.pill && <span className="fh-tri-cap">{landing.promo.pill}</span>}
+              </Link>
+              <div className="fh-tri-stack fh-item">
+                {landing.cardPhoto && (
+                  <div className="fh-tri-card">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={landing.cardPhoto} alt="" />
+                  </div>
+                )}
+                <div className="fh-tri-list">
+                  {(landing.promo.items.length ? landing.promo.items : landing.product.variants.map((variant) => variant.label)).map((item, index) => (
+                    <div key={`${item}-${index}`}>{item}<span>{String(index + 1).padStart(2, "0")}</span></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : landing ? (
         <section className="feature-hero" id="feature-hero" data-gate="pending">
           <FeatureHeroGate targetId="feature-hero" />
           <div className="feature-hero-inner">
