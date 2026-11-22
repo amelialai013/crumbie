@@ -8232,5 +8232,9 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 }
 
 @media (max-width: 640px) {
-  .feature-hero-logo { width: 130px; margin-bottom: 20px; }
+  .feature-hero-logo { width: 210px; margin-bottom: 36px; }
+}
+
+@media (max-width: 640px) {
+  .feature-hero-copy p { margin-top: 10px; }
 }
