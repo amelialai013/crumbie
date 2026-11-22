@@ -72,6 +72,35 @@ export function promoFrom(fields: Record<string, string> | undefined): Promo | n
 	};
 }
 
+// Landing-page hero settings; the product defaults to the hero product when none is chosen.
+export function landingFrom(fields: Record<string, string> | undefined) {
+	const promo = promoFrom(fields);
+	return {
+		productId: fields?.landingProductId || promo?.productId || "",
+		enabled: fields?.promoLanding !== "false",
+		layout: fields?.promoLayout === "split" || fields?.promoLayout === "triptych" ? fields.promoLayout : ("collage" as Promo["layout"]),
+		pill: fields?.promoPill?.trim() ?? "Pickup in Ivanhoe",
+		items: (fields?.promoList ?? "").split("\n").map((line) => line.trim()).filter(Boolean).slice(0, 12),
+		promo,
+	};
+}
+
+// Countdown under the Simple logo hero. Date and time are Melbourne wall-clock.
+export function countdownFrom(fields: Record<string, string> | undefined) {
+	const date = fields?.countdownDate ?? "";
+	const time = /^\d{2}:\d{2}$/.test(fields?.countdownTime ?? "") ? fields!.countdownTime : "00:00";
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+	let target = 0;
+	if (match) {
+		const [hour, minute] = time.split(":").map(Number);
+		const guess = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hour, minute);
+		const shown = new Date(guess).toLocaleString("en-US", { timeZone: "Australia/Melbourne", hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" });
+		const [m, d, y, h, mi] = shown.match(/\d+/g)!.map(Number);
+		target = guess - (Date.UTC(y, m - 1, d, h, mi) - guess);
+	}
+	return { enabled: fields?.countdownEnabled === "true" && target > 0, target, label: fields?.countdownLabel?.trim() ?? "Next collection drops in" };
+}
+
 // The hero product can rename its card (e.g. "Christmas Crumbie Card"); other products keep the default.
 export function cardForProduct(card: CardOption, promo: Promo | null, productId: string): CardOption {
 	if (!promo || promo.productId !== productId) return card;

@@ -8097,3 +8097,13 @@ section.hero::before, section.hero::after { z-index: 1; mix-blend-mode: screen; 
   mask-image: linear-gradient(to bottom, #000 calc(100% - 300px), rgba(0,0,0,.92) calc(100% - 240px), rgba(0,0,0,.7) calc(100% - 180px), rgba(0,0,0,.42) calc(100% - 120px), rgba(0,0,0,.18) calc(100% - 60px), rgba(0,0,0,.05) calc(100% - 20px), transparent);
 }
 .feature-hero { padding-bottom: 170px; }
+
+.admin-editor .admin-field-note { margin: -8px 0 0; font-size: .82rem; line-height: 1.4; opacity: .65; }
+
+.hero-countdown { margin-top: 56px; display: grid; justify-items: center; gap: 18px; }
+.hero-countdown-label { margin: 0; font-size: 1rem; opacity: .85; }
+.hero-countdown-grid { display: flex; gap: clamp(28px, 5vw, 64px); justify-content: center; }
+.hero-countdown-grid div { display: grid; gap: 8px; justify-items: center; }
+.hero-countdown-grid strong { font-size: clamp(52px, 8vw, 88px); font-weight: 300; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; text-shadow: 0 2px 30px rgba(0,0,0,.45); }
+.hero-countdown-grid span { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
+@media (max-width: 520px) { .hero-countdown { margin-top: 40px; } .hero-countdown-grid { gap: 20px; } .hero-countdown-grid strong { font-size: 44px; } }

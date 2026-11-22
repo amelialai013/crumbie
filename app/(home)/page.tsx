@@ -2,17 +2,18 @@ import { productCardImage, productCardIsPhoto } from "@/lib/catalog";
 import Link from "next/link";
 import { getImageProps } from "next/image";
 import PromoBanner from "@/components/promo-banner";
-import { getHeroImage, getProducts, getPromo } from "@/lib/catalog-store";
+import { getCountdown, getHeroImage, getLanding, getProducts, getPromo } from "@/lib/catalog-store";
 import whiteLogo from "@/brand/latest-logos/new-text-logo/text-white.png";
 import whiteVerticalLogo from "@/brand/latest-logos/new-text-logo/white-vertical-logo.png";
 import FeatureHeroGate from "@/components/feature-hero-gate";
 import HeroMedia from "@/components/hero-media";
+import HeroCountdown from "@/components/hero-countdown";
 import ProductCookieImage from "@/components/product-cookie-image";
 import SectionReveal from "@/components/section-reveal";
 import { getRecord } from "@/lib/store";
 
 export default async function Home() {
-  const [allProducts, promo, heroImage] = await Promise.all([getProducts(), getPromo(), getHeroImage()]);
+  const [allProducts, promo, heroImage, landingSettings, countdown] = await Promise.all([getProducts(), getPromo(), getHeroImage(), getLanding(), getCountdown()]);
   const featured = promo ? allProducts.find((product) => product.id === promo.productId) : undefined;
   const products = featured ? allProducts.filter((product) => product.id !== featured.id) : allProducts;
   const content = await getRecord<{ fields?: Record<string, string> }>("content", "homepage").catch(() => null);
@@ -22,9 +23,19 @@ export default async function Home() {
   const { props: desktopLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "640px" });
   const { props: featureLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "(max-width: 900px) 480px, 640px" });
   const { props: mobileLogo } = getImageProps({ ...logoProps, src: whiteVerticalLogo, sizes: "340px" });
-  const mainPhoto = featured?.heroMode === "carousel" ? featured.heroImages?.[0] : undefined;
-  const cardPhoto = featured && productCardIsPhoto(featured) ? productCardImage(featured) : undefined;
-  const landing = promo?.landing && featured && mainPhoto ? { promo, product: featured, mainPhoto, cardPhoto } : null;
+  const landingProduct = allProducts.find((product) => product.id === landingSettings.productId);
+  const mainPhoto = landingProduct?.heroMode === "carousel" ? landingProduct.heroImages?.[0] : undefined;
+  const cardPhoto = landingProduct && productCardIsPhoto(landingProduct) ? productCardImage(landingProduct) : undefined;
+  const sharesCopy = promo?.productId === landingProduct?.id;
+  const landingCopy = {
+    headline: sharesCopy ? promo?.headline ?? "" : "",
+    blurb: sharesCopy ? promo?.blurb ?? "" : "",
+    button: promo?.button || "Order now",
+    layout: landingSettings.layout,
+    pill: landingSettings.pill,
+    items: landingSettings.items,
+  };
+  const landing = landingSettings.enabled && landingProduct && mainPhoto ? { promo: landingCopy, product: landingProduct, mainPhoto, cardPhoto } : null;
   const arrow = (
     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
       <path d="m7 4.5 5.5 5.5L7 15.5" />
@@ -156,6 +167,7 @@ export default async function Home() {
             </Link>
             <Link className="btn btn-light" href="/contact-us">{f.heroSecondaryLabel || "Make an enquiry"}</Link>
           </div>
+          {countdown.enabled && <HeroCountdown target={countdown.target} label={countdown.label} />}
         </div>
       </section>
       )}

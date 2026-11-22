@@ -1186,22 +1186,15 @@ function PromoSettings({
     promoHeadline: source.promoHeadline ?? "",
     promoBlurb: source.promoBlurb ?? "",
     promoButton: source.promoButton ?? "Order now",
-    promoLanding: source.promoLanding === "false" ? "false" : "true",
-    promoPill: source.promoPill ?? "Pickup in Ivanhoe",
-    promoLayout: source.promoLayout === "split" || source.promoLayout === "triptych" ? source.promoLayout : "collage",
-    promoList: source.promoList ?? "",
     promoCardLabel: source.promoCardLabel ?? "",
     promoCardDescription: source.promoCardDescription ?? "",
     promoCardPrice: source.promoCardPrice ?? "",
-    heroImage: source.heroImage ?? "",
   });
-  const [heroFile, setHeroFile] = useState<File | null>(null);
-  const heroPreview = useMemo(() => (heroFile ? URL.createObjectURL(heroFile) : ""), [heroFile]);
   const [values, setValues] = useState(() => pick(initial));
   const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
   const [status, setStatus] = useState("");
   const enabled = values.promoEnabled === "true";
-  const changed = JSON.stringify(values) !== saved || heroFile !== null;
+  const changed = JSON.stringify(values) !== saved;
   const set = (key: keyof typeof values, value: string) => setValues((current) => ({ ...current, [key]: value }));
 
   async function save(event: React.FormEvent) {
@@ -1209,18 +1202,6 @@ function PromoSettings({
     setStatus("Saving...");
     begin("Saving promo…");
     const next = { ...values, promoProductId: values.promoProductId || products[0]?.id || "" };
-    if (heroFile) {
-      const upload = new FormData();
-      upload.append("files", (await compressReferenceImages([heroFile]))[0]);
-      const uploaded = await fetch("/api/admin/gallery", { method: "POST", body: upload });
-      const result = await uploaded.json().catch(() => null);
-      if (!uploaded.ok || !result?.urls?.[0]) {
-        finish();
-        setStatus(result?.error || "Unable to upload photo");
-        return;
-      }
-      next.heroImage = result.urls[0];
-    }
     const current = await fetch("/api/admin/content?module=settings").then((r) => (r.ok ? r.json() : null)).catch(() => null);
     const response = await fetch("/api/admin/content", {
       method: "PUT",
@@ -1230,7 +1211,6 @@ function PromoSettings({
     if (response.ok) {
       onSaved?.(JSON.parse(saved), next);
       setValues(next);
-      setHeroFile(null);
       setSaved(JSON.stringify(next));
       setStatus("");
       finish("Changes successfully saved");
@@ -1325,6 +1305,107 @@ function PromoSettings({
                   <textarea id="promo-card-description" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
                   <small className="admin-editor-count">{values.promoCardDescription.length} / 200</small>
                 </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <div className="admin-promo-actions">
+        <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
+          {status === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
+          {status === "Saving..." ? "Saving…" : "Save changes"}
+        </button>
+        {status && status !== "Saving..." && <span>{status}</span>}
+      </div>
+    </form>
+  );
+}
+
+function LandingHeroSettings({
+  products,
+  initial,
+  begin,
+  finish,
+  onSaved,
+}: {
+  products: Product[];
+  initial: Record<string, string>;
+  begin: (message: string) => void;
+  finish: (message?: string) => void;
+  onSaved?: (next: Record<string, string>) => void;
+}) {
+  const pick = (source: Record<string, string>) => ({
+    landingProductId: source.landingProductId || (source.promoEnabled === "true" ? source.promoProductId ?? "" : ""),
+    promoLanding: source.promoLanding === "false" ? "false" : "true",
+    promoPill: source.promoPill ?? "Pickup in Ivanhoe",
+    promoLayout: source.promoLayout === "split" || source.promoLayout === "triptych" ? source.promoLayout : "collage",
+    promoList: source.promoList ?? "",
+    heroImage: source.heroImage ?? "",
+    countdownEnabled: source.countdownEnabled === "true" ? "true" : "false",
+    countdownDate: source.countdownDate ?? "",
+    countdownTime: source.countdownTime ?? "09:00",
+    countdownLabel: source.countdownLabel ?? "Next collection drops in",
+  });
+  const [heroFile, setHeroFile] = useState<File | null>(null);
+  const heroPreview = useMemo(() => (heroFile ? URL.createObjectURL(heroFile) : ""), [heroFile]);
+  const [values, setValues] = useState(() => pick(initial));
+  const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
+  const [status, setStatus] = useState("");
+  const changed = JSON.stringify(values) !== saved || heroFile !== null;
+  const set = (key: keyof typeof values, value: string) => setValues((current) => ({ ...current, [key]: value }));
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setStatus("Saving...");
+    begin("Saving landing page…");
+    const next = { ...values };
+    if (heroFile) {
+      const upload = new FormData();
+      upload.append("files", (await compressReferenceImages([heroFile]))[0]);
+      const uploaded = await fetch("/api/admin/gallery", { method: "POST", body: upload });
+      const result = await uploaded.json().catch(() => null);
+      if (!uploaded.ok || !result?.urls?.[0]) {
+        finish();
+        setStatus(result?.error || "Unable to upload photo");
+        return;
+      }
+      next.heroImage = result.urls[0];
+    }
+    const current = await fetch("/api/admin/content?module=settings").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const response = await fetch("/api/admin/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ module: "settings", fields: { ...(current?.fields ?? {}), ...next } }),
+    });
+    if (response.ok) {
+      onSaved?.(next);
+      setValues(next);
+      setHeroFile(null);
+      setSaved(JSON.stringify(next));
+      setStatus("");
+      finish("Changes successfully saved");
+      return;
+    }
+    finish();
+    setStatus((await response.json().catch(() => null))?.error || "Unable to save");
+  }
+
+  return (
+    <form className="admin-promo-settings" onSubmit={save}>
+      <div className="admin-promo-fields">
+        <div className="enquiry-form admin-editor">
+          <div className="admin-editor-fields">
+            <div className="field">
+              <label id="landing-product-label">Landing page product</label>
+              <PremiumSelect
+                labelId="landing-product-label"
+                value={values.landingProductId}
+                options={products.map((product) => ({ value: product.id, label: product.name }))}
+                placeholder="Choose a product"
+                onChange={(value) => set("landingProductId", value)}
+              />
+            </div>
+            <p className="admin-field-note">The product needs a photo carousel to appear in the layouts below.</p>
                 <div className="admin-promo-group">
                 <div className="field">
                   <label id="promo-layout-label">Landing page hero layout</label>
@@ -1342,6 +1423,34 @@ function PromoSettings({
                   />
                 </div>
                 {values.promoLanding === "false" && (
+                <>
+                <label className={`${switchStyles.root} admin-promo-row`}>
+                  <span>
+                    <strong>Countdown</strong>
+                    <small>Shown under the buttons on the landing page</small>
+                  </span>
+                  <input type="checkbox" role="switch" checked={values.countdownEnabled === "true"} onChange={(event) => set("countdownEnabled", event.target.checked ? "true" : "false")} />
+                  <span className={switchStyles.track} aria-hidden="true" />
+                </label>
+                {values.countdownEnabled === "true" && (
+                  <>
+                    <div className="field">
+                      <label htmlFor="countdown-label">Countdown label</label>
+                      <input id="countdown-label" maxLength={60} placeholder="Leave blank to hide the label" value={values.countdownLabel} onChange={(event) => set("countdownLabel", event.target.value)} />
+                      <small className="admin-editor-count">{values.countdownLabel.length} / 60</small>
+                    </div>
+                    <div className="admin-card-pair admin-card-even">
+                      <div className="field">
+                        <label htmlFor="countdown-date">Next collection release date</label>
+                        <DatePicker id="countdown-date" value={values.countdownDate} onChange={(value) => set("countdownDate", value)} />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="countdown-time">Release time (Melbourne)</label>
+                        <TimePicker id="countdown-time" label="Release time" value={values.countdownTime} onChange={(value) => set("countdownTime", value)} />
+                      </div>
+                    </div>
+                  </>
+                )}
                 <div className="field admin-gallery-field">
                   <label htmlFor="promo-hero-image">Background image</label>
                   <p>The photo behind the logo on the landing page.</p>
@@ -1372,6 +1481,7 @@ function PromoSettings({
                     <button type="button" className="text-button" onClick={() => { setHeroFile(null); set("heroImage", ""); }}>Reset to default</button>
                   )}
                 </div>
+                </>
                 )}
                 {values.promoLanding === "true" && (
                   <>
@@ -1392,10 +1502,8 @@ function PromoSettings({
                   </>
                 )}
                 </div>
-              </div>
-            </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
       <div className="admin-promo-actions">
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
@@ -3102,7 +3210,7 @@ export default function AdminDashboard() {
             className={tab === item ? "active" : ""}
             onClick={() => void selectTab(item)}
           >
-            {item}
+            {item === "page content" ? "page settings" : item}
             {item === "enquiries" && unreadCount > 0 && (
               <span className="admin-nav-badge" aria-label={`${unreadCount} new`}>
                 {unreadCount}
@@ -4832,6 +4940,11 @@ export default function AdminDashboard() {
                 {accordionsAllOpen ? "Collapse all" : "Expand all"}
               </button>
             </div>
+            {cardSettings && managedProducts.length > 0 && (
+              <AdminAccordion title="Hero layout">
+                <LandingHeroSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} onSaved={(next) => setCardSettings((current) => (current ? { ...current, ...next } : current))} />
+              </AdminAccordion>
+            )}
             {pageContentModules.map(([key, title]) => (
               <AdminAccordion key={key} title={title}>
                 <ContentEditor moduleName={key} begin={beginAdminAction} finish={finishAdminAction} />
