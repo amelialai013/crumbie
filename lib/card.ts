@@ -50,7 +50,7 @@ export function galleryImagesFrom(fields: Record<string, string> | undefined): s
 	}
 }
 
-export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string; cardLabel: string; cardDescription: string; cardPrice: number; landing: boolean; layout: "collage" | "split" | "triptych"; note: string; noteSub: string; pill: string; items: string[] };
+export type Promo = { productId: string; label: string; headline: string; blurb: string; button: string; cardLabel: string; cardDescription: string; cardPrice: number; landing: boolean; layout: "collage" | "split" | "triptych"; pill: string; items: string[] };
 
 // Crumbs-page promo banner, stored in the "settings" content module.
 export function promoFrom(fields: Record<string, string> | undefined): Promo | null {
@@ -64,11 +64,9 @@ export function promoFrom(fields: Record<string, string> | undefined): Promo | n
 		cardLabel: fields.promoCardLabel?.trim() ?? "",
 		cardDescription: fields.promoCardDescription?.trim() ?? "",
 		landing: fields.promoLanding !== "false",
-		layout: fields.promoLayout === "split" || fields.promoLayout === "triptych" ? fields.promoLayout : "collage",
-		note: fields.promoNote?.trim() ?? "Limited edition",
-		noteSub: fields.promoNoteSub?.trim() ?? "Baked to order · Pickup in Ivanhoe",
 		pill: fields.promoPill?.trim() ?? "Pickup in Ivanhoe",
-		items: (fields.promoList ?? "").split("\n").map((line) => line.trim()).filter(Boolean).slice(0, 8),
+		layout: fields.promoLayout === "split" || fields.promoLayout === "triptych" ? fields.promoLayout : "collage",
+		items: (fields.promoList ?? "").split("\n").map((line) => line.trim()).filter(Boolean).slice(0, 12),
 		// Leaving the hero card price empty makes the card free.
 		cardPrice: Number.isFinite(Number(fields.promoCardPrice)) && Number(fields.promoCardPrice) > 0 ? Math.round(Number(fields.promoCardPrice) * 100) / 100 : 0,
 	};

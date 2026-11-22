@@ -16,7 +16,7 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#1a140d" };
 export async function generateMetadata(): Promise<Metadata> {
 	const image = await getSearchImage();
-	const size = image === defaultSearchImage ? { width: 1920, height: 1080 } : {};
+	const size = image === defaultSearchImage ? { width: 1200, height: 700 } : {};
 	return {
 		metadataBase: new URL(siteUrl),
 		title: { default: "Club Crumbie", template: "%s | Club Crumbie" },

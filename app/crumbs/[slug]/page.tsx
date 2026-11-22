@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const products = await getProducts();
   const product = products.find((item) => item.slug === slug);
   if (!product) return {};
-  const image = product.images[0] && /^https?:\/\//.test(product.images[0]) ? [product.images[0]] : ["/hero-poster.webp"];
+  const image = product.images[0] && /^https?:\/\//.test(product.images[0]) ? [product.images[0]] : ["/og-image.jpg"];
   return {
     title: product.name,
     description: product.description,

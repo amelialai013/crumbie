@@ -314,6 +314,7 @@ type PickupDate = {
 type PickupFilter = "all" | "closed" | "open";
 type EmailTemplate = { key: string; name: string; description: string; subjectField: string; bodyField: string };
 
+const LAST_TAB_KEY = "admin-last-tab";
 const adminTabs = [
   "orders",
   "pickup schedule",
@@ -967,7 +968,7 @@ function CardSettings({
             <input id="content-searchImage" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) setSearchFile(file); event.target.value = ""; }} />
           </label>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={searchPreview || fields.searchImage || "/hero-poster.webp"} alt="Search thumbnail" style={{ width: "100%", maxWidth: 320, aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 12, marginTop: 12 }} />
+          <img src={searchPreview || fields.searchImage || "/og-image.jpg"} alt="Search thumbnail" style={{ width: "100%", maxWidth: 320, aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 12, marginTop: 12 }} />
           {(fields.searchImage || searchFile) && (
             <button type="button" className="text-button" onClick={() => { setSearchFile(null); setFields({ ...fields, searchImage: "" }); }}>Reset to default</button>
           )}
@@ -1186,20 +1187,21 @@ function PromoSettings({
     promoBlurb: source.promoBlurb ?? "",
     promoButton: source.promoButton ?? "Order now",
     promoLanding: source.promoLanding === "false" ? "false" : "true",
-    promoLayout: source.promoLayout === "split" || source.promoLayout === "triptych" ? source.promoLayout : "collage",
     promoPill: source.promoPill ?? "Pickup in Ivanhoe",
+    promoLayout: source.promoLayout === "split" || source.promoLayout === "triptych" ? source.promoLayout : "collage",
     promoList: source.promoList ?? "",
-    promoNote: source.promoNote ?? "Limited edition",
-    promoNoteSub: source.promoNoteSub ?? "Baked to order · Pickup in Ivanhoe",
     promoCardLabel: source.promoCardLabel ?? "",
     promoCardDescription: source.promoCardDescription ?? "",
     promoCardPrice: source.promoCardPrice ?? "",
+    heroImage: source.heroImage ?? "",
   });
+  const [heroFile, setHeroFile] = useState<File | null>(null);
+  const heroPreview = useMemo(() => (heroFile ? URL.createObjectURL(heroFile) : ""), [heroFile]);
   const [values, setValues] = useState(() => pick(initial));
   const [saved, setSaved] = useState(() => JSON.stringify(pick(initial)));
   const [status, setStatus] = useState("");
   const enabled = values.promoEnabled === "true";
-  const changed = JSON.stringify(values) !== saved;
+  const changed = JSON.stringify(values) !== saved || heroFile !== null;
   const set = (key: keyof typeof values, value: string) => setValues((current) => ({ ...current, [key]: value }));
 
   async function save(event: React.FormEvent) {
@@ -1207,6 +1209,18 @@ function PromoSettings({
     setStatus("Saving...");
     begin("Saving promo…");
     const next = { ...values, promoProductId: values.promoProductId || products[0]?.id || "" };
+    if (heroFile) {
+      const upload = new FormData();
+      upload.append("files", (await compressReferenceImages([heroFile]))[0]);
+      const uploaded = await fetch("/api/admin/gallery", { method: "POST", body: upload });
+      const result = await uploaded.json().catch(() => null);
+      if (!uploaded.ok || !result?.urls?.[0]) {
+        finish();
+        setStatus(result?.error || "Unable to upload photo");
+        return;
+      }
+      next.heroImage = result.urls[0];
+    }
     const current = await fetch("/api/admin/content?module=settings").then((r) => (r.ok ? r.json() : null)).catch(() => null);
     const response = await fetch("/api/admin/content", {
       method: "PUT",
@@ -1216,6 +1230,7 @@ function PromoSettings({
     if (response.ok) {
       onSaved?.(JSON.parse(saved), next);
       setValues(next);
+      setHeroFile(null);
       setSaved(JSON.stringify(next));
       setStatus("");
       finish("Changes successfully saved");
@@ -1310,13 +1325,14 @@ function PromoSettings({
                   <textarea id="promo-card-description" className="admin-textarea-lines" style={{ "--lines": 3 } as React.CSSProperties} maxLength={200} placeholder="Defaults to the standard card description" value={values.promoCardDescription} onChange={(event) => set("promoCardDescription", event.target.value)} />
                   <small className="admin-editor-count">{values.promoCardDescription.length} / 200</small>
                 </div>
+                <div className="admin-promo-group">
                 <div className="field">
                   <label id="promo-layout-label">Landing page hero layout</label>
                   <PremiumSelect
                     labelId="promo-layout-label"
                     value={values.promoLanding === "false" ? "video" : values.promoLayout}
                     options={[
-                      { value: "video", label: "Video hero" },
+                      { value: "video", label: "Simple logo" },
                       { value: "collage", label: "Photo collage" },
                       { value: "split", label: "Split" },
                       { value: "triptych", label: "Centred triptych" },
@@ -1325,34 +1341,57 @@ function PromoSettings({
                     onChange={(layout) => setValues((current) => layout === "video" ? { ...current, promoLanding: "false" } : { ...current, promoLanding: "true", promoLayout: layout })}
                   />
                 </div>
+                {values.promoLanding === "false" && (
+                <div className="field admin-gallery-field">
+                  <label htmlFor="promo-hero-image">Background image</label>
+                  <p>The photo behind the logo on the landing page.</p>
+                  <label className="admin-reference-dropzone admin-gallery-dropzone" htmlFor="promo-hero-image" tabIndex={0}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const file = Array.from(event.dataTransfer.files).find((item) => item.type.startsWith("image/"));
+                      if (file) setHeroFile(file);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        document.getElementById("promo-hero-image")?.click();
+                      }
+                    }}
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
+                    </svg>
+                    <span>Click to upload a photo</span>
+                    <small>or drag and drop · JPG, PNG or WebP</small>
+                    <input id="promo-hero-image" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) setHeroFile(file); event.target.value = ""; }} />
+                  </label>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={heroPreview || values.heroImage || "/hero-default.jpg"} alt="Background preview" style={{ width: "100%", maxWidth: 320, aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 12, marginTop: 12 }} />
+                  {(values.heroImage || heroFile) && (
+                    <button type="button" className="text-button" onClick={() => { setHeroFile(null); set("heroImage", ""); }}>Reset to default</button>
+                  )}
+                </div>
+                )}
                 {values.promoLanding === "true" && (
                   <>
-                <div className="field">
-                  <label htmlFor="promo-note">Hero note title</label>
-                  <input id="promo-note" maxLength={40} placeholder="Leave blank to hide the note" value={values.promoNote} onChange={(event) => set("promoNote", event.target.value)} />
-                  <small className="admin-editor-count">{values.promoNote.length} / 40</small>
-                </div>
-                <div className="field">
-                  <label htmlFor="promo-note-sub">Hero note text</label>
-                  <input id="promo-note-sub" maxLength={60} value={values.promoNoteSub} onChange={(event) => set("promoNoteSub", event.target.value)} />
-                  <small className="admin-editor-count">{values.promoNoteSub.length} / 60</small>
-                </div>
                 {values.promoLayout === "triptych" && (
-                  <>
                 <div className="field">
                   <label htmlFor="promo-pill">Photo label</label>
                   <input id="promo-pill" maxLength={40} placeholder="Leave blank to hide the label" value={values.promoPill} onChange={(event) => set("promoPill", event.target.value)} />
                   <small className="admin-editor-count">{values.promoPill.length} / 40</small>
                 </div>
+                )}
+                {values.promoLayout !== "split" && (
                 <div className="field">
                   <label htmlFor="promo-list">List items (one per line)</label>
-                  <textarea id="promo-list" className="admin-textarea-lines" style={{ "--lines": 5 } as React.CSSProperties} maxLength={400} placeholder="Leave blank to list the product's box sizes" value={values.promoList} onChange={(event) => set("promoList", event.target.value)} />
-                  <small className="admin-editor-count">{values.promoList.length} / 400</small>
+                  <textarea id="promo-list" className="admin-textarea-lines" style={{ "--lines": 5 } as React.CSSProperties} maxLength={600} placeholder="Leave blank to list the product's box sizes" value={values.promoList} onChange={(event) => set("promoList", event.target.value)} />
+                  <small className="admin-editor-count">{values.promoList.length} / 600</small>
                 </div>
-                  </>
                 )}
                   </>
                 )}
+                </div>
               </div>
             </div>
           </>
@@ -2102,6 +2141,8 @@ export default function AdminDashboard() {
     );
     setProductsLoaded(true);
     setCheckingSession(false);
+    const lastTab = localStorage.getItem(LAST_TAB_KEY);
+    if (lastTab && lastTab !== tabRef.current && adminTabs.includes(lastTab)) void selectTab(lastTab);
   }
 
   useEffect(() => {
@@ -2431,6 +2472,7 @@ export default function AdminDashboard() {
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
+    localStorage.removeItem(LAST_TAB_KEY);
     setTab("orders");
     tabRef.current = "orders";
     setData(null);
@@ -2863,6 +2905,7 @@ export default function AdminDashboard() {
   async function selectTab(nextTab: string) {
     setTab(nextTab);
     tabRef.current = nextTab;
+    localStorage.setItem(LAST_TAB_KEY, nextTab);
     setMenuOpen(false);
     setEmailTemplateKey(null);
     setViewingEnquiryId(null);

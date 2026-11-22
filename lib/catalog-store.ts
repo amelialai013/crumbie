@@ -104,9 +104,14 @@ export async function getUnavailableMessage() {
   return unavailableMessageFrom(settings?.fields);
 }
 
-export const defaultSearchImage = "/hero-poster.webp";
+export const defaultSearchImage = "/og-image.jpg";
 
 export async function getSearchImage() {
   const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
   return settings?.fields?.searchImage?.trim() || defaultSearchImage;
+}
+
+export async function getHeroImage() {
+  const settings = await getRecord<{ fields?: Record<string, string> }>("content", "settings");
+  return settings?.fields?.heroImage?.trim() || "/hero-default.jpg";
 }

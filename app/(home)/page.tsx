@@ -2,7 +2,7 @@ import { productCardImage, productCardIsPhoto } from "@/lib/catalog";
 import Link from "next/link";
 import { getImageProps } from "next/image";
 import PromoBanner from "@/components/promo-banner";
-import { getProducts, getPromo } from "@/lib/catalog-store";
+import { getHeroImage, getProducts, getPromo } from "@/lib/catalog-store";
 import whiteLogo from "@/brand/latest-logos/new-text-logo/text-white.png";
 import whiteVerticalLogo from "@/brand/latest-logos/new-text-logo/white-vertical-logo.png";
 import FeatureHeroGate from "@/components/feature-hero-gate";
@@ -12,7 +12,7 @@ import SectionReveal from "@/components/section-reveal";
 import { getRecord } from "@/lib/store";
 
 export default async function Home() {
-  const [allProducts, promo] = await Promise.all([getProducts(), getPromo()]);
+  const [allProducts, promo, heroImage] = await Promise.all([getProducts(), getPromo(), getHeroImage()]);
   const featured = promo ? allProducts.find((product) => product.id === promo.productId) : undefined;
   const products = featured ? allProducts.filter((product) => product.id !== featured.id) : allProducts;
   const content = await getRecord<{ fields?: Record<string, string> }>("content", "homepage").catch(() => null);
@@ -38,7 +38,6 @@ export default async function Home() {
   );
   const title = landing ? landing.promo.headline || landing.product.name : "";
   const blurb = landing ? landing.promo.blurb || landing.product.description : "";
-  const noteParts = landing ? landing.promo.noteSub.split("·").map((part) => part.trim()).filter(Boolean) : [];
   return (
     <>
       {landing && landing.promo.layout === "split" ? (
@@ -88,12 +87,6 @@ export default async function Home() {
                 {landing.promo.pill && <span className="fh-tri-cap">{landing.promo.pill}</span>}
               </Link>
               <div className="fh-tri-stack fh-item">
-                {landing.cardPhoto && (
-                  <div className="fh-tri-card">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={landing.cardPhoto} alt="" />
-                  </div>
-                )}
                 <div className="fh-tri-list">
                   {(landing.promo.items.length ? landing.promo.items : landing.product.variants.map((variant) => variant.label)).map((item, index) => (
                     <div key={`${item}-${index}`}>{item}<span>{String(index + 1).padStart(2, "0")}</span></div>
@@ -130,23 +123,22 @@ export default async function Home() {
                 <img src={landing.mainPhoto} alt={landing.product.name} fetchPriority="high" />
               </Link>
               {landing.cardPhoto && (
-                <div className="feature-hero-photo feature-hero-card">
+                <Link className="feature-hero-photo feature-hero-card" href={`/crumbs/${landing.product.slug}`} aria-label={landing.product.name}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={landing.cardPhoto} alt="" />
-                </div>
+                </Link>
               )}
-              {(landing.promo.note || landing.promo.noteSub) && (
-                <div className="feature-hero-note">
-                  {landing.promo.note && <strong>{landing.promo.note}</strong>}
-                  {landing.promo.noteSub && <span>{landing.promo.noteSub}</span>}
-                </div>
-              )}
+              <div className="feature-hero-note fh-tri-list">
+                {(landing.promo.items.length ? landing.promo.items : landing.product.variants.map((variant) => variant.label)).map((item, index) => (
+                  <div key={`${item}-${index}`}>{item}<span>{String(index + 1).padStart(2, "0")}</span></div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
       ) : (
       <section className="hero">
-        <HeroMedia />
+        <HeroMedia image={heroImage} />
         <div className="hero-content">
           <h1 className="hero-logo-heading">
             <picture>
