@@ -8238,3 +8238,15 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 @media (max-width: 640px) {
   .feature-hero-copy p { margin-top: 10px; }
 }
+
+/* Fade the orbs out before they reach the top edge (nav), so they are never clipped into a hard line. */
+.feature-hero {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0, rgba(0,0,0,.35) 40px, #000 96px),
+    linear-gradient(to bottom, #000 calc(100% - 90px), rgba(0,0,0,.6) calc(100% - 50px), transparent);
+  mask-image:
+    linear-gradient(to bottom, transparent 0, rgba(0,0,0,.35) 40px, #000 96px),
+    linear-gradient(to bottom, #000 calc(100% - 90px), rgba(0,0,0,.6) calc(100% - 50px), transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
