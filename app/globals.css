@@ -8554,3 +8554,6 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 @media (hover: hover) and (pointer: fine) {
   .cookie-catalog .product-card:hover .product-card-heading { border-bottom-color: rgba(239, 205, 170, .55); }
 }
+
+/* A little more room under the delivery Full name field. */
+.co-deliver .checkout-stack > .field:has(#delivery-name) { margin-bottom: 8px; }
