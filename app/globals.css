@@ -8464,3 +8464,93 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 @media (max-width: 640px) {
   .admin-schedule-group > h2 { margin-bottom: 8px; }
 }
+
+/* Cookie grows slightly on card hover. */
+.cookie-catalog .product-card-render img {
+  transition: transform 400ms var(--motion-ease), filter 300ms var(--motion-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cookie-catalog .product-card:hover .product-card-render img,
+  .cookie-catalog .product-card:hover .product-card-render .product-cookie-image-transparent {
+    transform: scale(1.02);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cookie-catalog .product-card:hover .product-card-render img { transform: none; }
+}
+
+/* Banner image links to the product and grows slightly on hover. */
+.promo-banner-media { display: block; overflow: hidden; min-height: 0; }
+.promo-banner-media .promo-banner-image { display: block; transition: transform 500ms var(--motion-ease); }
+@media (min-width: 801px) { .promo-banner-media { order: -1; } }
+@media (hover: hover) and (pointer: fine) {
+  .promo-banner-media:hover .promo-banner-image { transform: scale(1.015); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .promo-banner-media:hover .promo-banner-image { transform: none; }
+}
+.promo-banner-media, .promo-banner-media .promo-banner-image { cursor: pointer; }
+
+/* Promo banner image uses the same hover as the hero cards: slow zoom, soft gradient and accent outline. */
+.promo-banner-media { position: relative; }
+.promo-banner-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 1px rgba(239, 205, 170, 0);
+  background: linear-gradient(to top, rgba(26, 20, 13, .28), rgba(26, 20, 13, 0) 45%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .6s cubic-bezier(.22, 1, .36, 1), box-shadow .6s cubic-bezier(.22, 1, .36, 1);
+}
+.promo-banner-media .promo-banner-image { transition: transform 1.2s cubic-bezier(.22, 1, .36, 1); }
+@media (hover: hover) {
+  .promo-banner-media:hover .promo-banner-image { transform: scale(1.035); }
+  .promo-banner-media:hover::after { opacity: 1; box-shadow: inset 0 0 0 1px rgba(239, 205, 170, .55); }
+}
+.promo-banner-media:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) {
+  .promo-banner-media .promo-banner-image { transition: none; }
+  .promo-banner-media:hover .promo-banner-image { transform: none; }
+}
+
+/* Smoother hover: transform only, no filter changes, gentle ease, own compositor layer. */
+.cookie-catalog .product-card-render img {
+  transition: transform 700ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cookie-catalog .product-card:hover .product-card-render img {
+    filter: drop-shadow(0 22px 20px rgba(26, 20, 13, .28));
+  }
+  .cookie-catalog .product-card:hover .product-card-render img,
+  .cookie-catalog .product-card:hover .product-card-render .product-cookie-image-transparent {
+    transform: scale(1.02);
+  }
+}
+.promo-banner-media .promo-banner-image {
+  transition: transform 900ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+.promo-banner-media::after { transition-duration: .8s; }
+@media (hover: hover) {
+  .promo-banner-media:hover .promo-banner-image { transform: scale(1.02); }
+  .promo-banner-media:hover::after { box-shadow: inset 0 0 0 1px rgba(239, 205, 170, .35); }
+}
+
+/* No outline on the promo banner hover; keep the zoom and gradient. */
+.promo-banner-media:hover::after { box-shadow: none; }
+
+/* Cookie card hover: the image stays still; the divider line softly brightens alongside the existing text colour change. */
+@media (hover: hover) and (pointer: fine) {
+  .cookie-catalog .product-card:hover .product-card-render img,
+  .cookie-catalog .product-card:hover .product-card-render .product-cookie-image-transparent {
+    transform: none;
+  }
+}
+.cookie-catalog .product-card-heading { transition: border-color 500ms var(--motion-ease); }
+@media (hover: hover) and (pointer: fine) {
+  .cookie-catalog .product-card:hover .product-card-heading { border-bottom-color: rgba(239, 205, 170, .55); }
+}

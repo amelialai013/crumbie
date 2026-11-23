@@ -20,7 +20,9 @@ export default function PromoBanner({ promo, product }: { promo: Promo; product:
       </div>
       {image && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img className="promo-banner-image" src={image} alt={product.name} />
+        <Link className="promo-banner-media" href={`/crumbs/${product.slug}`} aria-label={`View ${product.name}`}>
+          <img className="promo-banner-image" src={image} alt={product.name} />
+        </Link>
       )}
     </div>
   );
