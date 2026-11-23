@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { z } from "zod";
 import { isDateClosed } from "@/lib/catalog";
-import { addressExists, addressShapeOk } from "@/lib/address";
+import { addressExists, addressShapeOk, manualAddressOk } from "@/lib/address";
 import { deliveryFeeFor, postcodeAllowed } from "@/lib/delivery";
 import { getCardOption, getDelivery, getProducts, getPickupDates, getPromo, getUnavailableMessage } from "@/lib/catalog-store";
 import { setRecord } from "@/lib/store";
@@ -22,6 +22,7 @@ const deliverySchema = z.object({
 	street: z.string().trim().min(1).max(120),
 	suburb: z.string().trim().min(1).max(60),
 	postcode: z.string().trim(),
+	source: z.enum(["autofill", "manual"]).default("autofill"),
 });
 const schema = z.object({
 	lines: z.array(lineSchema).min(1).max(30),
@@ -123,7 +124,7 @@ export async function POST(req: Request) {
 	const deliveryLines = clean.filter((line) => line.fulfilment === "delivery");
 	const hasPickup = clean.some((line) => line.fulfilment === "pickup");
 	const fulfilment = deliveryLines.length > 0 ? "delivery" : "pickup";
-	let delivery: { name: string; street: string; suburb: string; postcode: string } | null = null;
+	let delivery: { name: string; street: string; suburb: string; postcode: string; source: "autofill" | "manual" } | null = null;
 	let deliveryFee = 0;
 	let deliverySlot: { date: string; window: string } | null = null;
 	const openSlots = deliveryOption.slots.filter((slot) => !isDateClosed(slot));
@@ -134,7 +135,8 @@ export async function POST(req: Request) {
 		if (!postcodeAllowed(delivery.postcode, deliveryOption.postcodes)) {
 			return NextResponse.json({ error: "Sorry, we don't deliver to that postcode. Choose pickup or try another address." }, { status: 400 });
 		}
-		if (!addressShapeOk(delivery.street, delivery.suburb) || !(await addressExists(delivery.street, delivery.suburb, delivery.postcode))) {
+		const manual = delivery.source === "manual";
+		if (manual ? !manualAddressOk(delivery.street, delivery.suburb) : !addressShapeOk(delivery.street, delivery.suburb) || !(await addressExists(delivery.street, delivery.suburb, delivery.postcode))) {
 			return NextResponse.json({ error: deliveryOption.addressErrorMessage, field: "street" }, { status: 400 });
 		}
 		const deliverySubtotal = deliveryLines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) + cardPrices.reduce((sum, price) => sum + price, 0);

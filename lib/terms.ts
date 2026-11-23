@@ -8,6 +8,7 @@ export const termsDefaults: { heading: string; body: string }[] = [
 	{ heading: "Using the site", body: "Content on this site, including photos, text and branding, belongs to Club Crumbie and may not be copied or reused without permission. Please do not misuse the site or attempt to interfere with its operation." },
 	{ heading: "Changes", body: "We may update these terms from time to time. The version on this page applies to orders placed while it is displayed." },
 	{ heading: "Contact", body: "Questions? Email clubcrumbieadmin@gmail.com." },
+	{ heading: "Images", body: "Photos and images on this site are for illustration only and some may be AI-generated or digitally enhanced. Actual products may vary slightly. This does not affect your rights under the Australian Consumer Law." },
 ];
 
 export const termsDefaultTitle = "Terms of service";

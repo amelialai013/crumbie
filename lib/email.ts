@@ -24,7 +24,7 @@ type Order = {
 	currency: string | null;
 	amountTotal: number | null;
 	fulfilment?: "pickup" | "delivery";
-	delivery?: { name: string; street: string; suburb: string; postcode: string } | null;
+	delivery?: { name: string; street: string; suburb: string; postcode: string; source?: "autofill" | "manual" } | null;
 	deliverySlot?: { date: string; window: string } | null;
 };
 
@@ -136,6 +136,10 @@ export async function sendEnquiryReply(reply: { id: string; to: string; subject:
  if (sender?.url) return sendGmailReply(sender.url, { ...reply, threadToken: threadToken(reply.id), text: reply.message + signatureText,
   html: `<div style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;">${escapeHtml(reply.message).replace(/\r?\n/g, "<br />")}</div>${signatureHtml}` });
 	await sendTextEmail({ to: reply.to, subject: await linkedSubject(reply.id, reply.subject), text: reply.message, replyTo: enquiryMailbox, bcc: enquiryMailbox, signature: true, headers: { "X-Crumbie-Enquiry": threadToken(reply.id) } });
+}
+
+export async function sendOrderEmail(email: { to: string; subject: string; message: string }) {
+	await sendTextEmail({ to: email.to, subject: email.subject, text: email.message, replyTo: enquiryMailbox, bcc: enquiryMailbox, signature: true });
 }
 
 export async function sendOrderConfirmation(order: Order) {

@@ -8,7 +8,7 @@ import QuantityControl from "@/components/quantity-control";
 import { cardForProduct, type CardOption, type Promo } from "@/lib/card";
 import { isDateClosed, productSlugFromName } from "@/lib/catalog";
 import { formatPickupDate } from "@/lib/format-date";
-import { addressShapeOk, streetOk, suburbOk } from "@/lib/address";
+import { addressShapeOk, manualAddressOk, streetOk, suburbOk } from "@/lib/address";
 import { deliveryFeeFor, postcodeAllowed, type DeliveryOption } from "@/lib/delivery";
 
 type Mode = "pickup" | "delivery";
@@ -77,6 +77,8 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
   }
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [active, setActive] = useState(-1);
+  const [manual, setManual] = useState(false);
+  const [pickedText, setPickedText] = useState<string | null>(null);
   const placesOff = useRef(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const searchSeq = useRef(0);
@@ -97,7 +99,8 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
   }
 
   function searchAddress(value: string) {
-    setForm((current) => ({ ...current, street: value }));
+    setPickedText(null);
+    setForm((current) => ({ ...current, street: value, suburb: "", postcode: "" }));
     clearTimeout(searchTimer.current);
     const seq = ++searchSeq.current;
     if (placesOff.current || value.trim().length < 3) return setSuggestions([]);
@@ -120,6 +123,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
     searchSeq.current++;
     setSuggestions([]);
     setActive(-1);
+    setPickedText(item.text);
     setForm((current) => ({ ...current, street: item.street || current.street, suburb: item.suburb || current.suburb, postcode: /^\d{4}$/.test(item.postcode) ? item.postcode : "" }));
   }
 
@@ -154,7 +158,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
   const postcodeOk = postcodeAllowed(form.postcode, delivery.postcodes);
   const outOfRange = hasDelivery && postcodeFilled && !postcodeOk;
   const missing = hasDelivery && Object.values(form).some((value) => !value.trim());
-  const shapeOk = addressShapeOk(form.street, form.suburb);
+  const shapeOk = manual ? manualAddressOk(form.street, form.suburb) : addressShapeOk(form.street, form.suburb);
   const blocked = hasDelivery && (missing || !postcodeOk || !shapeOk);
   const total = subtotal + pickupFee + deliveryFee;
   const set = (key: keyof typeof empty) => (event: React.ChangeEvent<HTMLInputElement>) => { const value = event.target.value; setForm((current) => ({ ...current, [key]: value })); };
@@ -167,8 +171,8 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
   async function pay() {
     setTouched(true);
     if (blocked) {
-      const target = ["name", "street", "suburb", "postcode"].find((key) => key === "postcode" ? !postcodeOk : key === "street" ? !streetOk(form.street) : key === "suburb" ? !suburbOk(form.suburb) : !form[key as keyof typeof form].trim());
-      const input = target && document.getElementById(`delivery-${target}`);
+      const target = ["name", "street", "suburb", "postcode"].find((key) => key === "postcode" ? !postcodeOk : key === "street" ? !(manual ? form.street.trim().length >= 3 : streetOk(form.street)) : key === "suburb" ? !suburbOk(form.suburb) : !form[key as keyof typeof form].trim());
+      const input = target && (document.getElementById(`delivery-${target}`) ?? document.getElementById("delivery-street"));
       if (input) {
         const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         input.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
@@ -188,7 +192,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
           lines: lines.map((line) => ({ ...line, fulfilment: modeOf(line), ...(modeOf(line) === "delivery" ? { deliverySlot: whenOf(line, "delivery") } : {}) })),
           fulfilment: hasDelivery ? "delivery" : "pickup",
           ...(hasDelivery && slot ? { deliverySlot: slot } : {}),
-          ...(hasDelivery ? { delivery: form } : {}),
+          ...(hasDelivery ? { delivery: { ...form, source: manual ? "manual" : "autofill" } } : {}),
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -243,20 +247,18 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
         <input id="delivery-name" autoComplete="name" maxLength={80} placeholder="Name for the delivery" value={form.name} onChange={set("name")} />
         {touched && !form.name.trim() && <p className="field-error" role="alert">Enter full name</p>}
       </div>
-      <div className={`field${touched && !streetOk(form.street) ? " has-error" : ""}`}>
-        <label htmlFor="delivery-street">Street address</label>
+      <div className="co-address-swap" key={manual ? "manual" : "search"}>
+      <div className={`field${touched && (manual ? form.street.trim().length < 3 : !pickedText) ? " has-error" : ""}`}>
+        <label htmlFor="delivery-street">{manual ? "Street address" : "Delivery address"}</label>
         <div className="co-suggest">
           <input
             id="delivery-street"
-            autoComplete="off"
+            autoComplete={manual ? "street-address" : "off"}
             maxLength={120}
-            role="combobox"
-            aria-expanded={suggestions.length > 0}
-            aria-controls="delivery-street-list"
-            aria-autocomplete="list"
-            aria-activedescendant={active >= 0 && suggestions[active] ? `delivery-street-opt-${active}` : undefined}
-            value={form.street}
-            onChange={(event) => searchAddress(event.target.value)}
+            {...(manual ? {} : { role: "combobox", "aria-expanded": suggestions.length > 0, "aria-controls": "delivery-street-list", "aria-autocomplete": "list" as const, "aria-activedescendant": active >= 0 && suggestions[active] ? `delivery-street-opt-${active}` : undefined })}
+            placeholder={manual ? "" : "Search and select your address"}
+            value={!manual && pickedText ? pickedText : form.street}
+            onChange={(event) => (manual ? set("street")(event) : searchAddress(event.target.value))}
             onBlur={() => { searchSeq.current++; clearTimeout(searchTimer.current); setSuggestions([]); }}
             onKeyDown={(event) => {
               if (!suggestions.length) return;
@@ -266,7 +268,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
               else if (event.key === "Escape") setSuggestions([]);
             }}
           />
-          {suggestions.length > 0 && (
+          {!manual && suggestions.length > 0 && (
             <ul id="delivery-street-list" role="listbox" className="co-suggest-list">
               {suggestions.map((item, index) => (
                 <li key={item.placeId} id={`delivery-street-opt-${index}`} role="option" aria-selected={index === active} className={index === active ? "is-active" : undefined} onMouseDown={(event) => { event.preventDefault(); pickAddress(item); }}>{item.text}</li>
@@ -274,15 +276,15 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
             </ul>
           )}
         </div>
-        {touched && !form.street.trim() && <p className="field-error" role="alert">Enter street address</p>}
-        {touched && form.street.trim() && !streetOk(form.street) && <p className="field-error" role="alert">Enter a street number and name</p>}
+        {touched && !manual && !pickedText && <p className="field-error" role="alert">{form.street.trim() ? "Select your address from the suggestions, or enter it manually" : "Enter your delivery address"}</p>}
+        {touched && manual && form.street.trim().length < 3 && <p className="field-error" role="alert">Enter your street address</p>}
       </div>
+      {manual && (
       <div className="checkout-grid">
         <div className={`field${touched && !suburbOk(form.suburb) ? " has-error" : ""}`}>
           <label htmlFor="delivery-suburb">Suburb</label>
           <input id="delivery-suburb" autoComplete="address-level2" maxLength={60} value={form.suburb} onChange={set("suburb")} />
-        {touched && !form.suburb.trim() && <p className="field-error" role="alert">Enter suburb</p>}
-        {touched && form.suburb.trim() && !suburbOk(form.suburb) && <p className="field-error" role="alert">Enter a valid suburb</p>}
+          {touched && !suburbOk(form.suburb) && <p className="field-error" role="alert">Enter suburb</p>}
         </div>
         <div className="field">
           <label htmlFor="delivery-state">State</label>
@@ -291,9 +293,12 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
         <div className={`field${outOfRange || (touched && !postcodeOk) ? " has-error" : ""}`}>
           <label htmlFor="delivery-postcode">Postcode</label>
           <input id="delivery-postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} value={form.postcode} onChange={(event) => { const value = event.target.value.replace(/\D/g, ""); setForm((current) => ({ ...current, postcode: value })); }} />
-        {touched && !postcodeOk && <p className="field-error" role="alert">{postcodeFilled ? "Sorry, we don't deliver to this postcode" : "Enter postcode"}</p>}
+          {touched && !postcodeOk && <p className="field-error" role="alert">{postcodeFilled ? "Sorry, we don't deliver to this postcode" : "Enter postcode"}</p>}
         </div>
       </div>
+      )}
+      </div>
+      <button type="button" className="co-address-toggle" onClick={() => { setManual(!manual); setPickedText(null); setSuggestions([]); setForm((current) => ({ ...current, street: "", suburb: "", postcode: "" })); }}>{manual ? "Search for address instead" : "Enter address manually"}</button>
       {postcodeOk && !addressNotFound && !busy && <p className="checkout-status" role="status">{check}<span>{delivery.deliverableMessage.replaceAll("{postcode}", form.postcode.trim())}</span></p>}
       {addressNotFound && <p className="checkout-status is-error" role="alert">{cross}<span>{addressNotFound} Still having issues? <Link href="/contact-us" className="co-alert-link">Send us an enquiry</Link></span></p>}
       {outOfRange && <p className="checkout-status is-error" role="alert">{cross}<span>{delivery.undeliverableMessage.replaceAll("{postcode}", form.postcode.trim())}</span></p>}
@@ -353,7 +358,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
       )}
       {groups.pickup.lines.length > 0 && pickupFee > 0 && <p><span>Pickup fee</span><span>{money(pickupFee)}</span></p>}
       {hasDelivery && <p><span>Delivery fee</span><span>{money(deliveryFee)}</span></p>}
-      {hasDelivery && deliveryAddress && <p className="co-totals-note">{deliveryAddress}</p>}
+      {hasDelivery && deliveryAddress && (manual || pickedText) && <p className="co-totals-note">{deliveryAddress}</p>}
     </div>
   );
 

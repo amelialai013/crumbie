@@ -42,8 +42,9 @@ type Order = {
   customer?: { name?: string; email?: string };
   fulfilment?: "pickup" | "delivery";
   deliverySlot?: { date?: string; window?: string };
-  delivery?: { name?: string; street?: string; suburb?: string; postcode?: string };
+  delivery?: { name?: string; street?: string; suburb?: string; postcode?: string; source?: "autofill" | "manual" };
   paymentStatus?: string;
+  emails?: Array<{ subject: string; message: string; sentAt: string }>;
   card?: { label?: string; price?: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null;
   lines?: Array<{
     productName?: string;
@@ -53,8 +54,16 @@ type Order = {
     pickupDateId?: string;
     pickupDate?: string;
     pickupWindow?: string;
+    fulfilment?: "pickup" | "delivery";
     status?: string;
   }>;
+};
+const isPickupLine = (order: Order, line: NonNullable<Order["lines"]>[number]) => (line.fulfilment ?? order.fulfilment) !== "delivery";
+const orderCollection = (order: Order) => {
+  const modes = new Set((order.lines || []).map((line) => line.fulfilment ?? order.fulfilment ?? "pickup"));
+  if (!modes.size) modes.add(order.fulfilment ?? "pickup");
+  if (modes.size > 1) return "Pickup & delivery";
+  return modes.has("delivery") ? "Delivery" : "Pickup";
 };
 type Enquiry = {
   gmailThreaded?: boolean;
@@ -2112,6 +2121,12 @@ export default function AdminDashboard() {
   const [pickupDatePendingRemoval, setPickupDatePendingRemoval] =
     useState<PickupDate | null>(null);
   const [viewOrderId, setViewOrderId] = useState<string | null>(null);
+  const [orderMenuId, setOrderMenuId] = useState<string | null>(null);
+  const [emailingOrderId, setEmailingOrderId] = useState<string | null>(null);
+  const [orderEmailSubject, setOrderEmailSubject] = useState("");
+  const [orderEmailMessage, setOrderEmailMessage] = useState("");
+  const [orderEmailError, setOrderEmailError] = useState("");
+  const [sendingOrderEmail, setSendingOrderEmail] = useState(false);
   const [blockedPickupDateRemoval, setBlockedPickupDateRemoval] = useState<{
     pickupDate: PickupDate;
     orderCount: number;
@@ -2518,6 +2533,64 @@ export default function AdminDashboard() {
       document.removeEventListener("keydown", closeMenu);
     };
   }, [enquiryMenuId]);
+
+  useEffect(() => {
+    if (!orderMenuId) return;
+    function closeMenu(event: MouseEvent | KeyboardEvent) {
+      if (event instanceof KeyboardEvent) {
+        if (event.key === "Escape") setOrderMenuId(null);
+        return;
+      }
+      if (!(event.target as Element).closest?.(".admin-kebab")) setOrderMenuId(null);
+    }
+    document.addEventListener("mousedown", closeMenu);
+    document.addEventListener("keydown", closeMenu);
+    return () => {
+      document.removeEventListener("mousedown", closeMenu);
+      document.removeEventListener("keydown", closeMenu);
+    };
+  }, [orderMenuId]);
+
+  function openOrderEmail(order: Order) {
+    setOrderMenuId(null);
+    setEmailingOrderId(order.id ?? null);
+    setOrderEmailSubject("Your Club Crumbie order");
+    setOrderEmailMessage(`Hi ${order.customer?.name?.split(" ")[0] || "there"},\n\n\n\nThanks,\nClub Crumbie`);
+    setOrderEmailError("");
+  }
+
+  function closeOrderEmail() {
+    if (sendingOrderEmail) return;
+    setEmailingOrderId(null);
+    setOrderEmailError("");
+  }
+
+  async function sendOrderEmail(event: React.FormEvent) {
+    event.preventDefault();
+    if (!emailingOrderId) return;
+    if (!orderEmailSubject.trim() || !orderEmailMessage.trim()) {
+      setOrderEmailError("Add a subject and message.");
+      return;
+    }
+    setSendingOrderEmail(true);
+    setOrderEmailError("");
+    const response = await fetch("/api/admin/orders/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: emailingOrderId, subject: orderEmailSubject, message: orderEmailMessage }),
+    }).catch(() => null);
+    setSendingOrderEmail(false);
+    if (!response?.ok) {
+      setOrderEmailError((await response?.json().catch(() => null))?.error || "Unable to send email. Please try again.");
+      return;
+    }
+    const updated = (await response.json()) as Order;
+    setData((current) =>
+      current ? { ...current, orders: (current.orders as Order[]).map((order) => (order.id === updated.id ? updated : order)) } : current,
+    );
+    setEmailingOrderId(null);
+    finishAdminAction(`Email sent to ${updated.customer?.email}`);
+  }
 
   async function setEnquiryStatus(enquiry: Enquiry, status: "replied" | "pending" | "new") {
     if (!enquiry.id || updatingEnquiryId) return;
@@ -3462,18 +3535,48 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+        {emailingOrderId && (() => {
+          const order = orders.find((item) => item.id === emailingOrderId);
+          if (!order) return null;
+          return (
+            <div className="admin-confirm-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeOrderEmail(); }}>
+              <form aria-labelledby="order-email-title" aria-modal="true" className="admin-confirm-modal admin-reply-modal" role="dialog" onSubmit={sendOrderEmail} noValidate>
+                <h2 id="order-email-title">Email {order.customer?.name || "customer"}</h2>
+                <p>Sending to <strong>{order.customer?.email}</strong></p>
+                {config && !config.resend && (
+                  <p className="admin-reply-error" role="alert">Email sending is not configured. Add Resend to send emails.</p>
+                )}
+                <label className="field">
+                  <span>Subject</span>
+                  <input value={orderEmailSubject} maxLength={200} onChange={(event) => setOrderEmailSubject(event.target.value)} disabled={sendingOrderEmail} />
+                </label>
+                <label className="field">
+                  <span>Message</span>
+                  <textarea value={orderEmailMessage} rows={8} maxLength={10000} onChange={(event) => setOrderEmailMessage(event.target.value)} disabled={sendingOrderEmail} autoFocus />
+                </label>
+                {orderEmailError && <p className="admin-reply-error" role="alert">{orderEmailError}</p>}
+                <div className="admin-confirm-actions">
+                  <button className="btn btn-light" type="button" onClick={closeOrderEmail} disabled={sendingOrderEmail}>Cancel</button>
+                  <button className="btn btn-dark admin-confirm-danger" type="submit" disabled={sendingOrderEmail || (config ? !config.resend : false)}>{sendingOrderEmail ? "Sending..." : "Send email"}</button>
+                </div>
+              </form>
+            </div>
+          );
+        })()}
         {viewOrderId && (() => {
           const order = orders.find((item) => item.id === viewOrderId);
           if (!order) return null;
           return (
             <div className="admin-confirm-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setViewOrderId(null); }}>
               <div aria-labelledby="order-view-title" aria-modal="true" className="admin-confirm-modal admin-order-modal" role="dialog">
+                <div className="admin-order-head">
                 <h2 id="order-view-title">{order.customer?.name || "Order"}</h2>
                 <button className="btn btn-light admin-order-close" type="button" aria-label="Close modal" title="Close" onClick={() => setViewOrderId(null)}>
                   <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                     <path d="m5 5 10 10M15 5 5 15" />
                   </svg>
                 </button>
+                </div>
                 <div className="admin-order-scroll">
                 <dl className="admin-order-details">
                   <div><dt>Email</dt><dd>{order.customer?.email || "—"}</dd></div>
@@ -3482,6 +3585,7 @@ export default function AdminDashboard() {
                     <>
                       <div><dt>Delivery name</dt><dd>{order.delivery.name || "—"}</dd></div>
                       <div><dt>Delivery address</dt><dd>{`${order.delivery.street}, ${order.delivery.suburb} VIC ${order.delivery.postcode}`}</dd></div>
+                      <div><dt>Address entry</dt><dd>{order.delivery.source === "manual" ? "Entered manually" : order.delivery.source === "autofill" ? "Autofilled" : "—"}</dd></div>
                     </>
                   ) : null}
                   <div><dt>Payment</dt><dd>{order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : "—"}</dd></div>
@@ -3508,6 +3612,19 @@ export default function AdminDashboard() {
                     </dd>
                   </div>
                 </dl>
+                {order.emails?.length ? (
+                  <div className="admin-order-emails">
+                    <h3>Emails sent</h3>
+                    <ol>
+                      {order.emails.map((email, index) => (
+                        <li key={index}>
+                          <div><strong>{email.subject}</strong><time dateTime={email.sentAt}>{new Date(email.sentAt).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" })}</time></div>
+                          <p>{email.message}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
                 </div>
               </div>
             </div>
@@ -3628,6 +3745,7 @@ export default function AdminDashboard() {
               <tr>
                 <th>Customer</th>
                 <th>Items</th>
+                <th>Collection</th>
                 <th>Payment</th>
                 <th>Created</th>
                 <th aria-label="Actions" />
@@ -3649,6 +3767,7 @@ export default function AdminDashboard() {
                         )}
                       </div>
                     </td>
+                    <td data-label="Collection">{orderCollection(order)}</td>
                     <td data-label="Payment">
                       {order.paymentStatus
                         ? order.paymentStatus.charAt(0).toUpperCase() +
@@ -3663,7 +3782,7 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5}>No orders yet</td>
+                  <td colSpan={6}>No orders yet</td>
                 </tr>
               )}
             </tbody>
@@ -3671,33 +3790,74 @@ export default function AdminDashboard() {
         )}
         {tab === "pickup schedule" && (
           <div>
-            {pickupDates.map((date) => (
-              <div
-                className="admin-schedule-group"
-                key={date}
-              >
-                <h2>{formatPickupDate(date || "")}</h2>
-                <ul className="admin-schedule-list">
-                  {orders.flatMap((order) =>
-                    (order.lines || [])
-                      .filter((line) => line.pickupDate === date)
-                      .map((line, index) => (
-                        <li key={`${order.id}-${index}`}>
-                          <strong>{order.customer?.name}</strong>
-                          <span>
-                            {line.quantity ?? 1} × {line.productName}
-                            {order.card && index === 0 ? ` + ${order.card.quantity ?? 1} × ${order.card.label || "Club Crumbie Card"}` : ""}
-                          </span>
-                          <span>{line.pickupWindow}</span>
-                        </li>
-                      )),
-                  )}
-                </ul>
-                <button className="btn btn-light" disabled>
-                  Bulk ready email (configure Resend)
-                </button>
-              </div>
-            ))}
+            {pickupDates.map((date) => {
+              const pickups = orders.filter((order) => (order.lines || []).some((line) => line.pickupDate === date && isPickupLine(order, line)));
+              return (
+                <div className="admin-schedule-group" key={date}>
+                  <h2>{formatPickupDate(date || "")}</h2>
+                  <table className="table admin-stack-table">
+                    <thead>
+                      <tr>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Window</th>
+                        <th aria-label="Actions" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {!pickups.length && (
+                        <tr>
+                          <td colSpan={4}>No pickup orders yet</td>
+                        </tr>
+                      )}
+                      {pickups.map((order) => {
+                        const lines = (order.lines || []).filter((line) => line.pickupDate === date && isPickupLine(order, line));
+                        const windows = Array.from(new Set(lines.map((line) => line.pickupWindow).filter(Boolean)));
+                        return (
+                          <tr key={order.id}>
+                            <td data-label="Customer" className="admin-order-customer">
+                              <strong>{order.customer?.name}</strong>
+                              <span>{order.customer?.email}</span>
+                            </td>
+                            <td data-label="Items">
+                              {lines.map((line) => `${line.quantity ?? 1} × ${line.productName}`).join(", ")}
+                              {order.card ? ` + ${order.card.quantity ?? 1} × ${order.card.label || "Club Crumbie Card"}` : ""}
+                            </td>
+                            <td data-label="Window">{windows.join(", ") || "—"}</td>
+                            <td className="admin-table-action">
+                              <button type="button" className="admin-text-button" onClick={() => setViewOrderId(order.id ?? null)}>View</button>
+                              {order.id && order.customer?.email && (
+                                <div className="admin-kebab">
+                                  <button
+                                    aria-expanded={orderMenuId === order.id}
+                                    aria-haspopup="menu"
+                                    aria-label="Order actions"
+                                    className="admin-kebab-trigger"
+                                    type="button"
+                                    onClick={() => setOrderMenuId((current) => (current === order.id ? null : order.id!))}
+                                  >
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                                      <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+                                      <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                                      <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+                                    </svg>
+                                  </button>
+                                  {orderMenuId === order.id && (
+                                    <div className="admin-kebab-menu" role="menu">
+                                      <button role="menuitem" type="button" onClick={() => openOrderEmail(order)}>Send email</button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
           </div>
         )}
         {tab === "delivery schedule" && (() => {
@@ -3731,7 +3891,7 @@ export default function AdminDashboard() {
                             <td data-label="Customer" className="admin-order-customer">
                               <strong>{order.delivery?.name || order.customer?.name}</strong>
                             </td>
-                            <td data-label="Delivery address">{`${order.delivery?.street}, ${order.delivery?.suburb} VIC ${order.delivery?.postcode}`}</td>
+                            <td data-label="Delivery address">{`${order.delivery?.street}, ${order.delivery?.suburb} VIC ${order.delivery?.postcode}`}{order.delivery?.source === "manual" ? <span className="admin-manual-tag">Manual</span> : null}</td>
                             <td data-label="Window">{order.deliverySlot?.window || "—"}</td>
                             <td className="admin-table-action">
                               <button type="button" className="admin-text-button" onClick={() => setViewOrderId(order.id ?? null)}>View</button>

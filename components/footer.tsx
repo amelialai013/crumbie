@@ -53,7 +53,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="shell footer-bottom"><span>© {new Date().getFullYear()} Club Crumbie · ABN 60 930 191 685. All rights reserved.</span></div>
+      <div className="shell footer-bottom"><span>© {new Date().getFullYear()} Club Crumbie</span><span className="footer-abn">ABN 60 930 191 685. All rights reserved.</span></div>
     </footer>
   );
 }

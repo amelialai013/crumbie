@@ -1,4 +1,4 @@
-import { productRotationImages } from "@/lib/catalog";
+import { productCardImage, productCardIsPhoto, productRotationImages } from "@/lib/catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -8,9 +8,11 @@ import CookieExplorer from "@/components/cookie-explorer";
 import HeroCarousel from "@/components/hero-carousel";
 import { cardForProduct } from "@/lib/card";
 import { absoluteUrl, siteName } from "@/lib/site";
+import ProductCarousel from "@/components/product-carousel";
+import ProductCookieImage from "@/components/product-cookie-image";
 import ProductOrder from "@/components/product-order";
 import { sharedKitchenWarning } from "@/lib/catalog";
-import { getCardOption, getGalleryCopy, getExploreCopy, getGalleryImages, getProducts, getPickupDates, getPromo, getDelivery } from "@/lib/catalog-store";
+import { getCardOption, getGalleryCopy, getGalleryImages, getProducts, getPickupDates, getPromo, getDelivery } from "@/lib/catalog-store";
 
 const legacyProductSlugs: Record<string, string> = {
   "signature-box": "signature-crumbie",
@@ -40,13 +42,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // Availability must reflect admin changes and the current ordering cutoff.
   await connection();
   const { slug } = await params;
-  const [products, pickupDates, defaultCard, galleryCopy, sharedGallery, promo, exploreCopy, delivery] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages(), getPromo(), getExploreCopy(), getDelivery()]);
+  const [products, pickupDates, defaultCard, galleryCopy, sharedGallery, promo, delivery] = await Promise.all([getProducts(), getPickupDates(), getCardOption(), getGalleryCopy(), getGalleryImages(), getPromo(), getDelivery()]);
   const product = products.find((item) => item.slug === slug);
   if (!product && legacyProductSlugs[slug]) {
     redirect(`/crumbs/${legacyProductSlugs[slug]}`);
   }
   if (!product) notFound();
   const card = cardForProduct(defaultCard, promo, product.id);
+  const otherProducts = products.filter((item) => item.id !== product.id && !item.soldOut);
   const galleryImages = sharedGallery.length > 0 ? sharedGallery : product.galleryImages || [];
 
   const productJsonLd = {
@@ -138,20 +141,31 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <p>{sharedKitchenWarning}</p>
         </section>
       </div>
-      <div className="shell">
-        <div className="explore-crumbs">
-          <div className="explore-crumbs-copy">
-            <h2>{exploreCopy.title}</h2>
-            {exploreCopy.subtext && <p>{exploreCopy.subtext}</p>}
-          </div>
-          <Link className="btn btn-dark explore-crumbs-link" href="/crumbs">
-            Explore crumbs
-            <svg aria-hidden="true" viewBox="0 0 16 16">
-              <path d="m6 3.5 4.5 4.5L6 12.5" />
-            </svg>
-          </Link>
+      {otherProducts.length > 0 && (
+        <div className="shell">
+          <ProductCarousel title="More from Club Crumbie">
+            {otherProducts.map((other) => (
+              <Link className="product-carousel-card" href={`/crumbs/${other.slug}`} key={other.id}>
+                <div className="product-carousel-media">
+                  <ProductCookieImage
+                    image={productCardImage(other)}
+                    photo={productCardIsPhoto(other)}
+                    name={other.name}
+                    variant={other.id === "product-seasonal" ? "biscoff" : "signature"}
+                  />
+                </div>
+                <div className="product-carousel-body">
+                  <div>
+                    <h3>{other.name}</h3>
+                    <span>Boxes from ${other.variants[0].price}</span>
+                  </div>
+                  <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m6 3.5 4.5 4.5L6 12.5" /></svg>
+                </div>
+              </Link>
+            ))}
+          </ProductCarousel>
         </div>
-      </div>
+      )}
     </section>
   );
 }

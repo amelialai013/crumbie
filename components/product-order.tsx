@@ -36,10 +36,34 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
   const [quantity, setQuantity] = useState(1);
   const [fulfilment, setFulfilment] = useState<"pickup" | "delivery">("pickup");
   const delivering = delivery.enabled && fulfilment === "delivery";
-  const [postcode, setPostcode] = useState("");
+  const [query, setQuery] = useState("");
+  const [picked, setPicked] = useState<{ label: string; postcode: string } | null>(null);
+  const [suburbs, setSuburbs] = useState<[string, string][]>([]);
+  const [listOpen, setListOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const postcode = /^\d{4}$/.test(query.trim()) ? query.trim() : picked && picked.label === query ? picked.postcode : "";
+  const term = query.trim().toLowerCase();
+  const matches = term.length < 2
+    ? []
+    : /^\d+$/.test(term)
+      ? suburbs.filter(([, code]) => code.startsWith(term)).slice(0, 8)
+      : [...suburbs.filter(([name]) => name.toLowerCase().startsWith(term)), ...suburbs.filter(([name]) => !name.toLowerCase().startsWith(term) && name.toLowerCase().includes(term))].slice(0, 8);
   const postcodeFilled = postcode.length === 4;
   const postcodeOk = postcodeFilled && postcodeAllowed(postcode, delivery.postcodes);
   const [showPostcodeError, setShowPostcodeError] = useState(false);
+
+  function loadSuburbs() {
+    if (suburbs.length === 0) import("@/lib/vic-suburbs").then((module) => setSuburbs(module.VIC_SUBURBS));
+  }
+
+  function pickSuburb([name, code]: [string, string]) {
+    const label = `${name} ${code}`;
+    setPicked({ label, postcode: code });
+    setQuery(label);
+    setListOpen(false);
+    setActiveIndex(-1);
+    setShowPostcodeError(false);
+  }
   const [slotId, setSlotId] = useState("");
   const slotOptions = delivery.slots.filter((slot) => !isDateClosed(slot));
   const chosenSlot = delivering ? slotOptions.find((slot) => slot.id === slotId) ?? slotOptions[0] : undefined;
@@ -191,11 +215,42 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
         )}
         {delivering && (
           <div className={`field product-postcode${(postcodeFilled && !postcodeOk) || (showPostcodeError && !postcodeOk) ? " has-error" : ""}`}>
-            <label htmlFor="delivery-postcode-check">Delivery postcode</label>
-            <input id="delivery-postcode-check" inputMode="numeric" autoComplete="postal-code" maxLength={4} placeholder="Enter your postcode" value={postcode} onChange={(event) => { setPostcode(event.target.value.replace(/\D/g, "")); setShowPostcodeError(false); }} />
+            <label htmlFor="delivery-postcode-check">Delivery postcode / suburb</label>
+            <div className="co-suggest">
+              <input
+                id="delivery-postcode-check"
+                autoComplete="off"
+                role="combobox"
+                aria-expanded={listOpen && matches.length > 0}
+                aria-controls="delivery-suburb-list"
+                aria-autocomplete="list"
+                maxLength={40}
+                placeholder="Enter your postcode or suburb"
+                value={query}
+                onFocus={() => { loadSuburbs(); setListOpen(true); }}
+                onBlur={() => setListOpen(false)}
+                onChange={(event) => { loadSuburbs(); setQuery(event.target.value); setListOpen(true); setActiveIndex(-1); setShowPostcodeError(false); }}
+                onKeyDown={(event) => {
+                  if (!listOpen || matches.length === 0) return;
+                  if (event.key === "ArrowDown") { event.preventDefault(); setActiveIndex((index) => (index + 1) % matches.length); }
+                  else if (event.key === "ArrowUp") { event.preventDefault(); setActiveIndex((index) => (index <= 0 ? matches.length - 1 : index - 1)); }
+                  else if (event.key === "Enter" && activeIndex >= 0) { event.preventDefault(); pickSuburb(matches[activeIndex]); }
+                  else if (event.key === "Escape") setListOpen(false);
+                }}
+              />
+              {listOpen && matches.length > 0 && (
+                <ul className="co-suggest-list" id="delivery-suburb-list" role="listbox">
+                  {matches.map((item, index) => (
+                    <li key={`${item[0]}-${item[1]}`} role="option" aria-selected={index === activeIndex} className={index === activeIndex ? "is-active" : ""} onMouseDown={(event) => { event.preventDefault(); pickSuburb(item); }}>
+                      {item[0]} <span className="co-suggest-code">{item[1]}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             {postcodeOk && <p className="checkout-status" role="status">{check}<span>{delivery.deliverableMessage.replaceAll("{postcode}", postcode)}</span></p>}
             {postcodeFilled && !postcodeOk && <p className="checkout-status is-error" role="alert">{cross}<span>{delivery.undeliverableMessage.replaceAll("{postcode}", postcode)}</span></p>}
-            {showPostcodeError && !postcodeFilled && <p className="field-error" role="alert">Enter your postcode to check we deliver to you</p>}
+            {showPostcodeError && !postcodeFilled && <p className="field-error" role="alert">Enter your suburb or postcode to check we deliver to you</p>}
           </div>
         )}
         <div className="field product-date" key={delivering ? "delivery" : "pickup"}>

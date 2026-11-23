@@ -3,6 +3,8 @@ export const addressError = "We couldn't find that address. Select an address fr
 // Basic shape check that runs in the browser and on the server.
 export const streetOk = (street: string) => /\d/.test(street) && /[a-z]{2}/i.test(street);
 export const suburbOk = (suburb: string) => /[a-z]{2}/i.test(suburb);
+// Relaxed check for manually typed addresses.
+export const manualAddressOk = (street: string, suburb: string) => street.trim().length >= 3 && /[a-z]/i.test(street) && suburbOk(suburb);
 export const addressShapeOk = (street: string, suburb: string) => streetOk(street) && suburbOk(suburb);
 
 type Component = { longText?: string; shortText?: string; types?: string[] };

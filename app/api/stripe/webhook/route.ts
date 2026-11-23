@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { sendOrderConfirmation } from "@/lib/email";
 import { getRecord, saveRecord, setRecord } from "@/lib/store";
 
-type Pending = { id: string; lines: Array<Record<string, unknown>>; card?: { label: string; price: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null; fulfilment?: "pickup" | "delivery"; delivery?: { name: string; street: string; suburb: string; postcode: string } | null; deliveryFee?: number; deliverySlot?: { date: string; window: string } | null; createdAt: string };
+type Pending = { id: string; lines: Array<Record<string, unknown>>; card?: { label: string; price: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null; fulfilment?: "pickup" | "delivery"; delivery?: { name: string; street: string; suburb: string; postcode: string; source?: "autofill" | "manual" } | null; deliveryFee?: number; deliverySlot?: { date: string; window: string } | null; createdAt: string };
 
 export async function POST(req: Request) {
 	if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {

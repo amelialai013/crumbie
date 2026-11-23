@@ -63,10 +63,10 @@ export default async function Crumbs() {
               <h2>{custom.title}</h2>
               {custom.subtext && <p>{custom.subtext}</p>}
             </div>
-            <Link className="btn btn-dark explore-crumbs-link" href={custom.link}>
+            <Link className="btn btn-light btn-arrow" href={custom.link}>
               {custom.button}
-              <svg aria-hidden="true" viewBox="0 0 16 16">
-                <path d="m6 3.5 4.5 4.5L6 12.5" />
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                <path d="m7 4.5 5.5 5.5L7 15.5" />
               </svg>
             </Link>
           </div>
