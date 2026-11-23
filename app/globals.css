@@ -8557,3 +8557,10 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 
 /* A little more room under the delivery Full name field. */
 .co-deliver .checkout-stack > .field:has(#delivery-name) { margin-bottom: 8px; }
+
+/* Even breathing room above and below the +/- buttons. */
+.product-order .product-quantity .quantity-stepper { height: 56px; }
+.product-order .product-quantity .quantity-stepper input { height: 56px; }
+
+/* Size select matches the quantity row height so text sits on one line. */
+.product-order .product-order-fields > .field:first-child .premium-select-trigger { height: 56px; min-height: 56px; padding-top: 0; padding-bottom: 0; align-items: center; box-sizing: border-box; }
