@@ -13,7 +13,7 @@ import { routeFromIvanhoe } from "@/lib/delivery-route";
 import switchStyles from "@/components/admin-switch.module.css";
 import { policyBodyMaxChars } from "@/lib/text-limits";
 import { privacyBodyMaxChars, privacyDefaultTitle, privacyDefaults } from "@/lib/privacy";
-import { termsBodyMaxChars, termsDefaultTitle, termsDefaults } from "@/lib/terms";
+import { termsBodyMaxChars, termsDefaultTitle, termsDefaults, termsDisplayOrder } from "@/lib/terms";
 import { defaultCardOption, defaultUnavailableMessage } from "@/lib/card";
 import { defaultAddressErrorMessage, defaultDeliverableMessage, defaultDeliveryInfo, defaultUndeliverableMessage } from "@/lib/delivery";
 import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
@@ -565,9 +565,9 @@ Club Crumbie`,
   "terms of service": {
     fields: [
       { key: "pageTitle", label: "Page heading", maxLength: 80 },
-      ...termsDefaults.flatMap((_, i) => [
-        { key: `s${i + 1}Heading`, label: `Section ${i + 1} heading`, maxLength: 80 },
-        { key: `s${i + 1}Copy`, label: `Section ${i + 1} body copy`, maxLength: termsBodyMaxChars, multiline: true },
+      ...termsDisplayOrder.flatMap((i, n) => [
+        { key: `s${i + 1}Heading`, label: `Section ${n + 1} heading`, maxLength: 80 },
+        { key: `s${i + 1}Copy`, label: `Section ${n + 1} body copy`, maxLength: termsBodyMaxChars, multiline: true },
       ]),
     ],
     defaults: {

@@ -11,6 +11,15 @@ export const termsDefaults: { heading: string; body: string }[] = [
 	{ heading: "Images", body: "Photos and images on this site are for illustration only and some may be AI-generated or digitally enhanced. Actual products may vary slightly. This does not affect your rights under the Australian Consumer Law." },
 ];
 
+// Images was added after Changes and Contact; it displays before them without shifting saved content slots.
+export const termsDisplayOrder: number[] = (() => {
+	const images = termsDefaults.findIndex((section) => section.heading === "Images");
+	const changes = termsDefaults.findIndex((section) => section.heading === "Changes");
+	const order = termsDefaults.map((_, i) => i).filter((i) => i !== images);
+	order.splice(changes, 0, images);
+	return order;
+})();
+
 export const termsDefaultTitle = "Terms of service";
 export const termsSectionCount = termsDefaults.length;
 export const termsLimits: Record<string, number> = {
