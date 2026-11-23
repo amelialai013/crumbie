@@ -8250,3 +8250,61 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
+
+/* Orbs stay in the lower part of the hero so their glow never reaches the top edge on any viewport. */
+@keyframes hero-orb-a {
+  0%, 100% { transform: translate3d(55vw, 8svh, 0) scale(1); opacity: .85; }
+  17% { transform: translate3d(5vw, 12svh, 0) scale(1.1); opacity: 1; }
+  34% { transform: translate3d(-8vw, 22svh, 0) scale(1); opacity: .8; }
+  51% { transform: translate3d(30vw, 26svh, 0) scale(1.15); opacity: 1; }
+  68% { transform: translate3d(60vw, 18svh, 0) scale(.95); opacity: .85; }
+  84% { transform: translate3d(35vw, 9svh, 0) scale(1.05); opacity: 1; }
+}
+@keyframes hero-orb-b {
+  0%, 100% { transform: translate3d(-5vw, 18svh, 0) scale(1); opacity: .75; }
+  20% { transform: translate3d(25vw, 26svh, 0) scale(1.15); opacity: 1; }
+  40% { transform: translate3d(58vw, 14svh, 0) scale(.95); opacity: .8; }
+  60% { transform: translate3d(45vw, 8svh, 0) scale(1.1); opacity: 1; }
+  80% { transform: translate3d(10vw, 12svh, 0) scale(1); opacity: .85; }
+}
+@media (max-width: 900px) {
+  .feature-hero::before, .feature-hero::after,
+  section.hero::before, section.hero::after { top: 12svh; }
+  .feature-hero {
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0, rgba(0,0,0,.35) 80px, #000 180px),
+      linear-gradient(to bottom, #000 calc(100% - 90px), rgba(0,0,0,.6) calc(100% - 50px), transparent);
+    mask-image:
+      linear-gradient(to bottom, transparent 0, rgba(0,0,0,.35) 80px, #000 180px),
+      linear-gradient(to bottom, #000 calc(100% - 90px), rgba(0,0,0,.6) calc(100% - 50px), transparent);
+  }
+}
+
+/* Crumbs page banner: a single compact row with a smaller headline. */
+.custom-order-banner { align-items: center; padding-block: clamp(28px, 3.5vw, 40px); margin-top: clamp(32px, 4vw, 48px); }
+.custom-order-banner h2 { max-width: 26ch; font-size: clamp(1.5rem, 2.6vw, 2.25rem); line-height: 1.12; text-wrap: balance; }
+.custom-order-banner .explore-crumbs-copy { gap: 12px; }
+@media (max-width: 599px) {
+  .custom-order-banner { padding: 28px 24px; gap: 20px; }
+  .custom-order-banner .explore-crumbs-link { justify-self: stretch; }
+}
+
+.admin-accordion-divider { border: 0; border-top: 1px solid var(--line, #4a433a); margin: 28px 0; }
+
+/* Consecutive accordions form one joined container; only its outer corners are rounded. */
+.admin-accordion {
+  border-radius: 0;
+  margin-bottom: 0;
+}
+.admin-accordion + .admin-accordion {
+  margin-top: -1px;
+}
+.admin-accordion:not(.admin-accordion + .admin-accordion) {
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+.admin-accordion:not(:has(+ .admin-accordion)) {
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  margin-bottom: 28px;
+}

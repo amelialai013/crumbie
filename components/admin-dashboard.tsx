@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { DatePicker } from "./date-picker";
@@ -658,6 +658,7 @@ function normalizeCardSettings(data: { fields?: Record<string, string> } | null)
 const CARD_KEYS = ["cardEnabled", "cardPrice", "cardLabel", "cardDescription", "cardNamePlaceholder", "cardNameMaxLength", "cardMessagePlaceholder", "cardMessageMaxLength"];
 const PAGE_KEYS = ["galleryTitle", "galleryBody", "galleryImages"];
 const BANNER_KEYS = ["exploreTitle", "exploreSubtext"];
+const CUSTOM_KEYS = ["customTitle", "customSubtext", "customButton", "customLink"];
 const SEARCH_KEYS = ["searchImage"];
 
 function CardSettings({
@@ -666,12 +667,12 @@ function CardSettings({
   finish,
   initial,
 }: {
-  part: "card" | "page" | "banner" | "search";
+  part: "card" | "page" | "banner" | "custom" | "search";
   begin: (message: string) => void;
   finish: (message?: string) => void;
   initial: Record<string, string>;
 }) {
-  const keys = part === "card" ? CARD_KEYS : part === "banner" ? BANNER_KEYS : part === "search" ? SEARCH_KEYS : PAGE_KEYS;
+  const keys = part === "card" ? CARD_KEYS : part === "banner" ? BANNER_KEYS : part === "custom" ? CUSTOM_KEYS : part === "search" ? SEARCH_KEYS : PAGE_KEYS;
   const [fields, setFields] = useState<Record<string, string> | null>(initial);
   const [saved, setSaved] = useState(() => JSON.stringify(keys.map((key) => initial[key])));
   const [status, setStatus] = useState("");
@@ -972,6 +973,30 @@ function CardSettings({
           {(fields.searchImage || searchFile) && (
             <button type="button" className="text-button" onClick={() => { setSearchFile(null); setFields({ ...fields, searchImage: "" }); }}>Reset to default</button>
           )}
+        </div>
+        </>)}
+        {part === "custom" && (<>
+        <p className="admin-section-note">This banner appears at the bottom of the Crumbs page, below the product list.</p>
+        <div className="admin-explore-fields">
+            <div className="field">
+              <label htmlFor="custom-title">Title</label>
+              <input id="custom-title" maxLength={80} placeholder="Need another quantity or something entirely your own?" value={fields.customTitle ?? ""} onChange={(event) => setFields({ ...fields, customTitle: event.target.value })} />
+              <small className="admin-editor-count">{(fields.customTitle ?? "").length} / 80</small>
+            </div>
+            <div className="field">
+              <label htmlFor="custom-subtext">Subtext (optional)</label>
+              <textarea id="custom-subtext" className="admin-textarea-lines" style={{ "--lines": 2 } as React.CSSProperties} maxLength={160} value={fields.customSubtext ?? ""} onChange={(event) => setFields({ ...fields, customSubtext: event.target.value })} />
+              <small className="admin-editor-count">{(fields.customSubtext ?? "").length} / 160</small>
+            </div>
+            <div className="field">
+              <label htmlFor="custom-button">Button label</label>
+              <input id="custom-button" maxLength={30} placeholder="Contact us" value={fields.customButton ?? ""} onChange={(event) => setFields({ ...fields, customButton: event.target.value })} />
+              <small className="admin-editor-count">{(fields.customButton ?? "").length} / 30</small>
+            </div>
+            <div className="field">
+              <label htmlFor="custom-link">Button link</label>
+              <input id="custom-link" maxLength={200} placeholder="/contact-us" value={fields.customLink ?? ""} onChange={(event) => setFields({ ...fields, customLink: event.target.value })} />
+            </div>
         </div>
         </>)}
         {part === "banner" && (<>
@@ -2132,6 +2157,7 @@ export default function AdminDashboard() {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [heroMode, setHeroMode] = useState<"cookie" | "carousel">("cookie");
+  const [hideGallery, setHideGallery] = useState(false);
   const [heroImages, setHeroImages] = useState<string[]>([]);
   const [heroFiles, setHeroFiles] = useState<File[]>([]);
   const [heroDragActive, setHeroDragActive] = useState(false);
@@ -2157,7 +2183,7 @@ export default function AdminDashboard() {
   const [savedProduct, setSavedProduct] = useState<string | null>(null);
   const contentChanged = JSON.stringify(content) !== savedContent;
   const productChanged =
-    !editingProductId || JSON.stringify({ newProduct, productImages, galleryImages, galleryFiles: galleryFiles.map((file) => file.name + file.size), heroMode, heroImages, heroFiles: heroFiles.map((file) => file.name + file.size), cardImage, cardFile: cardFile ? cardFile.name + cardFile.size : "" }) !== savedProduct;
+    !editingProductId || JSON.stringify({ newProduct, productImages, galleryImages, galleryFiles: galleryFiles.map((file) => file.name + file.size), heroMode, hideGallery, heroImages, heroFiles: heroFiles.map((file) => file.name + file.size), cardImage, cardFile: cardFile ? cardFile.name + cardFile.size : "" }) !== savedProduct;
 
   function loadContent(next: Content) {
     setContent(next);
@@ -2729,6 +2755,7 @@ export default function AdminDashboard() {
       imageMode: productImages.length > 0 ? "gallery" : undefined,
       galleryImages,
       heroMode: heroMode === "carousel" && (heroImages.length > 0 || heroFiles.length > 0) ? "carousel" : undefined,
+      hideGallery: hideGallery || undefined,
       heroImages,
       cardImage: cardImage || undefined,
       variants: [
@@ -2802,11 +2829,12 @@ export default function AdminDashboard() {
     setGalleryImages(product.galleryImages || []);
     setGalleryFiles([]);
     setHeroMode(product.heroMode === "carousel" ? "carousel" : "cookie");
+    setHideGallery(!!product.hideGallery);
     setHeroImages(product.heroImages || []);
     setHeroFiles([]);
     setCardImage(product.cardImage || "");
     setCardFile(null);
-    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images, galleryImages: product.galleryImages || [], galleryFiles: [], heroMode: product.heroMode === "carousel" ? "carousel" : "cookie", heroImages: product.heroImages || [], heroFiles: [], cardImage: product.cardImage || "", cardFile: "" }));
+    setSavedProduct(JSON.stringify({ newProduct: productForm, productImages: product.images, galleryImages: product.galleryImages || [], galleryFiles: [], heroMode: product.heroMode === "carousel" ? "carousel" : "cookie", hideGallery: !!product.hideGallery, heroImages: product.heroImages || [], heroFiles: [], cardImage: product.cardImage || "", cardFile: "" }));
     setReferenceImageFiles([]);
     setImageDirection("");
     setGenerationStatus("");
@@ -2821,6 +2849,7 @@ export default function AdminDashboard() {
     setGalleryImages([]);
     setGalleryFiles([]);
     setHeroMode("cookie");
+    setHideGallery(false);
     setHeroImages([]);
     setHeroFiles([]);
     setCardImage("");
@@ -3685,7 +3714,6 @@ export default function AdminDashboard() {
                 return (
                   <div className="admin-schedule-group" key={date || "unscheduled"}>
                     <h2>{date ? formatPickupDate(date) : "No delivery date"}</h2>
-                    <p className="admin-schedule-note">Route starts and ends in Ivanhoe, nearest stop first.</p>
                     <table className="table admin-stack-table">
                       <thead>
                         <tr>
@@ -4212,6 +4240,11 @@ export default function AdminDashboard() {
                 <fieldset className="admin-image-generator">
                   <legend>Product imagery</legend>
                   <AdminSwitch
+                    checked={!hideGallery}
+                    onChange={(checked) => setHideGallery(!checked)}
+                    label="Show the photo gallery section on this product page"
+                  />
+                  <AdminSwitch
                     checked={heroMode === "carousel"}
                     onChange={(checked) => setHeroMode(checked ? "carousel" : "cookie")}
                     label="Use a photo carousel instead of the 3D cookie"
@@ -4700,28 +4733,8 @@ export default function AdminDashboard() {
               </AdminAccordion>
             )}
             {cardSettings && (
-              <AdminAccordion title="Product gallery">
-                <CardSettings part="page" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
-              </AdminAccordion>
-            )}
-            {cardSettings && (
-              <AdminAccordion title="Search image">
-                <CardSettings part="search" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
-              </AdminAccordion>
-            )}
-            {cardSettings && (
-              <AdminAccordion title="Product banner">
-                <CardSettings part="banner" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
-              </AdminAccordion>
-            )}
-            {cardSettings && (
               <AdminAccordion title="Card settings">
                 <CardSettings part="card" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
-              </AdminAccordion>
-            )}
-            {cardSettings && (
-              <AdminAccordion title="Checkout messages">
-                <MessageSettings begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
               </AdminAccordion>
             )}
           </>
@@ -4944,16 +4957,41 @@ export default function AdminDashboard() {
                 {accordionsAllOpen ? "Collapse all" : "Expand all"}
               </button>
             </div>
-            {cardSettings && managedProducts.length > 0 && (
-              <AdminAccordion title="Hero layout">
-                <LandingHeroSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} onSaved={(next) => setCardSettings((current) => (current ? { ...current, ...next } : current))} />
-              </AdminAccordion>
-            )}
-            {pageContentModules.map(([key, title]) => (
-              <AdminAccordion key={key} title={title}>
-                <ContentEditor moduleName={key} begin={beginAdminAction} finish={finishAdminAction} />
-              </AdminAccordion>
-            ))}
+            {[
+              ...(cardSettings
+                ? [
+                    ["Crumbs", <CardSettings key="crumbs" part="custom" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />],
+                    [
+                      "Products",
+                      <Fragment key="products">
+                        <CardSettings part="page" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
+                        <hr className="admin-accordion-divider" />
+                        <CardSettings part="banner" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />
+                      </Fragment>,
+                    ],
+                    ["Checkout", <MessageSettings key="checkout" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />],
+                    ["Google listing", <CardSettings key="google" part="search" begin={beginAdminAction} finish={finishAdminAction} initial={cardSettings} />],
+                  ]
+                : []),
+              ...pageContentModules.map(([key, title]) => [
+                title,
+                <Fragment key={key}>
+                  {key === "homepage" && cardSettings && managedProducts.length > 0 && (
+                    <>
+                      <LandingHeroSettings products={managedProducts} initial={cardSettings} begin={beginAdminAction} finish={finishAdminAction} onSaved={(next) => setCardSettings((current) => (current ? { ...current, ...next } : current))} />
+                      <hr className="admin-accordion-divider" />
+                    </>
+                  )}
+                  <ContentEditor moduleName={key} begin={beginAdminAction} finish={finishAdminAction} />
+                </Fragment>,
+              ]),
+            ]
+              .sort((x, y) => (x[0] as string).localeCompare(y[0] as string))
+              .map(([title, body]) => (
+                <AdminAccordion key={title as string} title={title as string}>
+                  {body}
+                </AdminAccordion>
+              ))}
           </div>
         )}
         {tab === "settings" && config && (

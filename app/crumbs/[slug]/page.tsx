@@ -118,7 +118,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <ProductOrder product={product} pickupDates={pickupDates} card={card} delivery={delivery} />
         </div>
       </div>
-      {galleryImages.length > 0 && (
+      {galleryImages.length > 0 && !product.hideGallery && (
         <div className="shell product-photo-gallery">
           <div className="product-photo-gallery-copy">
             <h2>{galleryCopy.title}</h2>

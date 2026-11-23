@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCookieImage from "@/components/product-cookie-image";
 import PromoBanner from "@/components/promo-banner";
-import { getProducts, getPromo } from "@/lib/catalog-store";
+import { getCustomOrderCopy, getProducts, getPromo } from "@/lib/catalog-store";
 
 export const metadata: Metadata = { title: "Crumbs", description: "Browse Club Crumbie small-batch cookie boxes and order for pickup in Ivanhoe, Victoria." };
 
 export default async function Crumbs() {
   const products = await getProducts();
   const promo = await getPromo();
+  const custom = await getCustomOrderCopy();
   const featured = promo ? products.find((product) => product.id === promo.productId) : undefined;
   const gridProducts = featured ? products.filter((product) => product.id !== featured.id) : products;
   return (
@@ -57,7 +58,18 @@ export default async function Crumbs() {
               </Link>
             ))}
           </div>
-          <div className="notice custom-order-notice">Need another quantity or something entirely your own? <Link href="/contact-us">Contact us</Link></div>
+          <div className="explore-crumbs custom-order-banner">
+            <div className="explore-crumbs-copy">
+              <h2>{custom.title}</h2>
+              {custom.subtext && <p>{custom.subtext}</p>}
+            </div>
+            <Link className="btn btn-dark explore-crumbs-link" href={custom.link}>
+              {custom.button}
+              <svg aria-hidden="true" viewBox="0 0 16 16">
+                <path d="m6 3.5 4.5 4.5L6 12.5" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </section>
     </>

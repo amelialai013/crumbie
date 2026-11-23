@@ -115,6 +115,17 @@ export function exploreCopyFrom(fields: Record<string, string> | undefined) {
 	};
 }
 
+// Closing banner at the bottom of the Crumbs listing page.
+export function customOrderCopyFrom(fields: Record<string, string> | undefined) {
+	const link = fields?.customLink?.trim();
+	return {
+		title: fields?.customTitle?.trim() || "Need another quantity or something entirely your own?",
+		subtext: fields?.customSubtext?.trim() ?? "",
+		button: fields?.customButton?.trim() || "Contact us",
+		link: link && (link.startsWith("/") || /^https?:\/\//i.test(link)) ? link : "/contact-us",
+	};
+}
+
 export const defaultUnavailableMessage = "This product or box size is no longer available. Please remove it and choose another box.";
 
 // Shown in the checkout alert when a cart item can no longer be ordered.

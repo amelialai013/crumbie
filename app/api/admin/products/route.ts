@@ -70,6 +70,7 @@ export async function POST(request: Request) {
 			galleryImages,
 			heroImages,
 			cardImage,
+			hideGallery: payload.hideGallery === true ? true : undefined,
 			heroMode: payload.heroMode === "carousel" ? "carousel" : undefined,
 			imageMode: uploadedImages || payload.imageMode === "gallery" ? "gallery" : existing?.imageMode,
 		};
