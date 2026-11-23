@@ -8564,3 +8564,7 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 
 /* Size select matches the quantity row height so text sits on one line. */
 .product-order .product-order-fields > .field:first-child .premium-select-trigger { height: 56px; min-height: 56px; padding-top: 0; padding-bottom: 0; align-items: center; box-sizing: border-box; }
+
+/* Mobile: stop the track getting stuck in an overscrolled state at the start. */
+.product-carousel-track { scroll-snap-type: x proximity; overscroll-behavior-x: none; -webkit-overflow-scrolling: auto; scroll-padding-inline: 0; }
+.product-carousel-card { scroll-snap-stop: normal; }
