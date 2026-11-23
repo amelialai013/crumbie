@@ -45,6 +45,19 @@ Pickup address: {{pickupAddress}}
 Please keep this email for your records. We look forward to sharing your crumbs with you.
 
 Club Crumbie`,
+	pickupReminderSubject: "Your Club Crumbie pickup is coming up",
+	pickupReminderBody: `Hi {{customerName}},
+
+Just a reminder that your Club Crumbie order is ready for pickup soon.
+
+Pickup window: {{pickupDate}}
+Pickup window: {{pickupWindow}}
+Order number: {{orderNumber}}
+Pickup address: {{pickupAddress}}
+
+Please arrive during your pickup window so we can hand over your box while it is fresh.
+
+Club Crumbie`,
 	enquirySubject: "New Club Crumbie enquiry from {{customerName}}",
 	enquiryBody: `A new enquiry has been submitted through the Club Crumbie Contact Us form.
 
@@ -162,5 +175,23 @@ export async function sendOrderConfirmation(order: Order) {
 		to: order.customer.email,
 		subject: renderTemplate(templates.confirmationSubject || defaultTemplates.confirmationSubject, values),
 		text: renderTemplate(withPickupAddress(templates.confirmationBody || defaultTemplates.confirmationBody), values) + (order.card ? `\n\nIncluded in your order: ${order.card.quantity ?? 1} × ${order.card.label} ($${order.card.price.toFixed(2)} each)${(order.card.names?.some(Boolean) || order.card.messages?.some(Boolean)) ? "\n" + (order.card.messages ?? []).map((m, i) => `Card ${i + 1}${order.card?.names?.[i] ? ` to ${order.card.names[i]}` : ""}${order.card?.products?.[i] ? ` (${order.card.products[i]})` : ""}: ${m || "(blank)"}`).join("\n") : ""}` : ""),
+	});
+}
+
+export async function sendPickupReminder(order: Order, slot: { date: string; window: string }) {
+	if (!order.customer.email) throw new Error("Order customer email is missing");
+	const [templates, settings] = await Promise.all([contentFields("email templates"), contentFields("settings")]);
+	const values = {
+		customerName: order.customer.name || "there",
+		pickupAddress: singleLine(settings.pickupAddress || "") || "Ivanhoe, Victoria (exact address to follow)",
+		orderNumber: order.id.slice(0, 8).toUpperCase(),
+		pickupDate: formatPickupDate(slot.date),
+		pickupWindow: slot.window,
+	};
+	await sendTextEmail({
+		to: order.customer.email,
+		subject: renderTemplate(templates.pickupReminderSubject || defaultTemplates.pickupReminderSubject, values),
+		text: renderTemplate(withPickupAddress(templates.pickupReminderBody || defaultTemplates.pickupReminderBody), values),
+		replyTo: enquiryMailbox,
 	});
 }

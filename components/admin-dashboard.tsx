@@ -59,9 +59,13 @@ type Order = {
   }>;
 };
 const isPickupLine = (order: Order, line: NonNullable<Order["lines"]>[number]) => (line.fulfilment ?? order.fulfilment) !== "delivery";
-const orderCollection = (order: Order) => {
+const orderModes = (order: Order) => {
   const modes = new Set((order.lines || []).map((line) => line.fulfilment ?? order.fulfilment ?? "pickup"));
   if (!modes.size) modes.add(order.fulfilment ?? "pickup");
+  return modes;
+};
+const orderCollection = (order: Order) => {
+  const modes = orderModes(order);
   if (modes.size > 1) return "Pickup & delivery";
   return modes.has("delivery") ? "Delivery" : "Pickup";
 };
@@ -347,7 +351,7 @@ const pageContentModules: [string, string][] = [
 ];
 const emailTemplates: EmailTemplate[] = [
   { key: "confirmation", name: "Order confirmation", description: "Sent immediately after a successful order.", subjectField: "confirmationSubject", bodyField: "confirmationBody" },
-  { key: "pickupReminder", name: "Pickup reminder", description: "Sent before a customer pickup with date, time, and collection information.", subjectField: "pickupReminderSubject", bodyField: "pickupReminderBody" },
+  { key: "pickupReminder", name: "Pickup reminder", description: "Sent automatically 48 hours before the pickup window, with date, time, and collection information.", subjectField: "pickupReminderSubject", bodyField: "pickupReminderBody" },
   { key: "enquiryNotification", name: "Enquiry notification", description: "Sent when a customer submits the Contact Us form.", subjectField: "enquirySubject", bodyField: "enquiryBody" },
 ];
 
@@ -2141,6 +2145,8 @@ export default function AdminDashboard() {
   const [updatingEnquiryId, setUpdatingEnquiryId] = useState<string | null>(null);
   const [enquiryMenuId, setEnquiryMenuId] = useState<string | null>(null);
   const [enquiryPendingDeletion, setEnquiryPendingDeletion] = useState<Enquiry | null>(null);
+  const [orderCollectionFilter, setOrderCollectionFilter] = useState("all");
+  const [orderCardFilter, setOrderCardFilter] = useState("all");
   const [enquiryTypeFilter, setEnquiryTypeFilter] = useState("all");
   const [enquiryStatusFilter, setEnquiryStatusFilter] = useState("all");
   const [enquirySort, setEnquirySort] = useState("newest");
@@ -3739,7 +3745,58 @@ export default function AdminDashboard() {
             <strong>{dashboardError}</strong>
           </div>
         )}
-        {tab === "orders" && (
+        {tab === "orders" && (() => {
+          const visibleOrders = orders.filter((order) => {
+            const o = order as Order;
+            if (orderCollectionFilter !== "all" && !orderModes(o).has(orderCollectionFilter as "pickup" | "delivery")) return false;
+            if (orderCardFilter === "with" && !o.card) return false;
+            if (orderCardFilter === "without" && o.card) return false;
+            return true;
+          });
+          return (
+          <>
+          <div className="admin-enquiry-filters">
+            <div className="admin-enquiry-filter">
+              <span id="order-collection-filter-label">Collection</span>
+              <PremiumSelect
+                labelId="order-collection-filter-label"
+                value={orderCollectionFilter}
+                options={[
+                  { value: "all", label: "All collections" },
+                  { value: "pickup", label: "Pickup" },
+                  { value: "delivery", label: "Delivery" },
+                ]}
+                placeholder="All collections"
+                onChange={setOrderCollectionFilter}
+              />
+            </div>
+            <div className="admin-enquiry-filter">
+              <span id="order-card-filter-label">Card</span>
+              <PremiumSelect
+                labelId="order-card-filter-label"
+                value={orderCardFilter}
+                options={[
+                  { value: "all", label: "All orders" },
+                  { value: "with", label: "Includes a card" },
+                  { value: "without", label: "No card" },
+                ]}
+                placeholder="All orders"
+                onChange={setOrderCardFilter}
+              />
+            </div>
+            {(orderCollectionFilter !== "all" || orderCardFilter !== "all") && (
+              <button
+                type="button"
+                className="admin-filter-reset"
+                onClick={() => {
+                  setOrderCollectionFilter("all");
+                  setOrderCardFilter("all");
+                }}
+              >
+                Reset filters
+              </button>
+            )}
+          </div>
           <table className="table admin-stack-table">
             <thead>
               <tr>
@@ -3752,8 +3809,8 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {orders.length ? (
-                orders.map((order) => (
+              {visibleOrders.length ? (
+                visibleOrders.map((order) => (
                   <tr key={order.id}>
                     <td data-label="Customer" className="admin-order-customer">
                       <strong>{order.customer?.name}</strong>
@@ -3782,12 +3839,14 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6}>No orders yet</td>
+                  <td colSpan={6}>{orders.length ? "No orders match these filters" : "No orders yet"}</td>
                 </tr>
               )}
             </tbody>
           </table>
-        )}
+          </>
+          );
+        })()}
         {tab === "pickup schedule" && (
           <div>
             {pickupDates.map((date) => {
