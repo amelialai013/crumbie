@@ -3599,7 +3599,7 @@ export default function AdminDashboard() {
             <div className="admin-confirm-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeOrderEmail(); }}>
               <form aria-labelledby="order-email-title" aria-modal="true" className="admin-confirm-modal admin-reply-modal" role="dialog" onSubmit={sendOrderEmail} noValidate>
                 <h2 id="order-email-title">Email {order.customer?.name || "customer"}</h2>
-                <p>Sending to <strong>{order.customer?.email}</strong></p>
+                <p>Order <strong>{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</strong> · Sending to <strong>{order.customer?.email}</strong></p>
                 {config && !config.resend && (
                   <p className="admin-reply-error" role="alert">Email sending is not configured. Add Resend to send emails.</p>
                 )}
@@ -3636,6 +3636,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="admin-order-scroll">
                 <dl className="admin-order-details">
+                  <div><dt>Order number</dt><dd>{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</dd></div>
                   <div><dt>Email</dt><dd>{order.customer?.email || "—"}</dd></div>
                   <div><dt>Collection</dt><dd>{order.fulfilment === "delivery" ? "Delivery" : "Pickup"}</dd></div>
                   {order.fulfilment === "delivery" && order.delivery ? (
@@ -3851,11 +3852,10 @@ export default function AdminDashboard() {
           <table className="table admin-stack-table">
             <thead>
               <tr>
+                <th>Order</th>
                 <th>Customer</th>
                 <th>Items</th>
                 <th>Collection</th>
-                <th>Payment</th>
-                <th>Created</th>
                 <th aria-label="Actions" />
               </tr>
             </thead>
@@ -3863,6 +3863,7 @@ export default function AdminDashboard() {
               {visibleOrders.length ? (
                 visibleOrders.map((order) => (
                   <tr key={order.id}>
+                    <td data-label="Order">{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</td>
                     <td data-label="Customer" className="admin-order-customer">
                       <strong>{order.customer?.name}</strong>
                       <span>{order.customer?.email}</span>
@@ -3876,13 +3877,6 @@ export default function AdminDashboard() {
                       </div>
                     </td>
                     <td data-label="Collection">{orderCollection(order)}</td>
-                    <td data-label="Payment">
-                      {order.paymentStatus
-                        ? order.paymentStatus.charAt(0).toUpperCase() +
-                          order.paymentStatus.slice(1)
-                        : ""}
-                    </td>
-                    <td data-label="Created" className="admin-order-date">{order.createdAt?.slice(0, 10)}</td>
                     <td className="admin-table-action">
                       <button type="button" className="admin-text-button" onClick={() => setViewOrderId(order.id ?? null)}>View</button>
                     </td>
@@ -3890,7 +3884,7 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6}>{orders.length ? "No orders match these filters" : "No orders yet"}</td>
+                  <td colSpan={5}>{orders.length ? "No orders match these filters" : "No orders yet"}</td>
                 </tr>
               )}
             </tbody>
@@ -3909,6 +3903,7 @@ export default function AdminDashboard() {
                   <table className="table admin-stack-table">
                     <thead>
                       <tr>
+                        <th>Order</th>
                         <th>Customer</th>
                         <th>Items</th>
                         <th>Window</th>
@@ -3918,7 +3913,7 @@ export default function AdminDashboard() {
                     <tbody>
                       {!pickups.length && (
                         <tr>
-                          <td colSpan={4}>No pickup orders</td>
+                          <td colSpan={5}>No pickup orders</td>
                         </tr>
                       )}
                       {pickups.map((order) => {
@@ -3926,6 +3921,7 @@ export default function AdminDashboard() {
                         const windows = Array.from(new Set(lines.map((line) => line.pickupWindow).filter(Boolean)));
                         return (
                           <tr key={order.id}>
+                            <td data-label="Order">{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</td>
                             <td data-label="Customer" className="admin-order-customer">
                               <strong>{order.customer?.name}</strong>
                               <span>{order.customer?.email}</span>
@@ -3991,6 +3987,7 @@ export default function AdminDashboard() {
                       <thead>
                         <tr>
                           <th>Stop</th>
+                          <th>Order</th>
                           <th>Customer</th>
                           <th>Delivery address</th>
                           <th>Window</th>
@@ -4001,6 +3998,7 @@ export default function AdminDashboard() {
                         {route.map((order, index) => (
                           <tr key={order.id ?? index}>
                             <td data-label="Stop">{index + 1}</td>
+                            <td data-label="Order">{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</td>
                             <td data-label="Customer" className="admin-order-customer">
                               <strong>{order.delivery?.name || order.customer?.name}</strong>
                             </td>
