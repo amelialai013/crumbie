@@ -8574,3 +8574,22 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
   .product-carousel-track { scroll-snap-type: none; scroll-behavior: auto; touch-action: pan-x pan-y; }
   .product-carousel-card { scroll-snap-align: none; }
 }
+
+/* Product row actions live in a kebab; keep the open menu above following rows. */
+.admin-product-table .admin-table-action { overflow: visible; }
+.admin-product-table tr:has(.admin-kebab-menu) { position: relative; z-index: 5; }
+
+/* Product column takes all spare room; price and action columns stay compact. */
+@media (min-width: 641px) {
+  .admin-product-table th:nth-child(1) { width: auto; }
+  .admin-product-table th.admin-product-price,
+  .admin-product-table td.admin-product-price { width: 88px; padding-right: 8px; }
+  .admin-product-table th.admin-table-action,
+  .admin-product-table td.admin-table-action { width: 96px; padding-left: 0; }
+}
+
+.admin-accordion[open]:has(.admin-kebab-menu)::details-content { overflow: visible; }
+.admin-accordion:has(.admin-kebab-menu) { overflow: visible; }
+
+/* Dividers only between archived products, never after the last one. */
+.admin-products-table tbody tr:last-child > td { border-bottom: 0; }

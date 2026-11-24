@@ -21,7 +21,7 @@ function validProduct(value: unknown): value is Omit<Product, "images"> & { imag
 
 export async function GET() {
 	if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-	return NextResponse.json(await getProducts());
+	return NextResponse.json(await getProducts({ includeArchived: true }));
 }
 
 export async function POST(request: Request) {
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
 			galleryImages,
 			heroImages,
 			cardImage,
+			archived: existing?.archived ? true : undefined,
 			hideGallery: payload.hideGallery === true ? true : undefined,
 			heroMode: payload.heroMode === "carousel" ? "carousel" : undefined,
 			imageMode: uploadedImages || payload.imageMode === "gallery" ? "gallery" : existing?.imageMode,
@@ -94,6 +95,22 @@ export async function PUT(request: Request) {
 		return NextResponse.json({ ok: true });
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to save order";
+		return NextResponse.json({ error: message }, { status: 503 });
+	}
+}
+
+export async function PATCH(request: Request) {
+	if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	const body = await request.json().catch(() => null);
+	if (!body || typeof body.id !== "string" || typeof body.archived !== "boolean") return NextResponse.json({ error: "Product id and archived flag are required" }, { status: 400 });
+	try {
+		const product = (await getProducts({ includeArchived: true })).find((item) => item.id === body.id);
+		if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+		await saveRecord("product", { ...product, archived: body.archived ? true : undefined });
+		refreshCatalogue();
+		return NextResponse.json({ ok: true });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Unable to update product";
 		return NextResponse.json({ error: message }, { status: 503 });
 	}
 }

@@ -2159,6 +2159,7 @@ export default function AdminDashboard() {
   const managedDates = deliveryTab ? managedDeliveryDates : managedPickupDates;
   const setManagedDates = deliveryTab ? setManagedDeliveryDates : setManagedPickupDates;
   const [managedProducts, setManagedProducts] = useState<Product[]>(products);
+  const [archivedProducts, setArchivedProducts] = useState<Product[]>([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [cardSettings, setCardSettings] = useState<Record<string, string> | null>(null);
   const deliveryOn = cardSettings ? deliveryFrom(cardSettings).enabled : false;
@@ -2290,7 +2291,9 @@ export default function AdminDashboard() {
       setManagedDeliveryDates(await deliveryDatesResult.value.json());
     }
     if (productsResult.status === "fulfilled" && productsResult.value.ok) {
-      setManagedProducts(await productsResult.value.json());
+      const all = (await productsResult.value.json()) as Product[];
+      setManagedProducts(all.filter((product) => !product.archived));
+      setArchivedProducts(all.filter((product) => product.archived));
     }
     setCardSettings(
       normalizeCardSettings(
@@ -3005,6 +3008,29 @@ export default function AdminDashboard() {
     );
     setProductStatus("");
     finishAdminAction("Product successfully removed");
+  }
+
+  async function setProductArchived(product: Product, archived: boolean) {
+    beginAdminAction(archived ? "Archiving product…" : "Restoring product…");
+    const response = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: product.id, archived }),
+    });
+    if (!response.ok) {
+      finishAdminAction();
+      setProductStatus((await response.json().catch(() => null))?.error || "Unable to update product");
+      return;
+    }
+    if (archived) {
+      setManagedProducts((current) => current.filter((item) => item.id !== product.id));
+      setArchivedProducts((current) => [{ ...product, archived: true }, ...current]);
+    } else {
+      setArchivedProducts((current) => current.filter((item) => item.id !== product.id));
+      setManagedProducts((current) => [...current, { ...product, archived: undefined }]);
+    }
+    setProductStatus("");
+    finishAdminAction(archived ? "Product archived" : "Product restored");
   }
 
   function adjustProductPrice(field: "price4" | "price6" | "price12", amount: number) {
@@ -4945,23 +4971,31 @@ export default function AdminDashboard() {
                         );
                       })}
                       <td className="admin-table-action">
-                        <button
-                          className="text-button"
-                          type="button"
-                          onClick={() => editProduct(product)}
-                        >
-                          <svg className="admin-edit-icon" aria-hidden="true" viewBox="0 0 16 16" fill="none">
-                            <path d="M11.2 2.3a1.4 1.4 0 0 1 2 2L5.5 12 2.5 13.5 4 10.5l7.2-8.2Z" />
-                          </svg>
-                          Edit
-                        </button>
-                        <button
-                          className="text-button"
-                          type="button"
-                          onClick={() => void removeProduct(product.id)}
-                        >
-                          Remove
-                        </button>
+                        <div className="admin-kebab">
+                          <button
+                            aria-expanded={orderMenuId === `product:${product.id}`}
+                            aria-haspopup="menu"
+                            aria-label={`${product.name} actions`}
+                            className="admin-kebab-trigger"
+                            type="button"
+                            onClick={() => setOrderMenuId((current) => (current === `product:${product.id}` ? null : `product:${product.id}`))}
+                          >
+                            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                              <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+                              <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                              <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+                            </svg>
+                          </button>
+                          {orderMenuId === `product:${product.id}` && (
+                            <div className="admin-kebab-menu" role="menu">
+                              <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); editProduct(product); }}>Edit</button>
+                              {product.id !== heroProductId && (
+                                <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); void setProductArchived(product, true); }}>Archive</button>
+                              )}
+                              <button role="menuitem" type="button" className="is-danger" onClick={() => { setOrderMenuId(null); void removeProduct(product.id); }}>Remove</button>
+                            </div>
+                          )}
+                        </div>
                         {product.id === heroProductId && <span aria-hidden="true" className="admin-hero-tag admin-hero-tag-action">Hero</span>}
                       </td>
                     </tr>
@@ -4973,6 +5007,46 @@ export default function AdminDashboard() {
                 )}
               </tbody>
             </table>
+            )}
+            {archivedProducts.length > 0 && (
+              <AdminAccordion title={`Archived products (${archivedProducts.length})`}>
+                <table className="table admin-products-table">
+                  <tbody>
+                    {archivedProducts.map((product) => (
+                      <tr key={product.id}>
+                        <td>
+                          <div className="admin-product-name">{product.name}</div>
+                          <div className="admin-product-description">{product.description}</div>
+                        </td>
+                        <td className="admin-table-action">
+                          <div className="admin-kebab">
+                            <button
+                              aria-expanded={orderMenuId === `product:${product.id}`}
+                              aria-haspopup="menu"
+                              aria-label={`${product.name} actions`}
+                              className="admin-kebab-trigger"
+                              type="button"
+                              onClick={() => setOrderMenuId((current) => (current === `product:${product.id}` ? null : `product:${product.id}`))}
+                            >
+                              <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                                <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+                                <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                                <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+                              </svg>
+                            </button>
+                            {orderMenuId === `product:${product.id}` && (
+                              <div className="admin-kebab-menu" role="menu">
+                                <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); void setProductArchived(product, false); }}>Restore</button>
+                                <button role="menuitem" type="button" className="is-danger" onClick={() => { setOrderMenuId(null); void removeProduct(product.id).then(() => setArchivedProducts((current) => current.filter((item) => item.id !== product.id))); }}>Remove</button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </AdminAccordion>
             )}
             {cardSettings && managedProducts.length > 0 && (
               <AdminAccordion title="Product layout">

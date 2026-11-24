@@ -22,7 +22,7 @@ export async function getProductOrder(): Promise<string[]> {
 	return Array.isArray(record?.ids) ? record.ids.filter((id): id is string => typeof id === "string") : [];
 }
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(options: { includeArchived?: boolean } = {}): Promise<Product[]> {
 	const [stored, order, settings] = await Promise.all([
 		listRecords<ProductRecord>("product"),
 		getProductOrder(),
@@ -34,7 +34,8 @@ export async function getProducts(): Promise<Product[]> {
 		if (product.removed) products.delete(product.id);
 		else products.set(product.id, product);
 	});
-	return orderProducts(Array.from(products.values()), order, heroId).map((product) => ({
+	const visible = Array.from(products.values()).filter((product) => options.includeArchived || !product.archived);
+	return orderProducts(visible, order, options.includeArchived ? undefined : heroId).map((product) => ({
 		...product,
 		slug: productSlugFromName(product.name),
 		imageMode:
