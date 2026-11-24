@@ -26,6 +26,7 @@ type Order = {
 	fulfilment?: "pickup" | "delivery";
 	delivery?: { name: string; street: string; suburb: string; postcode: string; source?: "autofill" | "manual" } | null;
 	deliverySlot?: { date: string; window: string } | null;
+	deliveryFee?: number | null;
 };
 
 const defaultNotificationEmail = "clubcrumbieadmin@gmail.com";
@@ -37,8 +38,7 @@ const defaultTemplates = {
 Thanks for your order with Club Crumbie. We have received your payment and your cookie box is confirmed.
 
 Order number: {{orderNumber}}
-Pickup window: {{pickupDate}}
-Pickup window: {{pickupWindow}}
+Pickup window: {{pickupDate}}, {{pickupWindow}}
 Order total: {{orderTotal}}
 Pickup address: {{pickupAddress}}
 
@@ -50,8 +50,7 @@ Club Crumbie`,
 
 Just a reminder that your Club Crumbie order is ready for pickup soon.
 
-Pickup window: {{pickupDate}}
-Pickup window: {{pickupWindow}}
+Pickup window: {{pickupDate}}, {{pickupWindow}}
 Order number: {{orderNumber}}
 Pickup address: {{pickupAddress}}
 
@@ -83,7 +82,12 @@ function singleLine(value: string) {
 }
 
 function uniqueLineValues(lines: Order["lines"], key: "pickupDate" | "pickupWindow") {
-	return Array.from(new Set(lines.map((line) => line[key]).filter((value): value is string => typeof value === "string" && value.length > 0))).join(", ");
+	return Array.from(new Set(lines.map((line) => line[key]).filter((value): value is string => typeof value === "string" && value.length > 0).map((value) => (key === "pickupDate" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatPickupDate(value) : value)))).join(", ");
+}
+
+// Older stored templates split the date and time onto two "Pickup window:" lines.
+function mergePickupWindow(body: string) {
+	return body.replace(/^Pickup (?:date|window): ([^\r\n]+)\r?\nPickup window: /m, "Pickup window: $1, ");
 }
 
 async function contentFields(moduleName: string) {
@@ -155,6 +159,42 @@ export async function sendOrderEmail(email: { to: string; subject: string; messa
 	await sendTextEmail({ to: email.to, subject: email.subject, text: email.message, replyTo: enquiryMailbox, bcc: enquiryMailbox, signature: true });
 }
 
+function orderRecap(order: Order, currency: string, mixed = false) {
+	const money = new Intl.NumberFormat("en-AU", { style: "currency", currency });
+	const item = (line: Record<string, unknown>) => {
+		const quantity = Number(line.quantity) || 1;
+		const unit = Number(line.unitPrice) || 0;
+		const name = [line.productName, line.variantLabel].filter((part) => typeof part === "string" && part).join(" — ");
+		return `${quantity} × ${name || "Cookie box"} (${money.format(quantity * unit)})`;
+	};
+	const cardLines: string[] = [];
+	const card = order.card;
+	if (card) {
+		const quantity = card.quantity ?? 1;
+		cardLines.push(`${quantity} × ${card.label} (${money.format(quantity * card.price)})`);
+		(card.messages ?? []).forEach((message, i) => {
+			if (!card.names?.[i] && !message) return;
+			cardLines.push(`Card ${i + 1}${card.names?.[i] ? ` to ${card.names[i]}` : ""}${card.products?.[i] ? ` (${card.products[i]})` : ""}: ${message.replace(/\s+/g, " ").trim() || "(blank)"}`);
+		});
+	}
+	const fee = Number(order.deliveryFee) || 0;
+	const feeLine = fee > 0 ? [`1 x Delivery (${money.format(fee)})`] : [];
+	if (mixed) {
+		const pickup = order.lines.filter((line) => line.fulfilment !== "delivery").map(item);
+		const delivery = [...order.lines.filter((line) => line.fulfilment === "delivery").map(item), ...cardLines];
+		return `Pickup:\n${pickup.join("\n")}\n\nDelivery:\n${delivery.join("\n")}${feeLine.length ? `\n${feeLine[0]}` : ""}`;
+	}
+	return `Order summary:\n${[...order.lines.map(item), ...cardLines, ...feeLine].join("\n")}`;
+}
+
+// Places the recap above the closing "keep this email" line, or at the end if the template has none.
+function withOrderRecap(body: string, recap: string) {
+	body = body.replace(/\s*\n\s*Club Crumbie\s*$/, "");
+	const closing = body.search(/^Please keep this email for your records/m);
+	if (closing === -1) return `${body.trimEnd()}\n\n${recap}`;
+	return `${body.slice(0, closing)}${recap}\n\n${body.slice(closing)}`;
+}
+
 export async function sendOrderConfirmation(order: Order) {
 	if (!order.customer.email) throw new Error("Order customer email is missing");
 	const [templates, settings] = await Promise.all([
@@ -162,19 +202,38 @@ export async function sendOrderConfirmation(order: Order) {
 		contentFields("settings"),
 	]);
 	const currency = order.currency?.toUpperCase() || "AUD";
-	const slot = order.fulfilment === "delivery" ? order.deliverySlot : null;
+	const hasDelivery = order.fulfilment === "delivery" && !!order.delivery;
+	const pickupLines = order.lines.filter((line) => line.fulfilment !== "delivery");
+	const mixed = hasDelivery && pickupLines.length > 0;
+	const slot = hasDelivery && !mixed ? order.deliverySlot : null;
+	const savedPickupAddress = singleLine(settings.pickupAddress || "") || "Ivanhoe, Victoria (exact address to follow)";
+	const deliveryAddress = hasDelivery && order.delivery ? `Delivery address: ${singleLine(`${order.delivery.name}, ${order.delivery.street}, ${order.delivery.suburb} VIC ${order.delivery.postcode}`)}` : "";
 	const values = {
 		customerName: order.customer.name || "there",
-		pickupAddress: order.fulfilment === "delivery" && order.delivery ? `None needed. We'll deliver to ${order.delivery.name}, ${order.delivery.street}, ${order.delivery.suburb} VIC ${order.delivery.postcode}` : singleLine(settings.pickupAddress || "") || "Ivanhoe, Victoria (exact address to follow)",
+		pickupAddress: savedPickupAddress,
 		orderNumber: order.id.slice(0, 8).toUpperCase(),
-		pickupDate: slot ? formatPickupDate(slot.date) : uniqueLineValues(order.lines, "pickupDate"),
-		pickupWindow: slot ? slot.window : uniqueLineValues(order.lines, "pickupWindow"),
+		pickupDate: slot ? formatPickupDate(slot.date) : uniqueLineValues(mixed ? pickupLines : order.lines, "pickupDate"),
+		pickupWindow: slot ? slot.window : uniqueLineValues(mixed ? pickupLines : order.lines, "pickupWindow"),
 		orderTotal: new Intl.NumberFormat("en-AU", { style: "currency", currency }).format((order.amountTotal || 0) / 100),
 	};
+	let body = mergePickupWindow(renderTemplate(withPickupAddress(templates.confirmationBody || defaultTemplates.confirmationBody), values));
+	if (mixed) {
+		const slot = order.deliverySlot;
+		const header = [
+			`Order number: ${values.orderNumber}`,
+			`Pickup window: ${values.pickupDate}, ${values.pickupWindow}`,
+			`Pickup address: ${savedPickupAddress}`,
+			slot ? `Delivery window: ${formatPickupDate(slot.date)}, ${slot.window}` : "",
+			deliveryAddress,
+			`Order total: ${values.orderTotal}`,
+		].filter(Boolean);
+		body = body.replace(/^Order number:[\s\S]*?^Pickup address:[^\r\n]*$/m, header.join("\n"));
+	} else if (hasDelivery) body = body.replace(/^Pickup window:/m, "Delivery window:").replace(/^Pickup address:[^\r\n]*$/m, deliveryAddress);
 	await sendTextEmail({
 		to: order.customer.email,
 		subject: renderTemplate(templates.confirmationSubject || defaultTemplates.confirmationSubject, values),
-		text: renderTemplate(withPickupAddress(templates.confirmationBody || defaultTemplates.confirmationBody), values) + (order.card ? `\n\nIncluded in your order: ${order.card.quantity ?? 1} × ${order.card.label} ($${order.card.price.toFixed(2)} each)${(order.card.names?.some(Boolean) || order.card.messages?.some(Boolean)) ? "\n" + (order.card.messages ?? []).map((m, i) => `Card ${i + 1}${order.card?.names?.[i] ? ` to ${order.card.names[i]}` : ""}${order.card?.products?.[i] ? ` (${order.card.products[i]})` : ""}: ${m || "(blank)"}`).join("\n") : ""}` : ""),
+		text: withOrderRecap(body, orderRecap(order, currency, mixed)),
+		signature: true,
 	});
 }
 
@@ -191,7 +250,7 @@ export async function sendPickupReminder(order: Order, slot: { date: string; win
 	await sendTextEmail({
 		to: order.customer.email,
 		subject: renderTemplate(templates.pickupReminderSubject || defaultTemplates.pickupReminderSubject, values),
-		text: renderTemplate(withPickupAddress(templates.pickupReminderBody || defaultTemplates.pickupReminderBody), values),
+		text: mergePickupWindow(renderTemplate(withPickupAddress(templates.pickupReminderBody || defaultTemplates.pickupReminderBody), values)),
 		replyTo: enquiryMailbox,
 	});
 }
