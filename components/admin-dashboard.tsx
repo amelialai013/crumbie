@@ -2152,6 +2152,7 @@ export default function AdminDashboard() {
   const [enquirySort, setEnquirySort] = useState("newest");
   const [deletingEnquiryId, setDeletingEnquiryId] = useState<string | null>(null);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
+  const [scheduleFilter, setScheduleFilter] = useState<"all" | "current" | "past">("all");
   const [managedDeliveryDates, setManagedDeliveryDates] = useState<PickupDate[]>([]);
   const deliveryTab = tab === "delivery windows";
   const dateNoun = deliveryTab ? "delivery" : "pickup";
@@ -3279,6 +3280,30 @@ export default function AdminDashboard() {
     ),
   );
 
+  const todayMelbourne = new Date().toLocaleDateString("en-CA", { timeZone: "Australia/Melbourne" });
+  const scheduleVisible = (date: string | undefined, kind: "pickup" | "delivery") => {
+    if (scheduleFilter === "all") return true;
+    const known = kind === "delivery" ? managedDeliveryDates : managedPickupDates;
+    const current = !!date && date >= todayMelbourne && (!cardSettings || known.some((item) => item.date === date));
+    return scheduleFilter === "current" ? current : !current;
+  };
+  const scheduleTabs = (kind: string) => (
+    <div className="admin-filter-tabs" role="tablist" aria-label={`${kind} schedule filters`}>
+      {(["all", "current", "past"] as const).map((filter) => (
+        <button
+          key={filter}
+          className={scheduleFilter === filter ? "active" : ""}
+          type="button"
+          role="tab"
+          aria-selected={scheduleFilter === filter}
+          onClick={() => setScheduleFilter(filter)}
+        >
+          {filter === "all" ? `All ${kind} schedules` : filter === "current" ? `Current ${kind} schedules` : `Past ${kind} schedules`}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="admin-grid">
       <button
@@ -3849,7 +3874,8 @@ export default function AdminDashboard() {
         })()}
         {tab === "pickup schedule" && (
           <div>
-            {pickupDates.map((date) => {
+            {scheduleTabs("pickup")}
+            {pickupDates.filter((date) => scheduleVisible(date, "pickup")).map((date) => {
               const pickups = orders.filter((order) => (order.lines || []).some((line) => line.pickupDate === date && isPickupLine(order, line)));
               return (
                 <div className="admin-schedule-group" key={date}>
@@ -3866,7 +3892,7 @@ export default function AdminDashboard() {
                     <tbody>
                       {!pickups.length && (
                         <tr>
-                          <td colSpan={4}>No pickup orders yet</td>
+                          <td colSpan={4}>No pickup orders</td>
                         </tr>
                       )}
                       {pickups.map((order) => {
@@ -3921,10 +3947,12 @@ export default function AdminDashboard() {
         )}
         {tab === "delivery schedule" && (() => {
           const deliveries = orders.filter((order) => order.fulfilment === "delivery" && order.delivery);
-          const dates = Array.from(new Set(deliveries.map((order) => order.deliverySlot?.date || ""))).sort();
-          if (!dates.length) return <p className="admin-sync-note" role="note">No delivery orders yet</p>;
+          const dates = Array.from(new Set(deliveries.map((order) => order.deliverySlot?.date || ""))).sort().filter((date) => scheduleVisible(date, "delivery"));
+          if (!deliveries.length) return <p className="admin-sync-note" role="note">No delivery orders yet</p>;
           return (
             <div>
+              {scheduleTabs("delivery")}
+              {!dates.length && <p className="admin-sync-note" role="note">No {scheduleFilter} delivery schedules</p>}
               {dates.map((date) => {
                 const route = routeFromIvanhoe(
                   deliveries.filter((order) => (order.deliverySlot?.date || "") === date),
