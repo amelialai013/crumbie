@@ -9,6 +9,7 @@ export default function ProductCarousel({ children, title }: { children: ReactNo
   const update = useCallback(() => {
     const el = track.current;
     if (!el) return;
+    if (el.scrollLeft < 0) el.scrollLeft = 0;
     setEdge({ start: el.scrollLeft <= 4, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 });
   }, []);
 
@@ -42,7 +43,7 @@ export default function ProductCarousel({ children, title }: { children: ReactNo
           </div>
         )}
       </div>
-      <div className="product-carousel-track" ref={track} onScroll={update}>
+      <div className="product-carousel-track" ref={track} onScroll={update} onTouchEnd={() => window.setTimeout(update, 350)}>
         {children}
       </div>
     </div>

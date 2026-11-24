@@ -8568,3 +8568,9 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 /* Mobile: stop the track getting stuck in an overscrolled state at the start. */
 .product-carousel-track { scroll-snap-type: x proximity; overscroll-behavior-x: none; -webkit-overflow-scrolling: auto; scroll-padding-inline: 0; }
 .product-carousel-card { scroll-snap-stop: normal; }
+
+/* Touch: iOS Safari can leave snap-scrolled tracks offset at the start. Free scroll, no snapping. */
+@media (hover: none), (max-width: 760px) {
+  .product-carousel-track { scroll-snap-type: none; scroll-behavior: auto; touch-action: pan-x pan-y; }
+  .product-carousel-card { scroll-snap-align: none; }
+}
