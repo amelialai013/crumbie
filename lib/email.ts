@@ -1,12 +1,13 @@
 import "server-only";
 import { sendGmailReply } from "@/lib/gmail-sender";
 import { Resend } from "resend";
-import { welcomeDefaults, enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
+import { emailLogoHtml, welcomeDefaults, enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 import { enquiryMailbox, enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
 import { threadToken } from "@/lib/enquiry-thread";
 import { formatPickupDate } from "@/lib/format-date";
 import { siteUrl } from "@/lib/site";
 import { getRecord } from "@/lib/store";
+import { createWelcomeCode } from "@/lib/welcome-discount";
 
 type Content = { fields: Record<string, string> };
 type Enquiry = {
@@ -101,7 +102,7 @@ async function linkedSubject(id: string, subject: string) {
 }
 
 const signatureText = "\n\nClub Crumbie\nclubcrumbieadmin@gmail.com\nclubcrumbie.com\nInstagram: instagram.com/clubcrumbie\nTikTok: tiktok.com/@clubcrumbie\nFacebook: facebook.com/clubcrumbie";
-const signatureHtml = `<table cellpadding="0" cellspacing="0" border="0" width="320" style="width:320px;max-width:100%;border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;margin-top:28px;"><tr><td style="padding:0 0 14px;"><a href="https://clubcrumbie.com" style="text-decoration:none;"><img src="https://clubcrumbie.com/email/club-crumbie-logo-1-276.png" alt="" role="presentation" width="136" height="13" style="display:block;width:136px;max-width:100%;height:auto;border:0;" /></a></td></tr><tr><td style="padding:0;font-size:14px;line-height:21px;color:#1A140D;"><div style="font-size:14px;line-height:21px;font-weight:bold;padding-bottom:4px;">Club Crumbie</div><a href="mailto:clubcrumbieadmin@gmail.com" style="color:#1A140D;text-decoration:none;">clubcrumbieadmin@gmail.com</a><br /><a href="https://clubcrumbie.com" style="color:#1A140D;text-decoration:none;">clubcrumbie.com</a><div style="padding-top:12px;font-size:13px;line-height:20px;"><a href="https://instagram.com/clubcrumbie" style="color:#1A140D;text-decoration:underline;">Instagram</a>&nbsp;&nbsp;&nbsp; <a href="https://tiktok.com/@clubcrumbie" style="color:#1A140D;text-decoration:underline;">TikTok</a>&nbsp;&nbsp;&nbsp; <a href="https://facebook.com/clubcrumbie" style="color:#1A140D;text-decoration:underline;">Facebook</a></div></td></tr></table>`;
+const signatureHtml = `<table cellpadding="0" cellspacing="0" border="0" width="320" style="width:320px;max-width:100%;border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;margin-top:28px;"><tr><td style="padding:0 0 14px;"><a href="https://clubcrumbie.com" style="text-decoration:none;">${emailLogoHtml()}</a></td></tr><tr><td style="padding:0;font-size:14px;line-height:21px;color:#1A140D;"><div style="font-size:14px;line-height:21px;font-weight:bold;padding-bottom:4px;">Club Crumbie</div><a href="mailto:clubcrumbieadmin@gmail.com" style="color:#1A140D;text-decoration:none;">clubcrumbieadmin@gmail.com</a><br /><a href="https://clubcrumbie.com" style="color:#1A140D;text-decoration:none;">clubcrumbie.com</a><div style="padding-top:12px;font-size:13px;line-height:20px;"><a href="https://instagram.com/clubcrumbie" style="color:#1A140D;text-decoration:underline;">Instagram</a>&nbsp;&nbsp;&nbsp; <a href="https://tiktok.com/@clubcrumbie" style="color:#1A140D;text-decoration:underline;">TikTok</a>&nbsp;&nbsp;&nbsp; <a href="https://facebook.com/clubcrumbie" style="color:#1A140D;text-decoration:underline;">Facebook</a></div></td></tr></table>`;
 
 function escapeHtml(value: string) {
 	return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -303,9 +304,12 @@ export async function sendWelcomeEmail(to: string) {
 	const rawUrl = (templates.welcomeButtonUrl || welcomeDefaults.welcomeButtonUrl).trim();
 	const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
 	const hasButton = !!label && !!rawUrl;
+	const discount = await createWelcomeCode({ enabled: templates.welcomeDiscountEnabled, type: templates.welcomeDiscountType, value: templates.welcomeDiscountValue }).catch((error) => { console.error("Unable to create welcome code", error); return null; });
+	const expiry = discount ? discount.expiresAt.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric", timeZone: "Australia/Melbourne" }) : "";
+	const codeHtml = discount ? `<div style="margin:28px 0 0;padding:20px 24px;border:1px dashed #4A433A;border-radius:16px;max-width:360px;"><p style="margin:0 0 8px;font-size:14px;line-height:20px;color:#4A433A;">Your ${discount.label} off code</p><p style="margin:0 0 8px;font-size:24px;line-height:30px;font-weight:600;letter-spacing:0.04em;color:#1A140D;">${discount.code}</p><p style="margin:0;font-size:13px;line-height:18px;color:#4A433A;">One use only, just for you. Enter it at checkout before ${expiry}.</p></div>` : "";
 	const paragraphs = body.split(/\n{2,}/).map((part) => `<p style="margin:0 0 16px;">${escapeHtml(part.trim()).replace(/\n/g, "<br />")}</p>`).join("");
-	const cta = hasButton ? `<p style="margin:28px 0 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-weight:600;font-size:15px;line-height:20px;letter-spacing:0;text-align:center;padding:15px 30px;border-radius:999px;">${escapeHtml(label)}</a></p>` : "";
-	const html = `<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#1A140D;max-width:560px;padding:40px 32px;"><a href="https://clubcrumbie.com" style="text-decoration:none;"><img src="https://clubcrumbie.com/email/club-crumbie-logo-1-276.png" alt="Club Crumbie" width="136" height="13" style="display:block;width:136px;max-width:100%;height:auto;border:0;margin-bottom:36px;" /></a>${paragraphs}${cta}<div style="margin-top:40px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">You're getting this because you joined Club Crumbie.</div></div>`;
-	const { error } = await new Resend(apiKey).emails.send({ from, to, subject, text: hasButton ? `${body}\n\n${label}: ${url}` : body, html });
+	const cta = codeHtml + (hasButton ? `<p style="margin:28px 0 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-weight:600;font-size:15px;line-height:20px;letter-spacing:0;text-align:center;padding:15px 30px;border-radius:999px;">${escapeHtml(label)}</a></p>` : "");
+	const html = `<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#1A140D;max-width:560px;padding:40px 32px;"><a href="https://clubcrumbie.com" style="text-decoration:none;">${emailLogoHtml("margin-bottom:36px;")}</a>${paragraphs}${cta}<div style="margin-top:40px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">You're getting this because you joined Club Crumbie.</div></div>`;
+	const { error } = await new Resend(apiKey).emails.send({ from, to, subject, text: [body, discount ? `Your ${discount.label} off code: ${discount.code} (one use only, expires ${expiry})` : "", hasButton ? `${label}: ${url}` : ""].filter(Boolean).join("\n\n"), html });
 	if (error) throw new Error(error.message);
 }

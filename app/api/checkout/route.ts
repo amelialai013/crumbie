@@ -223,6 +223,7 @@ export async function POST(req: Request) {
 			integration_identifier: integrationIdentifier,
 			automatic_tax: { enabled: tax.enabled },
 			line_items: lineItems,
+			allow_promotion_codes: true,
 			customer_creation: "always",
 			phone_number_collection: { enabled: true },
 			success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,

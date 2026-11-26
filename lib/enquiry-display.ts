@@ -26,7 +26,7 @@ export function enquiryMessageDisplay(message: string, outgoing: boolean) {
    visible = visible.slice(0, match.index).trimEnd();
    // The logo can appear as an image URL followed by its link, or just the link.
    visible = visible.replace(/\n[ \t]*<https:\/\/clubcrumbie\.com\/?>[ \t]*$/i, "").trimEnd();
-   visible = visible.replace(/\n[ \t]*\[https:\/\/clubcrumbie\.com\/email\/club-crumbie-logo-1-276\.png\][ \t]*$/i, "").trimEnd();
+   visible = visible.replace(/\n[ \t]*\[https:\/\/clubcrumbie\.com\/email\/club-crumbie-logo-(?:1-276|transparent|light)\.png\][ \t]*$/i, "").trimEnd();
   }
  }
  // A quote-only email still needs to be readable.

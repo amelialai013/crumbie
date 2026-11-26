@@ -8831,3 +8831,64 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
   .admin-newsletter-modal-actions .btn.btn-dark,
   .admin-newsletter-modal-actions .btn:first-child { order: 0; }
 }
+
+.admin-editor-fields > fieldset.admin-image-generator.admin-welcome-discount{margin-top:20px}
+
+/* Welcome discount: joined stack of admin fields, same as the rest of the editor */
+.admin-editor-fields > fieldset.admin-welcome-discount {
+  gap: 0;
+  padding: 18px;
+}
+.admin-welcome-discount > label {
+  margin-bottom: 20px;
+}
+.admin-welcome-discount .field {
+  margin-bottom: 0;
+}
+.admin-welcome-discount .field + .field {
+  margin-top: -1px;
+}
+.admin-welcome-discount .premium-select-trigger {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.admin-welcome-discount .premium-select-trigger > svg {
+  left: auto;
+}
+.admin-welcome-discount > .admin-editor-count {
+  margin-top: 14px;
+  text-align: left;
+  opacity: .7;
+}
+.admin-welcome-discount > label {
+  display: flex;
+  width: fit-content;
+}
+.admin-welcome-discount .field:has(.premium-select.open) {
+  z-index: 5;
+}
+.admin-image-generator.admin-welcome-discount > label:not(.admin-reference-dropzone) {
+  margin: 0 0 20px;
+}
+.admin-welcome-discount .premium-select-trigger {
+  min-height: 24px;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 24px;
+}
+.admin-welcome-discount .premium-select-trigger > svg {
+  left: 0;
+}
+.admin-welcome-discount .field > .premium-select {
+  width: 100%;
+}
+.admin-welcome-discount .premium-select-menu {
+  top: calc(100% + 14px);
+  right: -18px;
+  left: -18px;
+}

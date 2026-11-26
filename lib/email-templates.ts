@@ -79,4 +79,15 @@ Club Crumbie 🍪
 P.S. Sharing is optional. We won't judge.`,
 	welcomeButtonLabel: "Order now",
 	welcomeButtonUrl: "https://clubcrumbie.com/crumbs",
+	welcomeDiscountEnabled: "true",
+	welcomeDiscountType: "percent",
+	welcomeDiscountValue: "10",
 };
+
+const logoBase = "https://clubcrumbie.com/email";
+const logoImgStyle = "display:block;width:136px;max-width:100%;height:auto;border:0;";
+
+// Dark logo by default; clients that honour prefers-color-scheme swap to the light one.
+export function emailLogoHtml(extraStyle = "") {
+	return `<style>.logo-light{display:none !important;}@media (prefers-color-scheme: dark){.logo-dark{display:none !important;}.logo-light{display:block !important;}}</style><img class="logo-dark" src="${logoBase}/club-crumbie-logo-transparent.png" alt="Club Crumbie" width="136" height="13" style="${logoImgStyle}${extraStyle}" /><img class="logo-light" src="${logoBase}/club-crumbie-logo-light.png" alt="" role="presentation" width="136" height="13" style="${logoImgStyle}display:none;${extraStyle}" />`;
+}

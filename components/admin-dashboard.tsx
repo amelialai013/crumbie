@@ -539,6 +539,9 @@ const contentModules: Record<string, ContentModule> = {
       { key: "welcomeBody", label: "Body copy", maxLength: 3000, multiline: true },
       { key: "welcomeButtonLabel", label: "Button text", maxLength: 60 },
       { key: "welcomeButtonUrl", label: "Button link", maxLength: 300 },
+      { key: "welcomeDiscountEnabled", label: "Welcome discount on", maxLength: 5 },
+      { key: "welcomeDiscountType", label: "Welcome discount type", maxLength: 10 },
+      { key: "welcomeDiscountValue", label: "Welcome discount amount", maxLength: 8 },
     ],
     defaults: {
       fields: {
@@ -5344,6 +5347,19 @@ export default function AdminDashboard() {
               {template.key === "welcome" && <>
                 <div className="field"><label htmlFor="email-template-button-label">Button text (leave blank for no button)</label><input id="email-template-button-label" maxLength={60} value={content.fields.welcomeButtonLabel || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, welcomeButtonLabel: event.target.value } })} /></div>
                 <div className="field"><label htmlFor="email-template-button-url">Button link</label><input id="email-template-button-url" type="url" maxLength={300} value={content.fields.welcomeButtonUrl || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, welcomeButtonUrl: event.target.value } })} /></div>
+                <fieldset className="admin-image-generator admin-welcome-discount">
+                  <legend>Welcome discount code</legend>
+                  <AdminSwitch
+                    checked={(content.fields.welcomeDiscountEnabled ?? "true") !== "false"}
+                    onChange={(checked) => setContent({ ...content, fields: { ...content.fields, welcomeDiscountEnabled: checked ? "true" : "false" } })}
+                    label="Give new subscribers a one-use discount code in this email"
+                  />
+                  {(content.fields.welcomeDiscountEnabled ?? "true") !== "false" && <>
+                    <div className="field"><label id="email-template-discount-type">Discount type</label><PremiumSelect labelId="email-template-discount-type" value={content.fields.welcomeDiscountType === "amount" ? "amount" : "percent"} options={[{ value: "percent", label: "Percentage off the order" }, { value: "amount", label: "Dollar amount off the order" }]} placeholder="Choose a type" onChange={(value) => setContent({ ...content, fields: { ...content.fields, welcomeDiscountType: value } })} /></div>
+                    <div className="field"><label htmlFor="email-template-discount-value">{content.fields.welcomeDiscountType === "amount" ? "Dollars off (e.g. 5)" : "Percent off (e.g. 10)"}</label><input id="email-template-discount-value" inputMode="decimal" maxLength={8} value={content.fields.welcomeDiscountValue ?? "10"} onChange={(event) => setContent({ ...content, fields: { ...content.fields, welcomeDiscountValue: event.target.value.replace(/[^0-9.]/g, "") } })} /></div>
+                    <small className="admin-editor-count">Each code works once, expires after 30 days, and is entered at checkout.</small>
+                  </>}
+                </fieldset>
               </>}
             </div>
             <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !contentChanged}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save changes"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
