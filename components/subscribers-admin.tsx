@@ -71,11 +71,10 @@ export default function SubscribersAdmin() {
       (statusFilter === "all" || statusOf(s) === statusFilter) &&
       (!cutoff || new Date(s.subscribedAt).getTime() >= cutoff),
   );
-  const active = (subscribers || []).filter((s) => !s.unsubscribed).length;
 
   return (
     <div className="admin-subscribers">
-      <p>{error || (subscribers === null ? "Loading subscribers…" : `${active} confirmed subscriber${active === 1 ? "" : "s"} · ${subscribers.length} total`)}</p>
+      {(error || subscribers === null) && <p>{error || "Loading subscribers…"}</p>}
       {subscribers && subscribers.length > 0 && (
         <div className="field">
           <label htmlFor="subscriber-search">Search</label>
@@ -120,6 +119,7 @@ export default function SubscribersAdmin() {
               Reset filters
             </button>
           )}
+          <span className="admin-subscribers-total">Total: {rows.length}</span>
         </div>
       )}
       {subscribers && (

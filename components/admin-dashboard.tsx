@@ -18,7 +18,7 @@ import { privacyBodyMaxChars, privacyDefaultTitle, privacyDefaults } from "@/lib
 import { termsBodyMaxChars, termsDefaultTitle, termsDefaults, termsDisplayOrder } from "@/lib/terms";
 import { defaultCardOption, defaultUnavailableMessage } from "@/lib/card";
 import { defaultAddressErrorMessage, defaultDeliverableMessage, defaultDeliveryInfo, defaultUndeliverableMessage } from "@/lib/delivery";
-import { defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
+import { subscribeConfirmDefaults, welcomeDefaults, defaultEnquiryTypes, enquiryTypeLabels, enquiryTypeMaxLength, pickupAddressToken, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 
 const usesPickupAddress = (field: string) => field === "confirmationBody" || field === "pickupReminderBody";
 import {
@@ -358,6 +358,8 @@ const emailTemplates: EmailTemplate[] = [
   { key: "confirmation", name: "Order confirmation", description: "Sent immediately after a successful order.", subjectField: "confirmationSubject", bodyField: "confirmationBody" },
   { key: "pickupReminder", name: "Pickup reminder", description: "Sent automatically 48 hours before the pickup window, with date, time, and collection information.", subjectField: "pickupReminderSubject", bodyField: "pickupReminderBody" },
   { key: "enquiryNotification", name: "Enquiry notification", description: "Sent when a customer submits the Contact Us form.", subjectField: "enquirySubject", bodyField: "enquiryBody" },
+  { key: "subscribeConfirm", name: "Subscription confirmation", description: "Sent when someone signs up to the newsletter, asking them to confirm their email address.", subjectField: "subscribeSubject", bodyField: "subscribeBody" },
+  { key: "welcome", name: "Welcome email", description: "Sent to a subscriber as soon as they confirm their email address.", subjectField: "welcomeSubject", bodyField: "welcomeBody" },
 ];
 
 const contentModules: Record<string, ContentModule> = {
@@ -528,6 +530,15 @@ const contentModules: Record<string, ContentModule> = {
       { key: "pickupReminderBody", label: "Body copy", maxLength: 3000, multiline: true },
       { key: "enquirySubject", label: "Subject", maxLength: 140 },
       { key: "enquiryBody", label: "Body copy", maxLength: 3000, multiline: true },
+      { key: "subscribeSubject", label: "Subject", maxLength: 140 },
+      { key: "subscribeHeading", label: "Heading", maxLength: 100 },
+      { key: "subscribeBody", label: "Body copy", maxLength: 600, multiline: true },
+      { key: "subscribeButtonLabel", label: "Button text", maxLength: 40 },
+      { key: "subscribeFooter", label: "Footer note", maxLength: 200 },
+      { key: "welcomeSubject", label: "Subject", maxLength: 140 },
+      { key: "welcomeBody", label: "Body copy", maxLength: 3000, multiline: true },
+      { key: "welcomeButtonLabel", label: "Button text", maxLength: 60 },
+      { key: "welcomeButtonUrl", label: "Button link", maxLength: 300 },
     ],
     defaults: {
       fields: {
@@ -573,6 +584,8 @@ Message:
 Please reply to the customer directly when you are ready to follow up.
 
 Club Crumbie`,
+        ...subscribeConfirmDefaults,
+        ...welcomeDefaults,
       },
     },
   },
@@ -2280,6 +2293,8 @@ export default function AdminDashboard() {
     }
   }
 
+  const [composingNewsletter, setComposingNewsletter] = useState(false);
+
   async function load() {
     const response = await fetch("/api/admin/dashboard");
     if (response.ok) {
@@ -2292,6 +2307,11 @@ export default function AdminDashboard() {
     } else {
       setDashboardError("Your admin session has expired. Sign in again.");
     }
+  }
+
+  async function refreshPage() {
+    await load();
+    finishAdminAction("Page successfully refreshed");
   }
 
   async function fetchProductsWithRetry() {
@@ -3827,12 +3847,17 @@ export default function AdminDashboard() {
                 </label>
               </>
             )}
+            {tab === "newsletter" && (
+              <button className="btn btn-dark admin-pickup-open" type="button" onClick={() => setComposingNewsletter(true)}>
+                Create newsletter
+              </button>
+            )}
             <button
               className="admin-refresh"
               type="button"
               aria-label="Refresh admin data"
               title="Refresh"
-              onClick={() => void load()}
+              onClick={() => void refreshPage()}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
                 <path d="M16 6.5A6.5 6.5 0 1 0 17 11" />
@@ -5310,7 +5335,16 @@ export default function AdminDashboard() {
             <div className="admin-template-editor-heading"><button className="text-button" type="button" onClick={() => setEmailTemplateKey(null)}><svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m10 3-5 5 5 5" /></svg>Back to templates</button><h2>{template.name}</h2><p>{template.description}</p></div>
             <div className="admin-editor-fields">
               <div className="field"><label htmlFor="email-template-subject">Subject</label><input id="email-template-subject" maxLength={140} value={content.fields[template.subjectField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.subjectField]: event.target.value } })} /><small className="admin-editor-count">{(content.fields[template.subjectField] || "").length} / 140</small></div>
-              <div className="field"><label htmlFor="email-template-body">Body copy</label><textarea id="email-template-body" rows={12} maxLength={3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><div className="admin-editor-meta">{usesPickupAddress(template.bodyField) && <small className="admin-editor-hint">{pickupAddressToken} is always replaced with the pickup address in Settings.</small>}<small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / 3000</small></div></div>
+              <div className="field"><label htmlFor="email-template-body">Body copy</label><textarea id="email-template-body" rows={template.key === "subscribeConfirm" ? 4 : 12} maxLength={template.key === "subscribeConfirm" ? 600 : 3000} value={content.fields[template.bodyField] || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, [template.bodyField]: event.target.value } })} /><div className="admin-editor-meta">{usesPickupAddress(template.bodyField) && <small className="admin-editor-hint">{pickupAddressToken} is always replaced with the pickup address in Settings.</small>}<small className="admin-editor-count">{(content.fields[template.bodyField] || "").length} / {template.key === "subscribeConfirm" ? 600 : 3000}</small></div></div>
+              {template.key === "subscribeConfirm" && <>
+                <div className="field"><label htmlFor="email-template-heading">Heading</label><input id="email-template-heading" maxLength={100} value={content.fields.subscribeHeading || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, subscribeHeading: event.target.value } })} /></div>
+                <div className="field"><label htmlFor="email-template-confirm-button">Button text</label><input id="email-template-confirm-button" maxLength={40} value={content.fields.subscribeButtonLabel || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, subscribeButtonLabel: event.target.value } })} /></div>
+                <div className="field"><label htmlFor="email-template-footer">Footer note</label><input id="email-template-footer" maxLength={200} value={content.fields.subscribeFooter || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, subscribeFooter: event.target.value } })} /></div>
+              </>}
+              {template.key === "welcome" && <>
+                <div className="field"><label htmlFor="email-template-button-label">Button text (leave blank for no button)</label><input id="email-template-button-label" maxLength={60} value={content.fields.welcomeButtonLabel || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, welcomeButtonLabel: event.target.value } })} /></div>
+                <div className="field"><label htmlFor="email-template-button-url">Button link</label><input id="email-template-button-url" type="url" maxLength={300} value={content.fields.welcomeButtonUrl || ""} onChange={(event) => setContent({ ...content, fields: { ...content.fields, welcomeButtonUrl: event.target.value } })} /></div>
+              </>}
             </div>
             <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !contentChanged}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save changes"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
           </form>;
@@ -5362,7 +5396,7 @@ export default function AdminDashboard() {
               ))}
           </div>
         )}
-        {tab === "newsletter" && <NewsletterAdmin onSuccess={(message) => finishAdminAction(message)} />}
+        {tab === "newsletter" && <NewsletterAdmin composing={composingNewsletter} onClose={() => setComposingNewsletter(false)} onOpen={() => setComposingNewsletter(true)} onSuccess={(message) => finishAdminAction(message)} />}
         {tab === "subscribers" && <SubscribersAdmin />}
         {tab === "settings" && config && (
           <div className="admin-config-grid">

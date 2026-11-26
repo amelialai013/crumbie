@@ -48,3 +48,35 @@ export function withEnquiryType(body: string) {
 	}
 	return `${enquiryTypeLine}\n\n${body.trimStart()}`;
 }
+
+export const subscribeConfirmDefaults = {
+	subscribeSubject: "Confirm your Club Crumbie subscription",
+	subscribeHeading: "One last step, nearly in.",
+	subscribeBody: "Tap the button below to confirm your email and we'll start sending you delicious drops, new flavours and a few crumbs of gossip.",
+	subscribeButtonLabel: "Yes, count me in",
+	subscribeFooter: "Didn't sign up? No worries, just ignore this email and we'll leave you be.",
+};
+
+export const welcomeDefaults = {
+	welcomeSubject: "Well, well, well… look who's joined the club 👀",
+	welcomeBody: `Hey Crumbie,
+
+First things first, welcome to the club! 💌
+
+We're so happy you're here.
+
+Club Crumbie is all about ridiculously good cookies, little moments of joy and having absolutely zero regrets about eating the last one.
+
+Think of this as your official invitation to the sweeter side of life.
+
+Expect delicious drops, new flavours, little surprises and a few crumbs of gossip along the way.
+
+And trust us, we've got some pretty sweet things coming.
+
+Stay crumbie,
+Club Crumbie 🍪
+
+P.S. Sharing is optional. We won't judge.`,
+	welcomeButtonLabel: "Order now",
+	welcomeButtonUrl: "https://clubcrumbie.com/crumbs",
+};

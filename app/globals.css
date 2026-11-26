@@ -8756,3 +8756,78 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .admin-order-customer { vertical-align: middle; }
 
 .admin-subscribers .admin-enquiry-filters { margin-bottom: 4px; }
+.admin-subscribers-total { margin-left: auto; align-self: center; color: var(--accent, #c9ad94); font-size: .95rem; }
+@media (max-width: 720px) {
+  .admin-subscribers .admin-subscribers-total { margin-left: 0; flex-basis: 100%; align-self: flex-start; }
+}
+.admin-subscribers .admin-subscribers-total { font-weight: 600; }
+.admin-subscribers .admin-subscribers-total { padding: 8px 14px; }
+.admin-subscribers .admin-filter-reset ~ .admin-subscribers-total { margin-left: auto; flex-basis: auto; align-self: center; }
+.admin-subscribers .admin-filter-reset ~ .admin-subscribers-total { margin-left: 0; }
+@media (min-width: 721px) {
+  .admin-subscribers .admin-filter-reset ~ .admin-subscribers-total { margin-left: auto; }
+}
+.admin-subscribers .admin-enquiry-filters { margin-top: 16px; }
+.admin-newsletter-history-title { margin: 40px 0 12px; font-size: 1.4rem; font-weight: 400; }
+.admin-newsletter-view { width: min(720px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column; }
+.admin-newsletter-view h2 { font-size: 1.6rem; }
+.admin-newsletter-view iframe { flex: 1; min-height: 420px; margin-top: 18px; border: 1px solid #4a433a; border-radius: 14px; background: #fff; }
+.admin-newsletter-view .admin-newsletter-preview { flex: 1; min-height: 0; overflow-y: auto; margin-top: 18px; padding: 24px; border: 1px solid #4a433a; border-radius: 14px; background: #fff; color: #1a140d; }
+.admin-reply-modal .admin-newsletter-hint { display: block; margin-top: 8px; opacity: .7; }
+.admin-newsletter-view .admin-newsletter-preview p,
+.admin-newsletter-view .admin-newsletter-preview div,
+.admin-newsletter-view .admin-newsletter-preview span { color: #1a140d; opacity: 1; }
+.admin-newsletter-modal { display: flex; flex-direction: column; width: min(920px, calc(100vw - 48px)); height: min(820px, calc(100dvh - 48px)); overflow: hidden; border: 1px solid var(--line); background: #1a140d; color: #efcdaa; box-shadow: 0 24px 70px rgba(26, 20, 13, .5); }
+.admin-newsletter-modal .admin-modal-header { position: relative; flex: 0 0 auto; margin: 0; padding: 24px 28px 20px; }
+.admin-newsletter-modal .admin-modal-body { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 16px; flex: 1 1 auto; min-height: 0; margin: 0; padding: 24px 28px 28px; overflow-y: auto; overflow-x: hidden; }
+.admin-newsletter-modal .field { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 14px 16px 12px; border: 0; border-radius: 0; background: #1f1a15; box-shadow: inset 0 0 0 1px #5a5248; }
+.admin-newsletter-modal .field:focus-within { box-shadow: inset 0 0 0 1px var(--accent); }
+.admin-newsletter-modal .field:nth-child(1),
+.admin-newsletter-modal .field:nth-child(2),
+.admin-newsletter-modal .field:nth-child(5),
+.admin-newsletter-modal .admin-modal-body > p { grid-column: 1 / -1; }
+.admin-newsletter-modal .field > span { color: #efcdaa; font-size: .78rem; font-weight: 500; letter-spacing: .04em; }
+.admin-newsletter-modal .field input,
+.admin-newsletter-modal .field textarea { width: 100%; padding: 0; border: 0; background: transparent; color: #efcdaa; line-height: 24px; resize: none; outline: 0; }
+.admin-newsletter-modal .field textarea { min-height: 220px; line-height: 1.6; }
+.admin-newsletter-modal .admin-newsletter-hint { display: block; margin-top: 4px; opacity: .7; }
+.admin-newsletter-modal-actions { display: flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: 12px; padding: 12px 28px; border-top: 1px solid var(--line); }
+.admin-newsletter-modal-actions .btn { min-height: 0; padding: 10px 24px; font-size: .9rem; }
+@media (max-width: 720px) { .admin-newsletter-modal .admin-modal-body { grid-template-columns: 1fr; } }
+.admin-newsletter-modal-actions .btn:first-child { margin-right: auto; }
+.admin-newsletter-modal .field .admin-newsletter-hint { margin: auto 0 0; padding: 0; }
+.admin-newsletter .admin-newsletter-modal .field > small.admin-newsletter-hint { margin: auto 0 0; padding: 0; }
+@media (max-width: 720px) {
+  .admin-newsletter .admin-newsletter-modal .admin-newsletter-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .admin-newsletter-modal-actions .btn { width: 100%; margin: 0; padding: 12px 12px; }
+  .admin-newsletter-modal-actions .btn.btn-dark { grid-column: 1 / -1; order: -1; }
+  .admin-newsletter-modal-actions .btn:first-child { margin-right: 0; }
+}
+@media (max-width: 720px) {
+  .admin-newsletter-modal-actions .btn:first-child { grid-column: 1 / -1; order: 1; }
+}
+@media (max-width: 720px) {
+  .admin-subscribers { gap: 8px; }
+  .admin-subscribers .admin-enquiry-filters { margin-bottom: 0; row-gap: 8px; }
+  .admin-subscribers .admin-subscribers-total { padding: 4px 14px 6px; }
+}
+@media (max-width: 720px) {
+  .admin-newsletter .admin-newsletter-modal .admin-newsletter-modal-actions { grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .admin-newsletter-modal-actions .btn { padding: 10px 6px; font-size: .85rem; white-space: nowrap; }
+  .admin-newsletter-modal-actions .btn:first-child { grid-column: auto; order: 0; }
+  .admin-newsletter-modal-actions .btn.btn-dark { grid-column: 1 / -1; order: 1; padding: 12px; font-size: .95rem; }
+}
+@media (max-width: 720px) {
+  .admin-newsletter .admin-newsletter-modal { height: auto; max-height: calc(100dvh - 48px); overflow-y: auto; }
+  .admin-newsletter .admin-newsletter-modal .admin-modal-body { flex: 0 0 auto; overflow: visible; }
+  .admin-newsletter .admin-newsletter-modal .admin-newsletter-modal-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 4px 16px 24px; border-top: 0; }
+  .admin-newsletter-modal-actions .btn,
+  .admin-newsletter-modal-actions .btn.btn-dark { width: 100%; padding: 14px; font-size: .95rem; white-space: normal; }
+  .admin-newsletter-modal-actions .btn.btn-dark { order: -1; }
+  .admin-newsletter-modal-actions .btn:first-child { order: 1; }
+}
+@media (max-width: 720px) {
+  .admin-newsletter-modal-actions .btn,
+  .admin-newsletter-modal-actions .btn.btn-dark,
+  .admin-newsletter-modal-actions .btn:first-child { order: 0; }
+}
