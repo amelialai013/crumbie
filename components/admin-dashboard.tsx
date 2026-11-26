@@ -350,6 +350,7 @@ const pageContentModules: [string, string][] = [
   ["terms of service", "Terms of service"],
   ["privacy policy", "Privacy policy"],
   ["order confirmation", "Order confirmation"],
+  ["newsletter confirmed", "Newsletter confirmed"],
 ];
 const emailTemplates: EmailTemplate[] = [
   { key: "confirmation", name: "Order confirmation", description: "Sent immediately after a successful order.", subjectField: "confirmationSubject", bodyField: "confirmationBody" },
@@ -403,6 +404,8 @@ const contentModules: Record<string, ContentModule> = {
       { key: "newsletterWordThree", label: "Newsletter scrolling sentence 3", maxLength: 30 },
       { key: "newsletterWordFour", label: "Newsletter scrolling sentence 4", maxLength: 30 },
       { key: "newsletterNote", label: "Newsletter small print", maxLength: 80 },
+      { key: "newsletterDoneTitle", label: "Newsletter after-signup heading", maxLength: 40 },
+      { key: "newsletterDoneBody", label: "Newsletter after-signup message", maxLength: 120, multiline: true, rows: 2 },
     ],
     defaults: {
       fields: {
@@ -424,6 +427,8 @@ const contentModules: Record<string, ContentModule> = {
         newsletterWordThree: "Seasonal flavours",
         newsletterWordFour: "Early access",
         newsletterNote: "No spam. Unsubscribe any time.",
+        newsletterDoneTitle: "Almost there",
+        newsletterDoneBody: "Check your inbox and confirm your email to join.",
       },
     },
   },
@@ -620,6 +625,20 @@ Club Crumbie`,
         message:
           "We’ll send confirmation to the email used at checkout once payment is complete. Pickup is in Ivanhoe; until the final address is configured, exact pickup details will be provided separately.",
         buttonLabel: "Back to crumbs",
+      },
+    },
+  },
+  "newsletter confirmed": {
+    fields: [
+      { key: "pageTitle", label: "Page heading", maxLength: 80 },
+      { key: "message", label: "Message", maxLength: 300, multiline: true },
+      { key: "buttonLabel", label: "Button label", maxLength: 40 },
+    ],
+    defaults: {
+      fields: {
+        pageTitle: "You're in",
+        message: "Welcome to the Club. We'll let you know when a fresh box is out of the oven, along with seasonal flavours and the odd sweet surprise.",
+        buttonLabel: "Explore Crumbs",
       },
     },
   },
@@ -2039,7 +2058,7 @@ function ContentEditor({
                   ))}
                   <div className="admin-modal-actions">
                     <button
-                      className="btn btn-dark"
+                      className="btn btn-light"
                       type="button"
                       onClick={() =>
                         setContent({
@@ -2052,6 +2071,17 @@ function ContentEditor({
                       }
                     >
                       Add another question
+                    </button>
+                    <button
+                      className="btn btn-dark"
+                      type="submit"
+                      disabled={contentStatus === "Saving..." || (content.sections && content.sections.length ? content.sections : [{ heading: "", body: "" }]).some((item) => !item.heading.trim() || !item.body.trim())}
+                      onClick={() => {
+                        const toggle = document.getElementById("policy-modal-toggle") as HTMLInputElement | null;
+                        if (toggle) toggle.checked = false;
+                      }}
+                    >
+                      Save question
                     </button>
                   </div>
                 </div>

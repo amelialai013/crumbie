@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function NewsletterSignup({ heading, body, button, note, wordTwo, wordThree, wordFour }: { heading: string; body: string; button: string; note: string; wordTwo: string; wordThree: string; wordFour: string }) {
+export default function NewsletterSignup({ heading, body, button, note, doneTitle, doneBody, wordTwo, wordThree, wordFour }: { heading: string; body: string; button: string; note: string; doneTitle: string; doneBody: string; wordTwo: string; wordThree: string; wordFour: string }) {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -56,8 +56,8 @@ export default function NewsletterSignup({ heading, body, button, note, wordTwo,
       {status === "done" ? (
         <div className="newsletter-done" role="status">
           <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7" pathLength="1" /></svg>
-          <strong>Almost there</strong>
-          <span>Check your inbox and confirm your email to join.</span>
+          <strong>{doneTitle}</strong>
+          <span>{doneBody}</span>
         </div>
       ) : (
         <>

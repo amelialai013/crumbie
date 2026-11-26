@@ -262,6 +262,8 @@ export default async function Home() {
             wordFour={f.newsletterWordFour || "Early access"}
             button={f.newsletterButton || "Subscribe"}
             note={f.newsletterNote ?? "No spam. Unsubscribe any time."}
+            doneTitle={f.newsletterDoneTitle || "Almost there"}
+            doneBody={f.newsletterDoneBody || "Check your inbox and confirm your email to join."}
           />
         </div>
       </SectionReveal>

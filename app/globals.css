@@ -8633,7 +8633,7 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .newsletter-error { margin: 0; color: #ff8f8f; font-size: .9rem; }
 .newsletter-form .newsletter-error { position: absolute; top: calc(100% + 8px); left: 0; right: 0; line-height: 1.3; text-align: center; padding-inline: 0; }
 .newsletter-done { display: grid; justify-items: center; gap: 10px; margin: 0; }
-.newsletter-done svg { width: 44px; height: 44px; padding: 12px; border: 2px solid var(--accent, #c9ad94); border-radius: 50%; fill: none; stroke: var(--ink, #efcdaa); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.newsletter-done svg { width: 44px; height: 44px; padding: 12px; border: 2px solid var(--accent, #c9ad94); border-radius: 50%; fill: none; stroke: var(--ink, #efcdaa); stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
 .newsletter-done strong { font-weight: 400; font-size: 1.15rem; }
 .newsletter-done span { color: var(--accent, #c9ad94); font-size: .95rem; }
 @media (max-width: 520px) {
@@ -8718,4 +8718,12 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .newsletter-signup:has(.newsletter-done) { padding-bottom: clamp(56px, 7vw, 88px); }
 @media (prefers-reduced-motion: no-preference) {
   .newsletter-signup:has(.newsletter-done) { gap: 24px; }
+}
+
+.admin-policy-sections .admin-modal-actions { flex-wrap: wrap; }
+.admin-policy-sections .admin-modal-actions .btn.btn-light { background: transparent; border-color: var(--line); color: var(--ink, #efcdaa); }
+.admin-policy-sections .admin-modal-actions .btn.btn-light:hover { background: transparent; border-color: var(--accent); color: var(--ink, #efcdaa); }
+.admin-policy-sections .admin-modal-actions .btn:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 760px) {
+  .admin-policy-sections .admin-modal-actions { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
 }

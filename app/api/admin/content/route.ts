@@ -14,16 +14,18 @@ const editableModules = new Set([
 	"terms of service",
 	"privacy policy",
 	"order confirmation",
+	"newsletter confirmed",
 	"settings",
 ]);
 const limits: Record<string, Record<string, number>> = {
-	homepage: { heroPrimaryLabel: 40, heroSecondaryLabel: 40, howTitle: 40, stepOneTitle: 60, stepOneBody: 80, stepTwoTitle: 60, stepTwoBody: 80, stepThreeTitle: 60, stepThreeBody: 80, catalogHeading: 80, newsletterHeading: 60, newsletterBody: 120, newsletterWordTwo: 30, newsletterWordThree: 30, newsletterWordFour: 30, newsletterButton: 24, newsletterNote: 80 },
+	homepage: { heroPrimaryLabel: 40, heroSecondaryLabel: 40, howTitle: 40, stepOneTitle: 60, stepOneBody: 80, stepTwoTitle: 60, stepTwoBody: 80, stepThreeTitle: 60, stepThreeBody: 80, catalogHeading: 80, newsletterHeading: 60, newsletterBody: 120, newsletterWordTwo: 30, newsletterWordThree: 30, newsletterWordFour: 30, newsletterButton: 24, newsletterNote: 80, newsletterDoneTitle: 40, newsletterDoneBody: 120 },
 	about: { pageTitle: 80, storyHeading: 80, storyCopy: 1200, batchHeading: 80, batchCopy: 800 },
 	"contact us": { pageTitle: 80, messagePrompt: 180, enquiryTypes: 1000 },
 	faqs: { pageTitle: 80, pickupHeading: 80, pickupCopy: policyBodyMaxChars, deadlineHeading: 80, deadlineCopy: policyBodyMaxChars, paymentHeading: 80, paymentCopy: policyBodyMaxChars, cancellationHeading: 80, cancellationCopy: policyBodyMaxChars, allergenHeading: 80, allergenCopy: policyBodyMaxChars, enquiryHeading: 80, enquiryCopy: policyBodyMaxChars },
 	"terms of service": termsLimits,
 	"privacy policy": privacyLimits,
 	"order confirmation": { pageTitle: 80, message: 600, buttonLabel: 40 },
+	"newsletter confirmed": { pageTitle: 80, message: 300, buttonLabel: 40 },
 	"email templates": { confirmationSubject: 140, confirmationBody: 3000, pickupReminderSubject: 140, pickupReminderBody: 3000, enquirySubject: 140, enquiryBody: 3000 },
 	settings: { pickupAddress: 240, notificationEmail: 200, businessName: 100, cardEnabled: 5, cardPrice: 8, cardLabel: 60, cardDescription: 200, cardNamePlaceholder: 120, cardNameMaxLength: 2, cardMessageMaxLength: 3, cardMessagePlaceholder: 160, galleryTitle: 80, galleryBody: 300, galleryImages: 8000, searchImage: 600, heroImage: 600, promoEnabled: 5, promoProductId: 120, promoLabel: 40, promoHeadline: 60, promoBlurb: 120, promoButton: 24, promoLanding: 5, promoLayout: 10, landingProductId: 120, countdownEnabled: 5, countdownDate: 10, countdownTime: 5, countdownLabel: 60, countdownNextProductId: 80, promoPill: 40, promoList: 600, promoCardLabel: 60, promoCardPrice: 8, promoCardDescription: 200, exploreTitle: 60, exploreSubtext: 160, customTitle: 80, customSubtext: 160, customButton: 30, customLink: 200, unavailableMessage: 200, deliverableMessage: 200, undeliverableMessage: 200, addressErrorMessage: 200, deliveryEnabled: 5, deliveryFee: 8, pickupFee: 8, deliveryFreeOver: 8, deliveryPostcodes: 20000, deliveryRadiusKm: 3, deliveryInfo: 200, pickupTitle: 30, pickupDescription: 80, deliveryTitle: 30, deliveryDescription: 80 },
 };
