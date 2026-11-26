@@ -18,7 +18,7 @@ type Enquiry = {
 };
 type Order = {
 	id: string;
-	customer: { name: string; email: string };
+	customer: { name: string; email: string; phone?: string };
 	lines: Array<Record<string, unknown>>;
 	card?: { label: string; price: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null;
 	currency: string | null;
@@ -35,7 +35,7 @@ const defaultTemplates = {
 	confirmationSubject: "Your Club Crumbie order is confirmed",
 	confirmationBody: `Hi {{customerName}},
 
-Thanks for your order with Club Crumbie. We have received your payment and your cookie box is confirmed.
+Thanks for your order with Club Crumbie. We have received your payment and your box is confirmed.
 
 Order number: {{orderNumber}}
 Pickup window: {{pickupDate}}, {{pickupWindow}}
@@ -217,6 +217,8 @@ export async function sendOrderConfirmation(order: Order) {
 		orderTotal: new Intl.NumberFormat("en-AU", { style: "currency", currency }).format((order.amountTotal || 0) / 100),
 	};
 	let body = mergePickupWindow(renderTemplate(withPickupAddress(templates.confirmationBody || defaultTemplates.confirmationBody), values));
+	// A saved template may still carry the old wording.
+	body = body.replace("your cookie box is confirmed.", "your box is confirmed.");
 	if (mixed) {
 		const slot = order.deliverySlot;
 		const header = [
@@ -234,6 +236,37 @@ export async function sendOrderConfirmation(order: Order) {
 		subject: renderTemplate(templates.confirmationSubject || defaultTemplates.confirmationSubject, values),
 		text: withOrderRecap(body, orderRecap(order, currency, mixed)),
 		signature: true,
+	});
+}
+
+export async function sendOrderNotification(order: Order) {
+	const settings = await contentFields("settings");
+	const to = notificationRecipients(defaultNotificationEmail, settings.notificationEmail, process.env.CRUMBIE_NOTIFICATION_EMAIL);
+	if (!to) throw new Error("Notification email is not configured");
+	const pickupAddress = singleLine(settings.pickupAddress || "") || "Ivanhoe, Victoria (exact address to follow)";
+	const currency = order.currency?.toUpperCase() || "AUD";
+	const hasDelivery = order.fulfilment === "delivery" && !!order.delivery;
+	const pickupLines = order.lines.filter((line) => line.fulfilment !== "delivery");
+	const mixed = hasDelivery && pickupLines.length > 0;
+	const orderNumber = order.id.slice(0, 8).toUpperCase();
+	const total = new Intl.NumberFormat("en-AU", { style: "currency", currency }).format((order.amountTotal || 0) / 100);
+	const slot = order.deliverySlot;
+	const details = [
+		`Order number: ${orderNumber}`,
+		`Customer: ${order.customer.name || "—"}`,
+		`Email: ${order.customer.email || "—"}`,
+		order.customer.phone ? `Phone: ${order.customer.phone}` : "",
+		`Order total: ${total}`,
+		pickupLines.length ? `Pickup window: ${uniqueLineValues(pickupLines, "pickupDate")}, ${uniqueLineValues(pickupLines, "pickupWindow")}` : "",
+		pickupLines.length ? `Pickup address: ${pickupAddress}` : "",
+		hasDelivery && slot ? `Delivery window: ${formatPickupDate(slot.date)}, ${slot.window}` : "",
+		hasDelivery && order.delivery ? `Delivery address: ${singleLine(`${order.delivery.name}, ${order.delivery.street}, ${order.delivery.suburb} VIC ${order.delivery.postcode}`)}` : "",
+	].filter(Boolean);
+	await sendTextEmail({
+		to,
+		replyTo: order.customer.email || undefined,
+		subject: `New order ${orderNumber} from ${order.customer.name || "a customer"} (${total})`,
+		text: `You have a new Club Crumbie order.\n\n${details.join("\n")}\n\n${orderRecap(order, currency, mixed)}`,
 	});
 }
 

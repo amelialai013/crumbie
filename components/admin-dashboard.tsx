@@ -511,7 +511,7 @@ const contentModules: Record<string, ContentModule> = {
         confirmationSubject: "Your Club Crumbie order is confirmed",
         confirmationBody: `Hi {{customerName}},
 
-Thanks for your order with Club Crumbie. We have received your payment and your cookie box is confirmed.
+Thanks for your order with Club Crumbie. We have received your payment and your box is confirmed.
 
 Order number: {{orderNumber}}
 Pickup window: {{pickupDate}}

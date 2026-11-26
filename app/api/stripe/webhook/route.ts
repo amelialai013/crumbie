@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { sendOrderConfirmation } from "@/lib/email";
+import { sendOrderConfirmation, sendOrderNotification } from "@/lib/email";
 import { getRecord, saveRecord, setRecord } from "@/lib/store";
 
 type Pending = { id: string; lines: Array<Record<string, unknown>>; card?: { label: string; price: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null; fulfilment?: "pickup" | "delivery"; delivery?: { name: string; street: string; suburb: string; postcode: string; source?: "autofill" | "manual" } | null; deliveryFee?: number; deliverySlot?: { date: string; window: string } | null; createdAt: string };
@@ -60,6 +60,11 @@ export async function POST(req: Request) {
 						await sendOrderConfirmation(order);
 					} catch (error) {
 						console.error("Unable to send order confirmation", error);
+					}
+					try {
+						await sendOrderNotification(order);
+					} catch (error) {
+						console.error("Unable to send order notification", error);
 					}
 				}
 			}
