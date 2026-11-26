@@ -36,8 +36,21 @@ export async function GET() {
 
 export async function POST(req: Request) {
 	if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-	const parsed = schema.safeParse(await req.json().catch(() => null));
-	if (!parsed.success) return NextResponse.json({ error: "Add a subject and message." }, { status: 400 });
+	const raw = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+	// Accept links typed without a scheme, e.g. "clubcrumbie.com".
+	if (raw && typeof raw.buttonUrl === "string" && raw.buttonUrl.trim() && !/^https?:\/\//i.test(raw.buttonUrl.trim())) raw.buttonUrl = `https://${raw.buttonUrl.trim()}`;
+	const parsed = schema.safeParse(raw);
+	if (!parsed.success) {
+		const field = parsed.error.issues[0]?.path[0];
+		const messages: Record<string, string> = {
+			subject: "Add a subject.",
+			body: "Add a message.",
+			buttonLabel: "Button text is too long.",
+			buttonUrl: "Enter a valid button link, e.g. https://clubcrumbie.com.",
+			scheduledAt: "Enter a valid schedule date.",
+		};
+		return NextResponse.json({ error: messages[String(field)] || "Check the newsletter details and try again." }, { status: 400 });
+	}
 	const { mode, subject, body, buttonLabel, buttonUrl, scheduledAt } = parsed.data;
 	const button = buttonLabel && buttonUrl ? { label: buttonLabel, url: buttonUrl } : undefined;
 	const html = newsletterHtml(body, button);

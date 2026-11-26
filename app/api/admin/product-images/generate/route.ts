@@ -113,7 +113,7 @@ export async function POST(request: Request) {
 				if (remaining < 20_000) break;
 				// Cap each attempt so one stalled OpenAI call can't use the whole budget; retry it instead.
 				let response: Response;
-				let result: any;
+				let result: { data?: { b64_json?: string }[]; error?: { message?: string } } | null;
 				try {
 					response = await fetch("https://api.openai.com/v1/images/edits", {
 						method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: upstream, signal: AbortSignal.timeout(Math.min(remaining, 100_000)),

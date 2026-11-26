@@ -36,6 +36,7 @@ export default function Header() {
       wasScrolled = isScrolled;
       setScrolled(isScrolled);
     };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setScrolled(wasScrolled);
     window.addEventListener("scroll", updateHeader, { passive: true });
     return () => window.removeEventListener("scroll", updateHeader);

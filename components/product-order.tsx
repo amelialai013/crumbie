@@ -390,6 +390,7 @@ export default function ProductOrder({ product, pickupDates, card, delivery }: {
               </button>
             </div>
             <div className="cart-card-item">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               {confirmation.image && <img src={confirmation.image} alt="" />}
               <div>
                 <strong>{product.name}</strong>

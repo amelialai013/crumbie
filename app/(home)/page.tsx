@@ -25,6 +25,8 @@ export default async function Home() {
   const { props: featureLogo } = getImageProps({ ...logoProps, src: whiteLogo, sizes: "(max-width: 900px) 480px, 640px" });
   const { props: featureMobileLogo } = getImageProps({ ...logoProps, src: whiteVerticalLogo, sizes: "340px" });
   const { props: mobileLogo } = getImageProps({ ...logoProps, src: whiteVerticalLogo, sizes: "340px" });
+  // Server component: evaluated once per request, so the current time is intended here.
+  // eslint-disable-next-line react-hooks/purity
   const countdownEnded = countdown.active && countdown.enabled && countdown.target <= Date.now() && allProducts.some((product) => product.id === countdown.nextProductId);
   const landingProduct = allProducts.find((product) => product.id === (countdownEnded ? countdown.nextProductId : landingSettings.productId));
   const mainPhoto = landingProduct?.heroMode === "carousel" ? landingProduct.heroImages?.[0] : undefined;
@@ -46,10 +48,9 @@ export default async function Home() {
   );
   const logo = (
     <h1 className="feature-hero-logo">
-      {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is in featureLogo */}
       <picture>
         <source media="(max-width: 640px)" srcSet={featureMobileLogo.srcSet} sizes={featureMobileLogo.sizes} />
-        <img {...featureLogo} className="hero-logo" loading="eager" fetchPriority="high" />
+        <img {...featureLogo} alt={featureLogo.alt} className="hero-logo" loading="eager" fetchPriority="high" />
       </picture>
     </h1>
   );
@@ -119,10 +120,9 @@ export default async function Home() {
           <div className="feature-hero-inner">
             <div className="feature-hero-copy">
               <h1 className="feature-hero-logo">
-                {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is in desktopLogo */}
                 <picture>
                   <source media="(max-width: 640px)" srcSet={featureMobileLogo.srcSet} sizes={featureMobileLogo.sizes} />
-                  <img {...featureLogo} className="hero-logo" loading="eager" fetchPriority="high" />
+                  <img {...featureLogo} alt={featureLogo.alt} className="hero-logo" loading="eager" fetchPriority="high" />
                 </picture>
               </h1>
               <h2>{landing.promo.headline || landing.product.name}</h2>

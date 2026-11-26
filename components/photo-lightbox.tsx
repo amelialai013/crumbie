@@ -28,12 +28,13 @@ export default function PhotoLightbox({
     if (open === null && el.open) el.close();
   }, [open]);
 
+  const isOpen = open !== null;
   useEffect(() => {
-    if (open === null) return;
+    if (!isOpen) return;
     const root = document.documentElement;
     root.classList.add("lightbox-open");
     return () => root.classList.remove("lightbox-open");
-  }, [open === null]);
+  }, [isOpen]);
 
   const step = useCallback(
     (direction: -1 | 1) => {

@@ -8727,3 +8727,32 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 @media (max-width: 760px) {
   .admin-policy-sections .admin-modal-actions { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
 }
+
+
+.admin-subscribers { display: grid; gap: 16px; }
+.admin-subscribers .field { max-width: 360px; margin: 0; }
+.admin-newsletter .field > small.admin-newsletter-hint {
+  display: block;
+  grid-column: 1 / -1;
+  margin: 10px 0 20px;
+  color: #efcdaa;
+  font-size: .72rem;
+  text-align: left;
+}
+.admin-subscribers .admin-table-action { text-align: right; overflow: visible; }
+.admin-subscribers tr:has(.admin-kebab-menu) { position: relative; z-index: 5; }
+.admin-newsletter.admin-editor { gap: 0; }
+.admin-newsletter.admin-editor > p { margin: 0 0 20px; }
+.admin-newsletter.admin-editor .field + .field { margin-top: -1px; }
+.admin-newsletter.admin-editor .admin-newsletter-actions { margin-top: 4px; }
+.admin-subscribers.admin-editor .field { margin: 0 0 8px; }
+.admin-subscribers.admin-editor input::placeholder { color: #efcdaa; opacity: .5; }
+.admin-newsletter.admin-editor .field > small.admin-newsletter-hint { margin: 2px 0 0; opacity: .7; }
+.admin-subscribers .field { max-width: 360px; margin: 0; padding: 0; border-bottom: 0; }
+.admin-newsletter.admin-editor .field { margin-bottom: 0; }
+.admin-newsletter.admin-editor .admin-newsletter-actions { margin-top: 24px; }
+.admin-subscribers .field input { height: 50px; border-radius: 12px; background: transparent; border: 1px solid var(--line); padding: 0 16px; font-size: .95rem; }
+.admin-subscribers .field input:focus { outline: 0; border-color: #c9ad94; box-shadow: 0 0 0 4px rgba(201, 173, 148, .14); }
+.admin-order-customer { vertical-align: middle; }
+
+.admin-subscribers .admin-enquiry-filters { margin-bottom: 4px; }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export default function NewsletterAdmin() {
+export default function NewsletterAdmin({ onSuccess }: { onSuccess?: (message: string) => void }) {
   const [subscribers, setSubscribers] = useState<number | null>(null);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -11,6 +11,7 @@ export default function NewsletterAdmin() {
   const [scheduledAt, setScheduledAt] = useState("");
   const [busy, setBusy] = useState<"" | "test" | "send">("");
   const [notice, setNotice] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ subject?: string; body?: string }>({});
 
   useEffect(() => {
     fetch("/api/admin/newsletter")
@@ -20,8 +21,14 @@ export default function NewsletterAdmin() {
   }, []);
 
   async function submit(mode: "test" | "send") {
-    if (!subject.trim() || !body.trim()) {
-      setNotice("Add a subject and message.");
+    const errors: { subject?: string; body?: string } = {};
+    if (!subject.trim()) errors.subject = "Add a subject.";
+    if (!body.trim()) errors.body = "Add a message.";
+    setFieldErrors(errors);
+    if (errors.subject || errors.body) {
+      const target = document.getElementById(errors.subject ? "nl-subject" : "nl-body");
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      target?.focus({ preventScroll: true });
       return;
     }
     const when = scheduledAt ? ` on ${new Date(scheduledAt).toLocaleString()}` : " now";
@@ -43,7 +50,7 @@ export default function NewsletterAdmin() {
     setBusy("");
     const data = await res?.json().catch(() => null);
     if (!res?.ok) return setNotice(data?.error || "Unable to send.");
-    setNotice(mode === "test" ? "Test sent to the admin inbox." : scheduledAt ? "Newsletter scheduled." : "Newsletter sent.");
+    onSuccess?.(mode === "test" ? "Test sent to the admin inbox." : scheduledAt ? "Newsletter scheduled." : "Newsletter sent.");
     if (mode === "send") {
       setSubject("");
       setBody("");
@@ -54,16 +61,17 @@ export default function NewsletterAdmin() {
   }
 
   return (
-    <div className="admin-newsletter">
-      <p>{subscribers === null ? "Loading subscribers…" : `${subscribers} confirmed subscriber${subscribers === 1 ? "" : "s"}`}</p>
-      <div className="field">
+    <div className="admin-newsletter admin-editor">
+      <div className={`field${fieldErrors.subject ? " has-error" : ""}`}>
         <label htmlFor="nl-subject">Subject</label>
-        <input id="nl-subject" maxLength={200} value={subject} onChange={(e) => setSubject(e.target.value)} />
+        <input id="nl-subject" maxLength={200} aria-invalid={!!fieldErrors.subject} value={subject} onChange={(e) => { setSubject(e.target.value); setFieldErrors((f) => ({ ...f, subject: undefined })); }} />
+        {fieldErrors.subject && <p className="field-error" role="alert">{fieldErrors.subject}</p>}
       </div>
-      <div className="field">
+      <div className={`field${fieldErrors.body ? " has-error" : ""}`}>
         <label htmlFor="nl-body">Message</label>
-        <textarea id="nl-body" className="admin-textarea-lines" style={{ "--lines": 10 } as React.CSSProperties} value={body} onChange={(e) => setBody(e.target.value)} />
-        <small className="admin-editor-count">Leave a blank line between paragraphs. An unsubscribe link is added automatically.</small>
+        <textarea id="nl-body" className="admin-textarea-lines" style={{ "--lines": 10 } as React.CSSProperties} aria-invalid={!!fieldErrors.body} value={body} onChange={(e) => { setBody(e.target.value); setFieldErrors((f) => ({ ...f, body: undefined })); }} />
+        {fieldErrors.body && <p className="field-error" role="alert">{fieldErrors.body}</p>}
+        <small className="admin-newsletter-hint">Leave a blank line between paragraphs. An unsubscribe link is added automatically.</small>
       </div>
       <div className="field">
         <label htmlFor="nl-button-label">Button text (optional)</label>

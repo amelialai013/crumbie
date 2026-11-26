@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { deleteRecord } from "@/lib/store";
 import { newsletterClient, newsletterSegmentId, sendConfirmationEmail } from "@/lib/newsletter";
 
 const schema = z.object({ email: z.string().trim().toLowerCase().email().max(200), website: z.string().optional() });
@@ -14,13 +15,17 @@ export async function POST(req: Request) {
 		const resend = newsletterClient();
 		const { email } = parsed.data;
 		const existing = await resend.contacts.get({ email });
-		// Already confirmed: nothing to do (and nothing to reveal).
-		if (existing.data && !existing.data.unsubscribed) return NextResponse.json({ ok: true });
+		// Already confirmed: resend the same email (keeping their confirmed status) so they don't think they missed anything.
+		if (existing.data && !existing.data.unsubscribed) {
+			await sendConfirmationEmail(resend, email);
+			return NextResponse.json({ ok: true }, { status: 201 });
+		}
 		if (!existing.data) {
 			const segmentId = await newsletterSegmentId(resend);
 			const { error } = await resend.contacts.create({ email, unsubscribed: true, segments: [{ id: segmentId }] });
 			if (error && !/already exists/i.test(error.message)) throw new Error(error.message);
 		}
+		await deleteRecord("newsletter-confirmed", email).catch(() => null);
 		await sendConfirmationEmail(resend, email);
 	} catch (error) {
 		console.error("Unable to subscribe", error);

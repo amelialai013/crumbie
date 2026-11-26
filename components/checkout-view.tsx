@@ -85,6 +85,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
 
   useEffect(() => {
     if (!error) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAlertLeaving(false);
     const timer = setTimeout(dismissError, 8000);
     return () => clearTimeout(timer);
@@ -319,6 +320,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
       <li key={line.key} className={`co-item-wrap${removingKey === line.key ? " is-removing" : ""}`}>
         <div className="co-item">
           <Link href={href} aria-label={`View ${line.productName}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             {(images[line.productId] ?? line.image) ? <img className="checkout-thumb" src={images[line.productId] ?? line.image} alt="" /> : <i className="checkout-thumb" />}
           </Link>
           <div className="co-item-body">

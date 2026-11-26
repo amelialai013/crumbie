@@ -1,6 +1,7 @@
 "use client";
 
 import NewsletterAdmin from "./newsletter-admin";
+import SubscribersAdmin from "./subscribers-admin";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
@@ -340,6 +341,7 @@ const adminTabs = [
   "page content",
   "email templates",
   "newsletter",
+  "subscribers",
   "settings",
 ];
 const pageContentModules: [string, string][] = [
@@ -5360,7 +5362,8 @@ export default function AdminDashboard() {
               ))}
           </div>
         )}
-        {tab === "newsletter" && <NewsletterAdmin />}
+        {tab === "newsletter" && <NewsletterAdmin onSuccess={(message) => finishAdminAction(message)} />}
+        {tab === "subscribers" && <SubscribersAdmin />}
         {tab === "settings" && config && (
           <div className="admin-config-grid">
             {Object.entries(config).map(([name, ready]) => (

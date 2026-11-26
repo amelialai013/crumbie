@@ -48,17 +48,19 @@ export function newsletterHtml(body: string, button?: { label: string; url: stri
 	return wrap(`${paragraphs}${cta}<p style="margin:32px 0 0;font-size:12px;color:#7a6f63;">Club Crumbie · <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#7a6f63;">Unsubscribe</a></p>`);
 }
 
-const confirmationHtml = (url: string) =>
-	`<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;color:#1A140D;max-width:560px;padding:40px 32px;"><a href="https://clubcrumbie.com" style="text-decoration:none;"><img src="https://clubcrumbie.com/email/club-crumbie-logo-1-276.png" alt="Club Crumbie" width="136" height="13" style="display:block;width:136px;max-width:100%;height:auto;border:0;" /></a><h1 style="font-weight:400;font-size:40px;line-height:44px;letter-spacing:-0.035em;margin:48px 0 18px;color:#1A140D;">One last step, nearly in.</h1><p style="margin:0 0 28px;font-size:16px;line-height:26px;color:#4A433A;max-width:400px;">Confirm your email to start getting news about new boxes and seasonal flavours.</p><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-weight:600;font-size:15px;padding:15px 30px;border-radius:999px;">Confirm subscription</a><div style="margin-top:44px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">If you didn't sign up, you can ignore this email.</div></div>`;
+const confirmationHtml = (url: string, sentAt: string) =>
+	`<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;color:#1A140D;max-width:560px;padding:40px 32px;"><a href="https://clubcrumbie.com" style="text-decoration:none;"><img src="https://clubcrumbie.com/email/club-crumbie-logo-1-276.png" alt="Club Crumbie" width="136" height="13" style="display:block;width:136px;max-width:100%;height:auto;border:0;" /></a><h1 style="font-weight:400;font-size:40px;line-height:44px;letter-spacing:-0.035em;margin:48px 0 18px;color:#1A140D;">One last step, nearly in.</h1><p style="margin:0 0 28px;font-size:16px;line-height:26px;color:#4A433A;max-width:400px;">Confirm your email to start getting news about new boxes and seasonal flavours.</p><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-weight:600;font-size:15px;padding:15px 30px;border-radius:999px;">Confirm subscription</a><div style="margin-top:44px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">If you didn't sign up, you can ignore this email.<br />Sent ${escapeHtml(sentAt)}</div></div>`;
 
 export async function sendConfirmationEmail(resend: Resend, email: string) {
 	const url = confirmUrl(email);
+	// Gmail collapses repeated identical emails into a hidden "..." quote, so every send carries a unique timestamp.
+	const sentAt = new Intl.DateTimeFormat("en-AU", { dateStyle: "medium", timeStyle: "medium", timeZone: "Australia/Sydney" }).format(new Date());
 	const { error } = await resend.emails.send({
 		from: newsletterFrom,
 		to: email,
 		subject: "Confirm your Club Crumbie subscription",
-		text: `Thanks for joining Club Crumbie.\n\nConfirm your email to start getting news about new boxes and seasonal flavours:\n${url}\n\nIf you didn't sign up, you can ignore this email.`,
-		html: confirmationHtml(url),
+		text: `Thanks for joining Club Crumbie.\n\nConfirm your email to start getting news about new boxes and seasonal flavours:\n${url}\n\nIf you didn't sign up, you can ignore this email.\n\nSent ${sentAt}`,
+		html: confirmationHtml(url, sentAt),
 	});
 	if (error) throw new Error(error.message);
 }

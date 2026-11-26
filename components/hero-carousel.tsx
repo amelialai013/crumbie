@@ -15,7 +15,7 @@ function FadeImage(props: React.ComponentProps<typeof Image>) {
   useEffect(() => {
     if (ref.current && !ref.current.complete) setLoading(true);
   }, []);
-  return <Image {...props} ref={ref} className={`fade-image${loading ? " is-loading" : ""}`} onLoad={() => setLoading(false)} />;
+  return <Image {...props} alt={props.alt ?? ""} ref={ref} className={`fade-image${loading ? " is-loading" : ""}`} onLoad={() => setLoading(false)} />;
 }
 
 export default function HeroCarousel({ images, name }: { images: string[]; name: string }) {

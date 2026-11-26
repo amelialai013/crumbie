@@ -16,6 +16,8 @@ function parts(ms: number) {
 export default function HeroCountdown({ target, label, refreshOnEnd }: { target: number; label: string; refreshOnEnd?: boolean }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
+    // Set after mount so server and client markup match.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
