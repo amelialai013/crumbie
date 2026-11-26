@@ -14,10 +14,18 @@ export default async function NewsletterConfirmed({ searchParams }: { searchPara
   const [title, message] = copy[status] ?? copy.error;
   return (
     <section className="page-hero">
-      <div className="shell">
+      <div className="shell newsletter-confirmed">
+        {status === "ok" && (
+          <span className="confirmed-ring" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path pathLength="1" d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+          </span>
+        )}
         <h1 className="page-title">{title}</h1>
         <p>{message}</p>
-        <p><Link className="button" href="/">Back to Club Crumbie</Link></p>
+        <Link className="btn btn-dark btn-arrow" href="/">
+          Back to Club Crumbie
+          <svg viewBox="0 0 20 20" aria-hidden="true" fill="none"><path d="m7 4.5 5.5 5.5L7 15.5" /></svg>
+        </Link>
       </div>
     </section>
   );

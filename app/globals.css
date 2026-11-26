@@ -8696,3 +8696,18 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .newsletter-done svg { margin-bottom: 8px; }
 .newsletter-done strong { line-height: 1.2; }
 .newsletter-done span { line-height: 1.35; }
+
+/* Newsletter confirmed page */
+.newsletter-confirmed { display: grid; justify-items: center; text-align: center; gap: 18px; }
+.newsletter-confirmed .page-title { margin: 0; }
+.newsletter-confirmed p { margin: 0; max-width: 34ch; color: var(--accent, #c9ad94); line-height: 1.55; }
+.newsletter-confirmed .btn { margin-top: 14px; }
+.confirmed-ring { display: grid; place-items: center; width: 72px; height: 72px; margin-bottom: 10px; border: 2px solid var(--accent, #c9ad94); border-radius: 50%; }
+.confirmed-ring svg { width: 28px; height: 28px; fill: none; stroke: var(--ink, #efcdaa); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: no-preference) {
+  .confirmed-ring { animation: nl-ring .6s cubic-bezier(.16, 1, .3, 1) both; }
+  .confirmed-ring path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: nl-tick .5s .35s cubic-bezier(.65, 0, .35, 1) forwards; }
+  .newsletter-confirmed .page-title { animation: nl-rise .6s .5s cubic-bezier(.16, 1, .3, 1) both; }
+  .newsletter-confirmed p, .newsletter-confirmed .btn { animation: nl-rise .6s .65s cubic-bezier(.16, 1, .3, 1) both; }
+}
+.page-hero:has(.newsletter-confirmed) { padding-bottom: clamp(96px, 14vw, 180px); }
