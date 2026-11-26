@@ -118,7 +118,7 @@ async function sendTextEmail(message: { to: string | string[]; subject: string; 
 		subject: singleLine(message.subject),
 		text: message.signature ? message.text + signatureText : message.text,
 		html: message.signature || message.button
-			? `<div style="white-space:pre-wrap;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#1A140D;">${escapeHtml(message.text).replace(/\r?\n/g, "<br />")}</div>${message.button ? `<p style="margin:20px 0;"><a href="${escapeHtml(message.button.url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;text-decoration:none;padding:12px 22px;border-radius:999px;">${escapeHtml(message.button.label)}</a></p>` : ""}${message.signature ? signatureHtml : ""}`
+			? `<div style="white-space:pre-wrap;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#1A140D;">${escapeHtml(message.text).replace(/\r?\n/g, "<br />")}</div>${message.button ? `<p style="margin:20px 0;"><a href="${escapeHtml(message.button.url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:20px;font-weight:600;text-decoration:none;padding:15px 30px;border-radius:999px;">${escapeHtml(message.button.label)}</a></p>` : ""}${message.signature ? signatureHtml : ""}`
 			: undefined,
 		replyTo: message.replyTo,
 		headers: message.headers,
@@ -304,7 +304,7 @@ export async function sendWelcomeEmail(to: string) {
 	const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
 	const hasButton = !!label && !!rawUrl;
 	const paragraphs = body.split(/\n{2,}/).map((part) => `<p style="margin:0 0 16px;">${escapeHtml(part.trim()).replace(/\n/g, "<br />")}</p>`).join("");
-	const cta = hasButton ? `<p style="margin:28px 0 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-weight:600;font-size:15px;padding:15px 30px;border-radius:999px;">${escapeHtml(label)}</a></p>` : "";
+	const cta = hasButton ? `<p style="margin:28px 0 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-weight:600;font-size:15px;line-height:20px;letter-spacing:0;text-align:center;padding:15px 30px;border-radius:999px;">${escapeHtml(label)}</a></p>` : "";
 	const html = `<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#1A140D;max-width:560px;padding:40px 32px;"><a href="https://clubcrumbie.com" style="text-decoration:none;"><img src="https://clubcrumbie.com/email/club-crumbie-logo-1-276.png" alt="Club Crumbie" width="136" height="13" style="display:block;width:136px;max-width:100%;height:auto;border:0;margin-bottom:36px;" /></a>${paragraphs}${cta}<div style="margin-top:40px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">You're getting this because you joined Club Crumbie.</div></div>`;
 	const { error } = await new Resend(apiKey).emails.send({ from, to, subject, text: hasButton ? `${body}\n\n${label}: ${url}` : body, html });
 	if (error) throw new Error(error.message);
