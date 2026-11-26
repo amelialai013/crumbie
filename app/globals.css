@@ -8593,3 +8593,8 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 
 /* Dividers only between archived products, never after the last one. */
 .admin-products-table tbody tr:last-child > td { border-bottom: 0; }
+
+/* Carousel chevrons always sit in the bottom-right of the card. */
+.product-carousel-card { position: relative; }
+.product-carousel-body { align-items: flex-end; padding-right: 80px; min-height: 96px; }
+.product-carousel-body svg { position: absolute; right: 24px; bottom: 20px; }

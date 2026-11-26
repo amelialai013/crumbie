@@ -2304,7 +2304,8 @@ export default function AdminDashboard() {
     );
     setProductsLoaded(true);
     setCheckingSession(false);
-    const lastTab = localStorage.getItem(LAST_TAB_KEY);
+    const linkedTab = new URLSearchParams(window.location.search).get("tab");
+    const lastTab = linkedTab && adminTabs.includes(linkedTab) ? linkedTab : localStorage.getItem(LAST_TAB_KEY);
     if (lastTab && lastTab !== tabRef.current && adminTabs.includes(lastTab)) void selectTab(lastTab);
   }
 

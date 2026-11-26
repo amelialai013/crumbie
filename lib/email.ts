@@ -5,6 +5,7 @@ import { enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/ema
 import { enquiryMailbox, enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
 import { threadToken } from "@/lib/enquiry-thread";
 import { formatPickupDate } from "@/lib/format-date";
+import { siteUrl } from "@/lib/site";
 import { getRecord } from "@/lib/store";
 
 type Content = { fields: Record<string, string> };
@@ -106,7 +107,7 @@ function escapeHtml(value: string) {
 	return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-async function sendTextEmail(message: { to: string | string[]; subject: string; text: string; replyTo?: string; headers?: Record<string, string>; bcc?: string; signature?: boolean }) {
+async function sendTextEmail(message: { to: string | string[]; subject: string; text: string; replyTo?: string; headers?: Record<string, string>; bcc?: string; signature?: boolean; button?: { label: string; url: string } }) {
 	const apiKey = process.env.RESEND_API_KEY?.trim();
 	const from = process.env.RESEND_FROM_EMAIL?.trim() || "Club Crumbie <hello@clubcrumbie.com>";
 	if (!apiKey) throw new Error("Resend is not configured");
@@ -116,7 +117,9 @@ async function sendTextEmail(message: { to: string | string[]; subject: string; 
 		to: message.to,
 		subject: singleLine(message.subject),
 		text: message.signature ? message.text + signatureText : message.text,
-		html: message.signature ? `<div style="white-space:pre-wrap;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#1A140D;">${escapeHtml(message.text).replace(/\r?\n/g, "<br />")}</div>${signatureHtml}` : undefined,
+		html: message.signature || message.button
+			? `<div style="white-space:pre-wrap;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#1A140D;">${escapeHtml(message.text).replace(/\r?\n/g, "<br />")}</div>${message.button ? `<p style="margin:20px 0;"><a href="${escapeHtml(message.button.url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;text-decoration:none;padding:12px 22px;border-radius:999px;">${escapeHtml(message.button.label)}</a></p>` : ""}${message.signature ? signatureHtml : ""}`
+			: undefined,
 		replyTo: message.replyTo,
 		headers: message.headers,
 		bcc: message.bcc,
@@ -267,6 +270,7 @@ export async function sendOrderNotification(order: Order) {
 		replyTo: order.customer.email || undefined,
 		subject: `New order ${orderNumber} from ${order.customer.name || "a customer"} (${total})`,
 		text: `You have a new Club Crumbie order.\n\n${details.join("\n")}\n\n${orderRecap(order, currency, mixed)}`,
+		button: { label: "View order in portal", url: `${siteUrl}/admin?tab=orders` },
 	});
 }
 
