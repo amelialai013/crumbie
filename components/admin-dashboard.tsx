@@ -7,6 +7,7 @@ import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { DatePicker } from "./date-picker";
 import CrumbLoader from "./crumb-loader";
+import AdminCreateOrder from "./admin-create-order";
 import PremiumSelect from "./premium-select";
 import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
@@ -47,6 +48,9 @@ type Order = {
   deliverySlot?: { date?: string; window?: string };
   delivery?: { name?: string; street?: string; suburb?: string; postcode?: string; source?: "autofill" | "manual" };
   paymentStatus?: string;
+  notes?: string;
+  pickedUpAt?: string | null;
+  deliveredAt?: string | null;
   emails?: Array<{ subject: string; message: string; sentAt: string }>;
   card?: { label?: string; price?: number; quantity?: number; names?: string[]; messages?: string[]; products?: string[] } | null;
   lines?: Array<{
@@ -2211,11 +2215,13 @@ export default function AdminDashboard() {
   const [enquiryPendingDeletion, setEnquiryPendingDeletion] = useState<Enquiry | null>(null);
   const [orderCollectionFilter, setOrderCollectionFilter] = useState("all");
   const [orderCardFilter, setOrderCardFilter] = useState("all");
+  const [orderPaymentFilter, setOrderPaymentFilter] = useState("all");
   const [enquiryTypeFilter, setEnquiryTypeFilter] = useState("all");
   const [enquiryStatusFilter, setEnquiryStatusFilter] = useState("all");
   const [enquirySort, setEnquirySort] = useState("newest");
   const [deletingEnquiryId, setDeletingEnquiryId] = useState<string | null>(null);
   const [orderQuery, setOrderQuery] = useState("");
+  const [creatingOrder, setCreatingOrder] = useState(false);
   const [orderPendingDeletion, setOrderPendingDeletion] = useState<Order | null>(null);
   const [deletingOrder, setDeletingOrder] = useState(false);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
@@ -2581,6 +2587,25 @@ export default function AdminDashboard() {
     );
     if (viewingEnquiryId === enquiry.id) setViewingEnquiryId(null);
     finishAdminAction("Enquiry deleted");
+  }
+
+  async function completeOrder(order: Order, kind: "pickup" | "delivery", done: boolean) {
+    if (!order.id) return;
+    setOrderMenuId(null);
+    const response = await fetch("/api/admin/orders/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: order.id, kind, done }),
+    }).catch(() => null);
+    const result = response?.ok ? ((await response.json().catch(() => null)) as { field: "pickedUpAt" | "deliveredAt"; value: string | null } | null) : null;
+    if (!result) {
+      finishAdminAction("Unable to update order. Please try again.");
+      return;
+    }
+    setData((current) =>
+      current ? { ...current, orders: (current.orders as Order[]).map((item) => (item.id === order.id ? { ...item, [result.field]: result.value } : item)) } : current,
+    );
+    finishAdminAction(done ? (kind === "pickup" ? "Marked as picked up" : "Marked as delivered") : "Marked as not completed");
   }
 
   async function deleteOrder() {
@@ -3581,6 +3606,19 @@ export default function AdminDashboard() {
             </form>
           </div>
         )}
+        {creatingOrder && (
+          <AdminCreateOrder
+            products={managedProducts}
+            pickupDates={managedPickupDates}
+            deliveryDates={managedDeliveryDates}
+            onClose={() => setCreatingOrder(false)}
+            onCreated={(order) => {
+              setCreatingOrder(false);
+              setData((current) => (current ? { ...current, orders: [order, ...(current.orders as Order[])] } : current));
+              finishAdminAction("Order created");
+            }}
+          />
+        )}
         {orderPendingDeletion && (
           <div
             className="admin-confirm-overlay"
@@ -3756,6 +3794,7 @@ export default function AdminDashboard() {
                       <div><dt>Address entry</dt><dd>{order.delivery.source === "manual" ? "Entered manually" : order.delivery.source === "autofill" ? "Autofilled" : "—"}</dd></div>
                     </>
                   ) : null}
+                  {order.notes ? <div><dt>Notes</dt><dd style={{ whiteSpace: "pre-wrap" }}>{order.notes}</dd></div> : null}
                   <div><dt>Payment</dt><dd>{order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : "—"}</dd></div>
                   <div><dt>Created</dt><dd>{order.createdAt?.slice(0, 10)}</dd></div>
                   <div>
@@ -3858,6 +3897,11 @@ export default function AdminDashboard() {
             <h1>{tab}</h1>
           </div>
           <div className="admin-section-actions">
+            {tab === "orders" && (
+              <button type="button" className="btn btn-dark" onClick={() => setCreatingOrder(true)}>
+                Create order
+              </button>
+            )}
             {tab === "products" && (
               <>
                 <input id="product-modal-toggle" type="checkbox" hidden />
@@ -3899,6 +3943,8 @@ export default function AdminDashboard() {
           const visibleOrders = orders.filter((order) => {
             const o = order as Order;
             if (orderCollectionFilter !== "all" && !orderModes(o).has(orderCollectionFilter as "pickup" | "delivery")) return false;
+            if (orderPaymentFilter === "manual" && o.paymentStatus !== "manual") return false;
+            if (orderPaymentFilter === "stripe" && o.paymentStatus === "manual") return false;
             if (orderCardFilter === "with" && !o.card) return false;
             if (orderCardFilter === "without" && o.card) return false;
             const needle = orderQuery.trim().toLowerCase();
@@ -3951,13 +3997,28 @@ export default function AdminDashboard() {
                 onChange={setOrderCardFilter}
               />
             </div>
-            {(orderCollectionFilter !== "all" || orderCardFilter !== "all") && (
+            <div className="admin-enquiry-filter">
+              <span id="order-payment-filter-label">Payment method</span>
+              <PremiumSelect
+                labelId="order-payment-filter-label"
+                value={orderPaymentFilter}
+                options={[
+                  { value: "all", label: "All payments" },
+                  { value: "stripe", label: "Stripe" },
+                  { value: "manual", label: "Manual" },
+                ]}
+                placeholder="All payments"
+                onChange={setOrderPaymentFilter}
+              />
+            </div>
+            {(orderCollectionFilter !== "all" || orderCardFilter !== "all" || orderPaymentFilter !== "all") && (
               <button
                 type="button"
                 className="admin-filter-reset"
                 onClick={() => {
                   setOrderCollectionFilter("all");
                   setOrderCardFilter("all");
+                  setOrderPaymentFilter("all");
                 }}
               >
                 Reset filters
@@ -4011,7 +4072,7 @@ export default function AdminDashboard() {
                           </button>
                           {orderMenuId === order.id && (
                             <div className="admin-kebab-menu" role="menu">
-                              <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setViewOrderId(order.id ?? null); }}>View</button>
+<button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setViewOrderId(order.id ?? null); }}>View</button>
 {order.customer?.email && <button role="menuitem" type="button" onClick={() => openOrderEmail(order)}>Send email</button>}
 <button className="is-danger" role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setOrderPendingDeletion(order); }}>Delete</button>
                             </div>
@@ -4035,7 +4096,9 @@ export default function AdminDashboard() {
           <div>
             {scheduleTabs("pickup")}
             {pickupDates.filter((date) => scheduleVisible(date, "pickup")).map((date) => {
-              const pickups = orders.filter((order) => (order.lines || []).some((line) => line.pickupDate === date && isPickupLine(order, line)));
+              const pickups = orders
+                .filter((order) => (order.lines || []).some((line) => line.pickupDate === date && isPickupLine(order, line)))
+                .sort((a, b) => Number(!!a.pickedUpAt) - Number(!!b.pickedUpAt));
               return (
                 <div className="admin-schedule-group" key={date}>
                   <h2>{formatPickupDate(date || "")}</h2>
@@ -4059,10 +4122,10 @@ export default function AdminDashboard() {
                         const lines = (order.lines || []).filter((line) => line.pickupDate === date && isPickupLine(order, line));
                         const windows = Array.from(new Set(lines.map((line) => line.pickupWindow).filter(Boolean)));
                         return (
-                          <tr key={order.id}>
+                          <tr key={order.id} className={order.pickedUpAt ? "is-completed" : undefined}>
                             <td data-label="Order">{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</td>
                             <td data-label="Customer" className="admin-order-customer">
-                              <strong>{order.customer?.name}</strong>
+                              <strong>{order.customer?.name}{order.pickedUpAt ? <span className="admin-done-tag">Picked up</span> : null}</strong>
                               <span>{order.customer?.email}</span>
                             </td>
                             <td data-label="Items">
@@ -4089,7 +4152,8 @@ export default function AdminDashboard() {
                                   </button>
                                   {orderMenuId === order.id && (
                                     <div className="admin-kebab-menu" role="menu">
-                                      <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setViewOrderId(order.id ?? null); }}>View</button>
+                              <button role="menuitem" type="button" onClick={() => completeOrder(order, "pickup", !order.pickedUpAt)}>{order.pickedUpAt ? "Mark as not picked up" : "Mark as picked up"}</button>
+<button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setViewOrderId(order.id ?? null); }}>View</button>
 {order.customer?.email && <button role="menuitem" type="button" onClick={() => openOrderEmail(order)}>Send email</button>}
 <button className="is-danger" role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setOrderPendingDeletion(order); }}>Delete</button>
                                     </div>
@@ -4119,7 +4183,9 @@ export default function AdminDashboard() {
                 const route = routeFromIvanhoe(
                   deliveries.filter((order) => (order.deliverySlot?.date || "") === date),
                   (order) => order.delivery?.postcode,
-                );
+                )
+                  .map((order, index) => ({ order, stop: index + 1 }))
+                  .sort((a, b) => Number(!!a.order.deliveredAt) - Number(!!b.order.deliveredAt));
                 return (
                   <div className="admin-schedule-group" key={date || "unscheduled"}>
                     <h2>{date ? formatPickupDate(date) : "No delivery date"}</h2>
@@ -4135,12 +4201,12 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {route.map((order, index) => (
-                          <tr key={order.id ?? index}>
-                            <td data-label="Stop">{index + 1}</td>
+                        {route.map(({ order, stop }, index) => (
+                          <tr key={order.id ?? index} className={order.deliveredAt ? "is-completed" : undefined}>
+                            <td data-label="Stop">{stop}</td>
                             <td data-label="Order">{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</td>
                             <td data-label="Customer" className="admin-order-customer">
-                              <strong>{order.delivery?.name || order.customer?.name}</strong>
+                              <strong>{order.delivery?.name || order.customer?.name}{order.deliveredAt ? <span className="admin-done-tag">Delivered</span> : null}</strong>
                             </td>
                             <td data-label="Delivery address">{`${order.delivery?.street}, ${order.delivery?.suburb} VIC ${order.delivery?.postcode}`}{order.delivery?.source === "manual" ? <span className="admin-manual-tag">Manual</span> : null}</td>
                             <td data-label="Window">{order.deliverySlot?.window || "—"}</td>
@@ -4163,6 +4229,7 @@ export default function AdminDashboard() {
                                   </button>
                                   {orderMenuId === order.id && (
                                     <div className="admin-kebab-menu" role="menu">
+                                      <button role="menuitem" type="button" onClick={() => completeOrder(order, "delivery", !order.deliveredAt)}>{order.deliveredAt ? "Mark as not delivered" : "Mark as delivered"}</button>
                                       <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setViewOrderId(order.id ?? null); }}>View</button>
 {order.customer?.email && <button role="menuitem" type="button" onClick={() => openOrderEmail(order)}>Send email</button>}
 <button className="is-danger" role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setOrderPendingDeletion(order); }}>Delete</button>

@@ -8867,3 +8867,32 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .admin-orders-search input { height: 50px; border-radius: 12px; background: transparent; border: 1px solid var(--line); padding: 0 16px; font-size: .95rem; }
 .admin-orders-search input:focus { outline: 0; border-color: #c9ad94; box-shadow: 0 0 0 4px rgba(201, 173, 148, .14); }
 .admin-orders-search { margin-bottom: 32px; }
+
+.admin-create-order { width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; text-align: left; }
+.admin-create-order-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.admin-create-order-wide { grid-column: 1 / -1; }
+.admin-create-order-items { display: grid; gap: 20px; margin-top: 24px; }
+.admin-create-order-line { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) 90px; gap: 16px; padding-top: 20px; border-top: 1px solid var(--line); align-items: end; }
+.admin-create-order-line:first-child { border-top: 0; padding-top: 0; }
+.admin-create-order-date { grid-column: 1 / -1; }
+.admin-create-order-remove { justify-self: start; }
+.admin-create-order-total { margin-right: auto; align-self: center; color: var(--accent, #c9ad94); font-weight: 600; }
+.admin-create-order .admin-confirm-actions { margin-top: 28px; }
+@media (max-width: 640px) {
+  .admin-create-order-grid, .admin-create-order-line { grid-template-columns: 1fr; }
+}
+
+/* Create order modal: match the other admin modals (sticky head, scroll body, footer) */
+.admin-create-order { width: min(720px, 100%); max-height: calc(100vh - 48px); overflow: hidden; }
+.admin-create-order .admin-order-scroll { overflow-y: auto; padding-bottom: 24px; }
+.admin-create-order-note { margin: 18px 0 0; }
+.admin-create-order .admin-create-order-footer { flex: 0 0 auto; margin: 0; padding: 18px 24px 22px; border-top: 1px solid #4a433a; }
+.admin-create-order .admin-reply-error { margin-top: 18px; }
+
+.admin-schedule-group tr.is-completed td:not(.admin-table-action) { opacity: .55; }
+.admin-done-tag { margin-left: 8px; padding: 2px 8px; border: 1px solid #c9ad94; border-radius: 999px; font-size: .72rem; font-weight: 400; color: #c9ad94; white-space: nowrap; }
+.admin-create-order-notes { margin-top: 24px; }
+.admin-create-order-notes textarea { min-height: 96px; resize: none; }
+
+.admin-schedule-group:has(.admin-kebab-menu), .admin-stack-table:has(.admin-kebab-menu) { position: relative; z-index: 6; }
+.admin-stack-table tr:has(.admin-kebab-menu) { position: relative; z-index: 5; }

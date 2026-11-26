@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 
 type Option = { value: string; label: string; detail?: string };
 
@@ -23,16 +24,51 @@ export default function PremiumSelect({
   const selectedIndex = options.findIndex((option) => option.value === value);
   const [highlightedIndex, setHighlightedIndex] = useState(Math.max(0, selectedIndex));
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const [floatingStyle, setFloatingStyle] = useState<CSSProperties | undefined>();
   const listId = `select-${useId().replace(/:/g, "")}`;
   const selected = options[selectedIndex];
 
   useEffect(() => {
     const close = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
     };
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, []);
+
+  // Inside a clipped, scrolling modal the menu is pinned to the viewport so it can overlap the footer.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!open || !root?.closest(".admin-create-order")) {
+      setFloatingStyle(undefined);
+      return;
+    }
+    const place = () => {
+      const rect = root.getBoundingClientRect();
+      const below = window.innerHeight - rect.bottom - 16;
+      const above = rect.top - 16;
+      const openUp = below < 200 && above > below;
+      setFloatingStyle({
+        position: "fixed",
+        left: rect.left,
+        width: rect.width,
+        maxHeight: Math.max(120, Math.min(320, openUp ? above : below)),
+        overflowY: "auto",
+        zIndex: 2000,
+        background: "#1d1812",
+        ...(openUp ? { top: "auto", bottom: window.innerHeight - rect.top + 6 } : { top: rect.bottom + 6, bottom: "auto" }),
+      });
+    };
+    place();
+    window.addEventListener("resize", place);
+    document.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      document.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
 
   function select(index: number) {
     const option = options[index];
@@ -65,6 +101,8 @@ export default function PremiumSelect({
     }
   }
 
+  const wrapMenu = (menu: React.ReactElement) => (floatingStyle ? createPortal(menu, document.body) : menu);
+
   return (
     <div className={`premium-select${open ? " open" : ""}`} ref={rootRef}>
       <button
@@ -85,8 +123,8 @@ export default function PremiumSelect({
         {selected?.detail && <small>{selected.detail}</small>}
         <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m4 6 4 4 4-4" /></svg>
       </button>
-      {open && (
-        <ul id={listId} className="premium-select-menu" role="listbox" aria-labelledby={labelId}>
+      {open && wrapMenu(
+        <ul id={listId} ref={menuRef} className="premium-select-menu" style={floatingStyle} role="listbox" aria-labelledby={labelId}>
           {options.map((option, index) => (
             <li
               id={`${listId}-${index}`}
@@ -104,7 +142,7 @@ export default function PremiumSelect({
               {option.value === value && <svg aria-hidden="true" viewBox="0 0 16 16" fill="none"><path d="m3.5 8 3 3 6-6" /></svg>}
             </li>
           ))}
-        </ul>
+        </ul>,
       )}
     </div>
   );
