@@ -10,6 +10,12 @@ export default function NewsletterSignup({ heading, body, button, note, wordTwo,
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
+    const email = String(data.get("email") || "").trim();
+    if (!email || !form.elements.namedItem("email") || !(form.elements.namedItem("email") as HTMLInputElement).validity.valid) {
+      setMessage(email ? "Please enter a valid email address." : "Please enter your email address.");
+      setStatus("error");
+      return;
+    }
     setStatus("sending");
     setMessage("");
     try {
@@ -55,16 +61,17 @@ export default function NewsletterSignup({ heading, body, button, note, wordTwo,
         </div>
       ) : (
         <>
-          <form className="newsletter-form" onSubmit={submit}>
+          <form className="newsletter-form" onSubmit={submit} noValidate>
             <label className="sr-only" htmlFor="newsletter-email">Email address</label>
-            <input id="newsletter-email" name="email" type="email" required autoComplete="email" placeholder="Your email address" />
+            <input id="newsletter-email" name="email" type="email" required autoComplete="email" aria-invalid={status === "error"} aria-describedby={status === "error" ? "newsletter-error" : undefined} placeholder="Your email address" />
             <input className="newsletter-hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
             <button type="submit" disabled={status === "sending"}>
               {status === "sending" ? "Joining…" : button}
               <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m7 4.5 5.5 5.5L7 15.5" /></svg>
             </button>
+            {status === "error" ? <p className="field-error newsletter-error" id="newsletter-error" role="alert">{message}</p> : null}
           </form>
-          {status === "error" ? <p className="newsletter-error" role="alert">{message}</p> : note ? <p className="newsletter-note">{note}</p> : null}
+          {note ? <p className="newsletter-note">{note}</p> : null}
         </>
       )}
     </div>
