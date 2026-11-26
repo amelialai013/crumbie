@@ -1,6 +1,7 @@
 import { productCardImage, productCardIsPhoto } from "@/lib/catalog";
 import Link from "next/link";
 import { getImageProps } from "next/image";
+import NewsletterSignup from "@/components/newsletter-signup";
 import PromoBanner from "@/components/promo-banner";
 import { getCountdown, getHeroImage, getLanding, getProducts, getPromo } from "@/lib/catalog-store";
 import whiteLogo from "@/brand/latest-logos/new-text-logo/text-white.png";
@@ -249,6 +250,19 @@ export default async function Home() {
               </Link>
             ))}
           </div>
+        </div>
+      </SectionReveal>
+      <SectionReveal className="section newsletter-section">
+        <div className="shell">
+          <NewsletterSignup
+            heading={f.newsletterHeading || "Join the Club"}
+            body={f.newsletterBody || "New boxes, seasonal flavours and the odd treat, straight to your inbox."}
+            wordTwo={f.newsletterWordTwo || "New boxes"}
+            wordThree={f.newsletterWordThree || "Seasonal flavours"}
+            wordFour={f.newsletterWordFour || "Early access"}
+            button={f.newsletterButton || "Subscribe"}
+            note={f.newsletterNote ?? "No spam. Unsubscribe any time."}
+          />
         </div>
       </SectionReveal>
     </>

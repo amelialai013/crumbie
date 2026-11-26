@@ -1,5 +1,6 @@
 "use client";
 
+import NewsletterAdmin from "./newsletter-admin";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
@@ -338,6 +339,7 @@ const adminTabs = [
   "delivery windows",
   "page content",
   "email templates",
+  "newsletter",
   "settings",
 ];
 const pageContentModules: [string, string][] = [
@@ -394,6 +396,13 @@ const contentModules: Record<string, ContentModule> = {
         label: "Product section heading",
         maxLength: 80,
       },
+      { key: "newsletterHeading", label: "Newsletter heading", maxLength: 60 },
+      { key: "newsletterBody", label: "Newsletter body copy", maxLength: 120, multiline: true, rows: 2 },
+      { key: "newsletterButton", label: "Newsletter button label", maxLength: 24 },
+      { key: "newsletterWordTwo", label: "Newsletter scrolling sentence 2", maxLength: 30 },
+      { key: "newsletterWordThree", label: "Newsletter scrolling sentence 3", maxLength: 30 },
+      { key: "newsletterWordFour", label: "Newsletter scrolling sentence 4", maxLength: 30 },
+      { key: "newsletterNote", label: "Newsletter small print", maxLength: 80 },
     ],
     defaults: {
       fields: {
@@ -408,6 +417,13 @@ const contentModules: Record<string, ContentModule> = {
         stepThreeTitle: "Pay securely",
         stepThreeBody: "Complete payment and receive immediate confirmation.",
         catalogHeading: "Crumbs for every craving",
+        newsletterHeading: "Join the Club",
+        newsletterBody: "New boxes, seasonal flavours and the odd treat, straight to your inbox.",
+        newsletterButton: "Subscribe",
+        newsletterWordTwo: "New boxes",
+        newsletterWordThree: "Seasonal flavours",
+        newsletterWordFour: "Early access",
+        newsletterNote: "No spam. Unsubscribe any time.",
       },
     },
   },
@@ -5314,6 +5330,7 @@ export default function AdminDashboard() {
               ))}
           </div>
         )}
+        {tab === "newsletter" && <NewsletterAdmin />}
         {tab === "settings" && config && (
           <div className="admin-config-grid">
             {Object.entries(config).map(([name, ready]) => (
