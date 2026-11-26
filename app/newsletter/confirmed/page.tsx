@@ -22,8 +22,8 @@ export default async function NewsletterConfirmed({ searchParams }: { searchPara
         )}
         <h1 className="page-title">{title}</h1>
         <p>{message}</p>
-        <Link className="btn btn-dark btn-arrow" href="/">
-          Back to Club Crumbie
+        <Link className="btn btn-dark btn-arrow" href="/crumbs">
+          Explore Crumbs
           <svg viewBox="0 0 20 20" aria-hidden="true" fill="none"><path d="m7 4.5 5.5 5.5L7 15.5" /></svg>
         </Link>
       </div>
