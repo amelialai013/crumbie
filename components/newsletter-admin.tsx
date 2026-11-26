@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CrumbLoader from "./crumb-loader";
 
 type Sent = { id: string; name: string | null; status: string; createdAt: string; scheduledAt: string | null; sentAt: string | null };
 type Draft = { id: string; subject: string; body: string; buttonLabel: string; buttonUrl: string; scheduledAt: string; updatedAt: string };
@@ -169,7 +170,7 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
       {historyError ? (
         <p>{historyError}</p>
       ) : history === null ? (
-        <p>Loading newsletters…</p>
+        <CrumbLoader label="Loading newsletters" />
       ) : (
         <table className="table admin-stack-table">
           <thead>
@@ -234,7 +235,7 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
         <div className="admin-confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setViewing(null); }}>
           <div className="admin-confirm-modal admin-newsletter-view" role="dialog" aria-modal="true" aria-label="Newsletter">
             {viewing === "loading" ? (
-              <p>Loading…</p>
+              <CrumbLoader />
             ) : viewing === "error" ? (
               <p>Unable to load this newsletter.</p>
             ) : (

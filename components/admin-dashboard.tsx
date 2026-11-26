@@ -6,6 +6,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { TimePicker } from "./time-picker";
 import { DatePicker } from "./date-picker";
+import CrumbLoader from "./crumb-loader";
 import PremiumSelect from "./premium-select";
 import { enquiryMessageDisplay } from "@/lib/enquiry-display";
 import { formatPickupDate } from "@/lib/format-date";
@@ -352,7 +353,7 @@ const pageContentModules: [string, string][] = [
   ["terms of service", "Terms of service"],
   ["privacy policy", "Privacy policy"],
   ["order confirmation", "Order confirmation"],
-  ["newsletter confirmed", "Newsletter confirmed"],
+  ["newsletter confirmed", "Subscription confirmation"],
 ];
 const emailTemplates: EmailTemplate[] = [
   { key: "confirmation", name: "Order confirmation", description: "Sent immediately after a successful order.", subjectField: "confirmationSubject", bodyField: "confirmationBody" },
@@ -1801,7 +1802,7 @@ function ContentEditor({
     setContentStatus((await response.json().catch(() => null))?.error || "Unable to save");
   }
 
-  if (!loaded) return <p className="admin-sync-note">Loading…</p>;
+  if (!loaded) return <CrumbLoader />;
 
   return (
           <form className="enquiry-form admin-editor" onSubmit={saveContent}>
@@ -2146,7 +2147,6 @@ export default function AdminDashboard() {
   const [savedContent, setSavedContent] = useState(() => JSON.stringify({ fields: {} }));
   const [contentStatus, setContentStatus] = useState("");
   const [config, setConfig] = useState<Config | null>(null);
-  const [dashboardError, setDashboardError] = useState("");
   const [managedPickupDates, setManagedPickupDates] =
     useState<PickupDate[]>(catalogPickupDates);
   const [newPickupDate, setNewPickupDate] = useState(() =>
@@ -2215,6 +2215,9 @@ export default function AdminDashboard() {
   const [enquiryStatusFilter, setEnquiryStatusFilter] = useState("all");
   const [enquirySort, setEnquirySort] = useState("newest");
   const [deletingEnquiryId, setDeletingEnquiryId] = useState<string | null>(null);
+  const [orderQuery, setOrderQuery] = useState("");
+  const [orderPendingDeletion, setOrderPendingDeletion] = useState<Order | null>(null);
+  const [deletingOrder, setDeletingOrder] = useState(false);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
   const [scheduleFilter, setScheduleFilter] = useState<"all" | "current" | "past">("all");
   const [managedDeliveryDates, setManagedDeliveryDates] = useState<PickupDate[]>([]);
@@ -2297,25 +2300,6 @@ export default function AdminDashboard() {
   }
 
   const [composingNewsletter, setComposingNewsletter] = useState(false);
-
-  async function load() {
-    const response = await fetch("/api/admin/dashboard");
-    if (response.ok) {
-      receiveDashboard(await response.json());
-      setDashboardError("");
-      if (!cardSettings) {
-        const settings = await fetch("/api/admin/content?module=settings").catch(() => null);
-        setCardSettings(normalizeCardSettings(settings?.ok ? await settings.json().catch(() => null) : null));
-      }
-    } else {
-      setDashboardError("Your admin session has expired. Sign in again.");
-    }
-  }
-
-  async function refreshPage() {
-    await load();
-    finishAdminAction("Page successfully refreshed");
-  }
 
   async function fetchProductsWithRetry() {
     let response = await fetch("/api/admin/products", { cache: "no-store" });
@@ -2597,6 +2581,28 @@ export default function AdminDashboard() {
     );
     if (viewingEnquiryId === enquiry.id) setViewingEnquiryId(null);
     finishAdminAction("Enquiry deleted");
+  }
+
+  async function deleteOrder() {
+    const order = orderPendingDeletion;
+    if (!order?.id || deletingOrder) return;
+    setDeletingOrder(true);
+    const response = await fetch("/api/admin/orders/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: order.id }),
+    }).catch(() => null);
+    setDeletingOrder(false);
+    setOrderPendingDeletion(null);
+    if (!response?.ok) {
+      finishAdminAction("Unable to delete order. Please try again.");
+      return;
+    }
+    setData((current) =>
+      current ? { ...current, orders: (current.orders as Order[]).filter((item) => item.id !== order.id) } : current,
+    );
+    if (viewOrderId === order.id) setViewOrderId(null);
+    finishAdminAction("Order deleted");
   }
 
   useEffect(() => {
@@ -3311,7 +3317,7 @@ export default function AdminDashboard() {
   if (checkingSession || (!data && signingIn))
     return (
       <div className="admin-auth admin-auth-loading" role="status" aria-live="polite">
-        <span className="admin-auth-spinner" aria-hidden="true" />
+        <CrumbLoader label="Signing in" />
         <p>Signing in…</p>
       </div>
     );
@@ -3573,6 +3579,38 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+        {orderPendingDeletion && (
+          <div
+            className="admin-confirm-overlay"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !deletingOrder) setOrderPendingDeletion(null);
+            }}
+          >
+            <div
+              aria-labelledby="order-delete-title"
+              aria-describedby="order-delete-copy"
+              aria-modal="true"
+              className="admin-confirm-modal"
+              role="dialog"
+            >
+              <h2 id="order-delete-title">Delete this order?</h2>
+              <p id="order-delete-copy">
+                This will permanently delete order{" "}
+                <strong>{orderPendingDeletion.id?.slice(0, 8).toUpperCase()}</strong>
+                {orderPendingDeletion.customer?.name ? <> for <strong>{orderPendingDeletion.customer.name}</strong></> : null}. This can&apos;t be undone.
+              </p>
+              <div className="admin-confirm-actions">
+                <button className="btn btn-light" type="button" onClick={() => setOrderPendingDeletion(null)} disabled={deletingOrder}>
+                  Keep order
+                </button>
+                <button className="btn btn-dark admin-confirm-danger" type="button" onClick={() => void deleteOrder()} disabled={deletingOrder}>
+                  {deletingOrder ? "Deleting..." : "Yes, delete it"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
         {enquiryPendingDeletion && (
@@ -3855,35 +3893,35 @@ export default function AdminDashboard() {
                 Create newsletter
               </button>
             )}
-            <button
-              className="admin-refresh"
-              type="button"
-              aria-label="Refresh admin data"
-              title="Refresh"
-              onClick={() => void refreshPage()}
-            >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
-                <path d="M16 6.5A6.5 6.5 0 1 0 17 11" />
-                <path d="M16 3.5v3h-3" />
-              </svg>
-            </button>
           </div>
         </div>
-        {dashboardError && (
-          <div className="notice">
-            <strong>{dashboardError}</strong>
-          </div>
-        )}
         {tab === "orders" && (() => {
           const visibleOrders = orders.filter((order) => {
             const o = order as Order;
             if (orderCollectionFilter !== "all" && !orderModes(o).has(orderCollectionFilter as "pickup" | "delivery")) return false;
             if (orderCardFilter === "with" && !o.card) return false;
             if (orderCardFilter === "without" && o.card) return false;
+            const needle = orderQuery.trim().toLowerCase();
+            if (needle) {
+              const haystack = [
+                o.id,
+                o.id?.slice(0, 8),
+                o.customer?.name,
+                o.customer?.email,
+                o.delivery?.name,
+                ...(o.lines || []).map((line) => line.productName),
+                o.card ? o.card.label || "Club Crumbie Card" : "",
+              ].join(" ").toLowerCase();
+              if (!haystack.includes(needle)) return false;
+            }
             return true;
           });
           return (
           <>
+          <div className="field admin-orders-search">
+            <label htmlFor="order-search">Search</label>
+            <input id="order-search" placeholder="Order, name, email or item" value={orderQuery} onChange={(e) => setOrderQuery(e.target.value)} />
+          </div>
           <div className="admin-enquiry-filters">
             <div className="admin-enquiry-filter">
               <span id="order-collection-filter-label">Collection</span>
@@ -3955,7 +3993,31 @@ export default function AdminDashboard() {
                     </td>
                     <td data-label="Collection">{orderCollection(order)}</td>
                     <td className="admin-table-action">
-                      <button type="button" className="admin-text-button" onClick={() => setViewOrderId(order.id ?? null)}>View</button>
+                      {order.id && (
+                        <div className="admin-kebab">
+                          <button
+                            aria-expanded={orderMenuId === order.id}
+                            aria-haspopup="menu"
+                            aria-label="Order actions"
+                            className="admin-kebab-trigger"
+                            type="button"
+                            onClick={() => setOrderMenuId((current) => (current === order.id ? null : order.id!))}
+                          >
+                            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                              <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+                              <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                              <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+                            </svg>
+                          </button>
+                          {orderMenuId === order.id && (
+                            <div className="admin-kebab-menu" role="menu">
+                              <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setViewOrderId(order.id ?? null); }}>View</button>
+{order.customer?.email && <button role="menuitem" type="button" onClick={() => openOrderEmail(order)}>Send email</button>}
+<button className="is-danger" role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setOrderPendingDeletion(order); }}>Delete</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -4009,8 +4071,7 @@ export default function AdminDashboard() {
                             </td>
                             <td data-label="Window">{windows.join(", ") || "—"}</td>
                             <td className="admin-table-action">
-                              <button type="button" className="admin-text-button" onClick={() => setViewOrderId(order.id ?? null)}>View</button>
-                              {order.id && order.customer?.email && (
+                              {order.id && (
                                 <div className="admin-kebab">
                                   <button
                                     aria-expanded={orderMenuId === order.id}
@@ -4028,7 +4089,9 @@ export default function AdminDashboard() {
                                   </button>
                                   {orderMenuId === order.id && (
                                     <div className="admin-kebab-menu" role="menu">
-                                      <button role="menuitem" type="button" onClick={() => openOrderEmail(order)}>Send email</button>
+                                      <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setViewOrderId(order.id ?? null); }}>View</button>
+{order.customer?.email && <button role="menuitem" type="button" onClick={() => openOrderEmail(order)}>Send email</button>}
+<button className="is-danger" role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setOrderPendingDeletion(order); }}>Delete</button>
                                     </div>
                                   )}
                                 </div>
@@ -4082,7 +4145,31 @@ export default function AdminDashboard() {
                             <td data-label="Delivery address">{`${order.delivery?.street}, ${order.delivery?.suburb} VIC ${order.delivery?.postcode}`}{order.delivery?.source === "manual" ? <span className="admin-manual-tag">Manual</span> : null}</td>
                             <td data-label="Window">{order.deliverySlot?.window || "—"}</td>
                             <td className="admin-table-action">
-                              <button type="button" className="admin-text-button" onClick={() => setViewOrderId(order.id ?? null)}>View</button>
+                              {order.id && (
+                                <div className="admin-kebab">
+                                  <button
+                                    aria-expanded={orderMenuId === order.id}
+                                    aria-haspopup="menu"
+                                    aria-label="Order actions"
+                                    className="admin-kebab-trigger"
+                                    type="button"
+                                    onClick={() => setOrderMenuId((current) => (current === order.id ? null : order.id!))}
+                                  >
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                                      <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+                                      <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                                      <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+                                    </svg>
+                                  </button>
+                                  {orderMenuId === order.id && (
+                                    <div className="admin-kebab-menu" role="menu">
+                                      <button role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setViewOrderId(order.id ?? null); }}>View</button>
+{order.customer?.email && <button role="menuitem" type="button" onClick={() => openOrderEmail(order)}>Send email</button>}
+<button className="is-danger" role="menuitem" type="button" onClick={() => { setOrderMenuId(null); setOrderPendingDeletion(order); }}>Delete</button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -4917,9 +5004,7 @@ export default function AdminDashboard() {
               </div>
             </form>
             {!productsLoaded ? (
-              <p className="admin-products-loading" role="status">
-                Loading products...
-              </p>
+              <CrumbLoader label="Loading products" />
             ) : (
             <table className="table admin-pickup-table admin-product-table">
               <thead>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import PremiumSelect from "./premium-select";
+import CrumbLoader from "./crumb-loader";
 
 type Subscriber = { id: string; email: string; name: string; subscribedAt: string; unsubscribed: boolean; pending: boolean };
 
@@ -74,7 +75,7 @@ export default function SubscribersAdmin() {
 
   return (
     <div className="admin-subscribers">
-      {(error || subscribers === null) && <p>{error || "Loading subscribers…"}</p>}
+      {error ? <p>{error}</p> : subscribers === null && <CrumbLoader label="Loading subscribers" />}
       {subscribers && subscribers.length > 0 && (
         <div className="field">
           <label htmlFor="subscriber-search">Search</label>
