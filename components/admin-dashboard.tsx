@@ -2482,7 +2482,7 @@ export default function AdminDashboard() {
     setAdminBusyMessage("");
     if (!successMessage) return;
     setAdminNoticeLeaving(false);
-    setAdminNotice(successMessage);
+    setAdminNotice(/[.!?]\s/.test(successMessage.trim()) ? successMessage : successMessage.trim().replace(/\.$/, ""));
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }
 

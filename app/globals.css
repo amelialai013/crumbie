@@ -8870,7 +8870,7 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
   z-index: 5;
 }
 .admin-image-generator.admin-welcome-discount > label:not(.admin-reference-dropzone) {
-  margin: 0 0 20px;
+  margin: 0 0 6px;
 }
 .admin-welcome-discount .premium-select-trigger {
   min-height: 24px;
