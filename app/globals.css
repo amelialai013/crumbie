@@ -9189,3 +9189,31 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
     border-top: 0;
   }
 }
+
+/* Modal fields: the wrapper never draws a focus box; only the control itself shows the selected state. */
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal, .admin-newsletter-modal, .admin-add-date) .field:not(.admin-gallery-field):not(.admin-card-toggle-field):not(:has(input[type="file"])):focus-within {
+  box-shadow: none;
+  z-index: auto;
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal, .admin-newsletter-modal, .admin-add-date) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) > :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), textarea),
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal, .admin-newsletter-modal, .admin-add-date) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) .premium-select-trigger {
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal, .admin-newsletter-modal, .admin-add-date) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) > :is(input, textarea):focus,
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal, .admin-newsletter-modal, .admin-add-date) .field > .admin-number-stepper:focus-within,
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal, .admin-newsletter-modal, .admin-add-date) .field .premium-select-trigger:is(:focus, :focus-visible, [aria-expanded="true"]),
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal, .admin-newsletter-modal, .admin-add-date) .field > .time-picker:focus-within {
+  outline: 0;
+  border-color: #c9ad94;
+  box-shadow: 0 0 0 4px rgba(201, 173, 148, .14);
+}
+
+/* Modal textareas: vertical padding and a normal line height so the cursor sits inside the box like other fields. */
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal, .admin-newsletter-modal, .admin-add-date) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) > textarea {
+  height: auto !important;
+  min-height: 120px !important;
+  padding: 13px 16px !important;
+  line-height: 24px !important;
+  resize: vertical;
+}
+.admin-newsletter-modal .field:not(.admin-gallery-field) > textarea { min-height: 220px !important; resize: none; }
