@@ -53,7 +53,7 @@ export function newsletterHtml(body: string, button?: { label: string; url: stri
 type ConfirmCopy = { heading: string; body: string; button: string; footer: string };
 
 const confirmationHtml = (url: string, sentAt: string, c: ConfirmCopy) =>
-	`<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;color:#1A140D;max-width:560px;padding:40px 32px;${emailWrapStyle}"><a href="https://clubcrumbie.com" style="text-decoration:none;">${emailLogoHtml()}</a><h1 style="font-weight:400;font-size:40px;line-height:44px;letter-spacing:-0.035em;margin:48px 0 18px;color:#1A140D;">${escapeHtml(c.heading)}</h1><p style="margin:0 0 28px;font-size:16px;line-height:26px;color:#4A433A;max-width:400px;">${escapeHtml(c.body)}</p><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-weight:600;font-size:15px;line-height:20px;letter-spacing:0;text-align:center;padding:15px 30px;border-radius:999px;">${escapeHtml(c.button)}</a><div style="margin-top:44px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">${escapeHtml(c.footer)}<br />Sent ${escapeHtml(sentAt)}</div></div>`;
+	`<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;color:#1A140D;max-width:560px;padding:40px 32px;${emailWrapStyle}"><a href="https://clubcrumbie.com" style="text-decoration:none;">${emailLogoHtml()}</a><h1 style="font-weight:400;font-size:40px;line-height:44px;letter-spacing:-0.035em;margin:48px 0 18px;color:#1A140D;">${escapeHtml(c.heading)}</h1><p style="margin:0 0 28px;font-size:16px;line-height:26px;color:#4A433A;max-width:400px;">${escapeHtml(c.body)}</p><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-weight:600;font-size:15px;line-height:20px;letter-spacing:0;text-align:center;padding:15px 30px;border-radius:999px;">${escapeHtml(c.button)}</a><div style="margin-top:44px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">${escapeHtml(c.footer)}</div></div>`;
 
 export async function sendConfirmationEmail(resend: Resend, email: string) {
 	const url = confirmUrl(email);
@@ -71,7 +71,7 @@ export async function sendConfirmationEmail(resend: Resend, email: string) {
 		from: newsletterFrom,
 		to: email,
 		subject,
-		text: `${copy.heading}\n\n${copy.body}\n${url}\n\n${copy.footer}\n\nSent ${sentAt}`,
+		text: `${copy.heading}\n\n${copy.body}\n${url}\n\n${copy.footer}`,
 		html: confirmationHtml(url, sentAt, copy),
 	});
 	if (error) throw new Error(error.message);
