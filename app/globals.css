@@ -9358,3 +9358,51 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .admin-editor .admin-editor-fields { margin-bottom: 0; padding-bottom: 0; }
 .admin-editor .admin-editor-fields + .admin-editor-actions,
 .admin-editor > .admin-editor-actions { margin-top: 20px; }
+
+.subscribe-popup-close { width: 44px; height: 44px; top: 14px; right: 14px; }
+.subscribe-popup-close svg { width: 18px; height: 18px; }
+
+@media (max-width: 700px) {
+  .subscribe-popup-body { text-align: center; align-items: stretch; }
+  .subscribe-popup-body h2, .subscribe-popup-body p { text-align: center; }
+  .subscribe-popup-error { padding-left: 0; text-align: center; }
+  .subscribe-popup-done { align-items: center; }
+}
+
+@media (max-width: 700px) {
+  .subscribe-popup { padding: 16px; }
+  .subscribe-popup-card { max-height: calc(100dvh - 32px); }
+  .subscribe-popup-image { min-height: 0; height: clamp(90px, 16dvh, 140px); }
+  .subscribe-popup-body { gap: 10px; padding: 20px 22px 18px; }
+  .subscribe-popup-body h2 { font-size: clamp(1.7rem, 7vw, 2.1rem); line-height: 1.08; }
+  .subscribe-popup-body p { font-size: .92rem; line-height: 1.45; }
+  .subscribe-popup-body form { margin-top: 2px; gap: 8px; }
+  .subscribe-popup-body form input[type="email"], .subscribe-popup-submit { height: 48px; }
+  .subscribe-popup-dismiss { padding: 0; }
+}
+
+.subscribe-popup-dismiss { padding: 0; margin-top: 8px; }
+.subscribe-popup-body { padding-bottom: 24px; }
+@media (max-width: 700px) {
+  .subscribe-popup-dismiss { margin-top: 6px; }
+  .subscribe-popup-body { padding-bottom: 16px; }
+}
+
+.subscribe-popup-body { padding-bottom: 34px; }
+@media (max-width: 700px) {
+  .subscribe-popup-body { padding-bottom: 24px; }
+}
+
+.subscribe-popup-body { padding-bottom: 28px; }
+@media (max-width: 700px) {
+  .subscribe-popup-body { padding-bottom: 19px; }
+}
+
+.subscribe-popup-body > p { margin-bottom: 8px; }
+@media (max-width: 700px) {
+  .subscribe-popup-body > p { margin-bottom: 6px; }
+}
+
+@media (max-width: 700px) {
+  .subscribe-popup-body input { text-align: center; }
+}
