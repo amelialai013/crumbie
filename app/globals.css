@@ -9149,3 +9149,24 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 @media (min-width: 641px) {
   .admin-newsletter > table.admin-stack-table td[data-label="Date"] { white-space: nowrap; }
 }
+.admin-newsletter:not(.admin-editor):has(> table) { max-width: none; }
+
+/* Newsletter list on mobile: kebab sits level with the Status value. */
+@media (max-width: 640px) {
+  .admin-newsletter > table.admin-stack-table:not(.admin-enquiries-table) tr:has(td.admin-table-action) { padding-bottom: 16px; }
+  .admin-newsletter > table.admin-stack-table:not(.admin-enquiries-table) td.admin-table-action { bottom: 20px; }
+}
+
+/* Newsletter modal (mobile): only the body scrolls, below the header, with the shared thin scrollbar. */
+@media (max-width: 720px) {
+  .admin-newsletter .admin-newsletter-modal { height: auto; max-height: calc(100dvh - 48px); overflow: hidden; }
+  .admin-newsletter .admin-newsletter-modal .admin-modal-body {
+    flex: 1 1 auto;
+    max-height: none;
+    padding-bottom: 24px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 173, 148, .7) transparent;
+  }
+  .admin-newsletter .admin-newsletter-modal .admin-newsletter-modal-actions { flex: 0 0 auto; }
+}
