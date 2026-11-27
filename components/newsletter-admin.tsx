@@ -284,13 +284,13 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
               <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
             </label>
             {notice && <p role="status">{notice}</p>}
-            </div>
       <div className="admin-newsletter-modal-actions">
         <button className="btn btn-light" type="button" disabled={!!busy} onClick={close}>Cancel</button>
         <button className="btn btn-light" type="button" disabled={!!busy} onClick={() => void saveDraft()}>{busy === "draft" ? "Saving…" : "Save draft"}</button>
         <button className="btn btn-light" type="button" disabled={!!busy} onClick={() => void submit("test")}>{busy === "test" ? "Sending…" : "Send test"}</button>
         <button className="btn btn-dark" type="button" disabled={!!busy} onClick={() => void submit("send")}>{busy === "send" ? "Sending…" : scheduledAt ? "Schedule" : "Send to subscribers"}</button>
       </div>
+            </div>
           </div>
         </div>
       )}

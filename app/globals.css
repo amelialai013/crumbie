@@ -9170,3 +9170,22 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
   }
   .admin-newsletter .admin-newsletter-modal .admin-newsletter-modal-actions { flex: 0 0 auto; }
 }
+
+/* Newsletter modal actions live inside the scrolling body: pinned footer on desktop, plain end-of-content on mobile. */
+.admin-newsletter-modal .admin-modal-body > .admin-newsletter-modal-actions {
+  grid-column: 1 / -1;
+  position: sticky;
+  bottom: -28px;
+  z-index: 1;
+  margin: 0 -28px -28px;
+  background: #1a140d;
+}
+@media (max-width: 720px) {
+  .admin-newsletter .admin-newsletter-modal .admin-modal-body > .admin-newsletter-modal-actions {
+    position: static;
+    margin: 0;
+    padding: 8px 0 0;
+    background: none;
+    border-top: 0;
+  }
+}
