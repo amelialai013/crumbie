@@ -10,6 +10,7 @@ const schema = z.object({
 	body: z.string().trim().min(1).max(10000),
 	buttonLabel: z.string().trim().max(60).optional(),
 	buttonUrl: z.string().trim().url().max(500).optional().or(z.literal("")),
+	images: z.array(z.object({ src: z.string().trim().url().max(500), after: z.number().int().min(-1).max(200) })).max(6).optional(),
 	scheduledAt: z.string().datetime().optional().or(z.literal("")),
 });
 
@@ -51,9 +52,9 @@ export async function POST(req: Request) {
 		};
 		return NextResponse.json({ error: messages[String(field)] || "Check the newsletter details and try again." }, { status: 400 });
 	}
-	const { mode, subject, body, buttonLabel, buttonUrl, scheduledAt } = parsed.data;
+	const { mode, subject, body, buttonLabel, buttonUrl, scheduledAt, images = [] } = parsed.data;
 	const button = buttonLabel && buttonUrl ? { label: buttonLabel, url: buttonUrl } : undefined;
-	const html = newsletterHtml(body, button);
+	const html = newsletterHtml(body, button, images);
 	const text = `${body}${button ? `\n\n${button.label}: ${button.url}` : ""}\n\nUnsubscribe: {{{RESEND_UNSUBSCRIBE_URL}}}`;
 
 	try {

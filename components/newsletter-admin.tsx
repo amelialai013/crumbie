@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import CrumbLoader from "./crumb-loader";
+import { DatePicker } from "./date-picker";
+import { TimePicker } from "./time-picker";
 
+type NewsletterImage = { src: string; after: number };
 type Sent = { id: string; name: string | null; status: string; createdAt: string; scheduledAt: string | null; sentAt: string | null };
-type Draft = { id: string; subject: string; body: string; buttonLabel: string; buttonUrl: string; scheduledAt: string; updatedAt: string };
+type Draft = { id: string; subject: string; body: string; buttonLabel: string; buttonUrl: string; images?: NewsletterImage[]; scheduledAt: string; updatedAt: string };
 type Viewing = { subject: string; html: string } | "loading" | "error" | null;
 
 const fmtDate = (value: string) => new Date(value).toLocaleString("en-AU", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).replace(" at ", ", ");
@@ -15,7 +18,12 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
   const [body, setBody] = useState("");
   const [buttonLabel, setButtonLabel] = useState("");
   const [buttonUrl, setButtonUrl] = useState("");
-  const [scheduledAt, setScheduledAt] = useState("");
+  const [schedDate, setSchedDate] = useState("");
+  const [schedTime, setSchedTime] = useState("");
+  const scheduledAt = schedDate ? (schedTime ? `${schedDate}T${schedTime}` : schedDate) : "";
+  const [images, setImages] = useState<NewsletterImage[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const [busy, setBusy] = useState<"" | "test" | "send" | "draft">("");
   const [menuId, setMenuId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -24,7 +32,7 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
   const [history, setHistory] = useState<Sent[] | null>(null);
   const [historyError, setHistoryError] = useState("");
   const [viewing, setViewing] = useState<Viewing>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ subject?: string; body?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ subject?: string; body?: string; time?: string }>({});
 
   useEffect(() => {
     fetch("/api/admin/newsletter")
@@ -68,7 +76,9 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
     setBody("");
     setButtonLabel("");
     setButtonUrl("");
-    setScheduledAt("");
+    setSchedDate("");
+    setSchedTime("");
+    setImages([]);
     setFieldErrors({});
     setNotice("");
   }
@@ -84,7 +94,9 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
     setBody(draft.body);
     setButtonLabel(draft.buttonLabel);
     setButtonUrl(draft.buttonUrl);
-    setScheduledAt(draft.scheduledAt);
+    setSchedDate(draft.scheduledAt.slice(0, 10));
+    setSchedTime(draft.scheduledAt.slice(11, 16));
+    setImages(draft.images || []);
     setFieldErrors({});
     setNotice("");
     onOpen();
@@ -105,7 +117,7 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
     const res = await fetch("/api/admin/newsletter/drafts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: draftId, subject, body, buttonLabel, buttonUrl, scheduledAt }),
+      body: JSON.stringify({ id: draftId, subject, body, buttonLabel, buttonUrl, images, scheduledAt }),
     }).catch(() => null);
     setBusy("");
     const data = await res?.json().catch(() => null);
@@ -116,6 +128,22 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
     loadDrafts();
   }
 
+  const paragraphCount = body.split(/\n{2,}/).filter((part) => part.trim()).length;
+
+  async function uploadImages(list: FileList | File[]) {
+    const files = Array.from(list).filter((f) => f.type.startsWith("image/")).slice(0, 6 - images.length);
+    if (!files.length) return;
+    setUploading(true);
+    setNotice("");
+    const form = new FormData();
+    files.forEach((f) => form.append("files", f));
+    const res = await fetch("/api/admin/newsletter/images", { method: "POST", body: form }).catch(() => null);
+    const data = await res?.json().catch(() => null);
+    setUploading(false);
+    if (!res?.ok) return setNotice(data?.error || "Unable to upload images.");
+    setImages((list) => [...list, ...(data.urls as string[]).map((src) => ({ src, after: -1 }))].slice(0, 6));
+  }
+
   async function view(id: string) {
     setViewing("loading");
     const res = await fetch(`/api/admin/newsletter/history?id=${encodeURIComponent(id)}`).catch(() => null);
@@ -124,12 +152,13 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
   }
 
   async function submit(mode: "test" | "send") {
-    const errors: { subject?: string; body?: string } = {};
+    const errors: { subject?: string; body?: string; time?: string } = {};
     if (!subject.trim()) errors.subject = "Add a subject.";
     if (!body.trim()) errors.body = "Add a message.";
+    if (schedDate && !schedTime) errors.time = "Choose a send time.";
     setFieldErrors(errors);
-    if (errors.subject || errors.body) {
-      const target = document.getElementById(errors.subject ? "nl-subject" : "nl-body");
+    if (errors.subject || errors.body || errors.time) {
+      const target = document.getElementById(errors.subject ? "nl-subject" : errors.body ? "nl-body" : "nl-schedule-time");
       target?.scrollIntoView({ behavior: "smooth", block: "center" });
       target?.focus({ preventScroll: true });
       return;
@@ -147,6 +176,7 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
         body,
         buttonLabel,
         buttonUrl,
+        images,
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : "",
       }),
     }).catch(() => null);
@@ -271,24 +301,73 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
               {fieldErrors.body && <small className="admin-reply-error" role="alert">{fieldErrors.body}</small>}
               <small className="admin-newsletter-hint">Leave a blank line between paragraphs. An unsubscribe link is added automatically.</small>
             </label>
-            <label className="field">
+            <div className="field">
+              <span>Images (optional)</span>
+              <div className="admin-newsletter-images-box">
+              {images.length < 6 && (
+                <label className={`admin-reference-dropzone admin-gallery-dropzone${dragActive ? " is-active" : ""}`} htmlFor="nl-images" tabIndex={0}
+                  onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                  onDragLeave={() => setDragActive(false)}
+                  onDrop={(e) => { e.preventDefault(); setDragActive(false); uploadImages(e.dataTransfer.files); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.getElementById("nl-images")?.click(); } }}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
+                  </svg>
+                  <span>{uploading ? "Uploading…" : "Click to upload photos"}</span>
+                  <small>or drag and drop · JPG, PNG, GIF or WebP · up to 6</small>
+                  <input id="nl-images" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple onChange={(e) => { if (e.target.files) uploadImages(e.target.files); e.target.value = ""; }} />
+                </label>
+              )}
+              {images.length > 0 && (
+                <div className="admin-newsletter-images">
+                  {images.map((image, i) => (
+                    <div key={image.src} className="admin-newsletter-image">
+                      <div className="admin-newsletter-image-thumb">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={image.src} alt="" />
+                        <button type="button" aria-label="Remove image" onClick={() => setImages((list) => list.filter((_, n) => n !== i))}>×</button>
+                      </div>
+                      <select aria-label="Image position" value={image.after} onChange={(e) => setImages((list) => list.map((img, n) => (n === i ? { ...img, after: Number(e.target.value) } : img)))}>
+                        <option value={0}>Above message</option>
+                        {Array.from({ length: paragraphCount }, (_, n) => (
+                          <option key={n} value={n + 1}>After paragraph {n + 1}</option>
+                        ))}
+                        <option value={-1}>Below message</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              )}
+              </div>
+              <small className="admin-newsletter-hint">Choose where each image sits in the message.</small>
+            </div>
+            <label className="field admin-newsletter-half">
               <span>Button text (optional)</span>
               <input maxLength={60} placeholder="Order now" value={buttonLabel} onChange={(e) => setButtonLabel(e.target.value)} />
             </label>
-            <label className="field">
+            <label className="field admin-newsletter-half">
               <span>Button link (optional)</span>
               <input type="url" placeholder="https://clubcrumbie.com" value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} />
             </label>
-            <label className="field">
-              <span>Schedule (optional, leave blank to send now)</span>
-              <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
-            </label>
+<div className="admin-time-range">
+              <div className="field">
+                <label htmlFor="nl-schedule-date">Schedule date (optional)</label>
+                <DatePicker key={draftId || "new"} id="nl-schedule-date" value={schedDate} onChange={(date) => { setSchedDate(date); setFieldErrors((e) => ({ ...e, time: undefined })); }} />
+              </div>
+              <div className="field">
+                <label htmlFor="nl-schedule-time">{schedDate ? "Send time" : "Send time (optional)"}</label>
+                <TimePicker id="nl-schedule-time" label="Send time" required={!!schedDate} value={schedTime} onChange={(time) => { setSchedTime(time); setFieldErrors((e) => ({ ...e, time: undefined })); }} />
+                {fieldErrors.time && <small className="admin-reply-error" role="alert">{fieldErrors.time}</small>}
+              </div>
+            </div>
+            <small className="admin-newsletter-hint">Leave the date and time blank to send now.</small>
             {notice && <p role="status">{notice}</p>}
       <div className="admin-newsletter-modal-actions">
         <button className="btn btn-light" type="button" disabled={!!busy} onClick={close}>Cancel</button>
-        <button className="btn btn-light" type="button" disabled={!!busy} onClick={() => void saveDraft()}>{busy === "draft" ? "Saving…" : "Save draft"}</button>
-        <button className="btn btn-light" type="button" disabled={!!busy} onClick={() => void submit("test")}>{busy === "test" ? "Sending…" : "Send test"}</button>
-        <button className="btn btn-dark" type="button" disabled={!!busy} onClick={() => void submit("send")}>{busy === "send" ? "Sending…" : scheduledAt ? "Schedule" : "Send to subscribers"}</button>
+        <button className={`btn btn-light${busy === "draft" ? " btn-loading" : ""}`} type="button" disabled={!!busy} onClick={() => void saveDraft()}>{busy === "draft" && <span className="btn-spinner" aria-hidden="true" />}Save draft</button>
+        <button className={`btn btn-light${busy === "test" ? " btn-loading" : ""}`} type="button" disabled={!!busy} onClick={() => void submit("test")}>{busy === "test" && <span className="btn-spinner" aria-hidden="true" />}Send test</button>
+        <button className={`btn btn-dark${busy === "send" ? " btn-loading" : ""}`} type="button" disabled={!!busy} onClick={() => void submit("send")}>{busy === "send" && <span className="btn-spinner" aria-hidden="true" />}{scheduledAt ? "Schedule" : "Send to subscribers"}</button>
       </div>
             </div>
           </div>

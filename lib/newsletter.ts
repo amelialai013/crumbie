@@ -44,8 +44,13 @@ export function escapeHtml(value: string) {
 const wrap = (inner: string) =>
 	`<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#1A140D;max-width:560px;">${inner}</div>`;
 
-export function newsletterHtml(body: string, button?: { label: string; url: string }) {
-	const paragraphs = body.split(/\n{2,}/).map((part) => `<p style="margin:0 0 16px;">${escapeHtml(part.trim()).replace(/\n/g, "<br />")}</p>`).join("");
+export type NewsletterImage = { src: string; after: number };
+
+export function newsletterHtml(body: string, button?: { label: string; url: string }, images: NewsletterImage[] = []) {
+	const parts = body.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
+	const picture = (src: string) => `<p style="margin:0 0 16px;"><img src="${escapeHtml(src)}" alt="" width="560" style="display:block;width:100%;max-width:560px;height:auto;border-radius:12px;border:0;" /></p>`;
+	const at = (n: number) => images.filter((img) => (img.after < 0 || img.after > parts.length ? parts.length : img.after) === n).map((img) => picture(img.src)).join("");
+	const paragraphs = at(0) + parts.map((part, i) => `<p style="margin:0 0 16px;">${escapeHtml(part).replace(/\n/g, "<br />")}</p>${at(i + 1)}`).join("");
 	const cta = button ? `<p style="margin:24px 0;"><a href="${escapeHtml(button.url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-weight:600;font-size:15px;line-height:20px;letter-spacing:0;text-align:center;padding:15px 30px;border-radius:999px;">${escapeHtml(button.label)}</a></p>` : "";
 	return wrap(`${paragraphs}${cta}<p style="margin:32px 0 0;font-size:12px;color:#7a6f63;">Club Crumbie · <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#7a6f63;">Unsubscribe</a></p>`);
 }

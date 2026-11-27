@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { deleteRecord, getRecord, listRecords, saveRecord, setRecord } from "@/lib/store";
 import { isAdmin } from "@/lib/session";
 
-type Draft = { id: string; subject: string; body: string; buttonLabel: string; buttonUrl: string; scheduledAt: string; updatedAt: string };
+type Draft = { id: string; subject: string; body: string; buttonLabel: string; buttonUrl: string; images?: { src: string; after: number }[]; scheduledAt: string; updatedAt: string };
 
 const text = (value: unknown, max: number) => (typeof value === "string" ? value.slice(0, max) : "");
 
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
 		body: text(payload.body, 10000),
 		buttonLabel: text(payload.buttonLabel, 60),
 		buttonUrl: text(payload.buttonUrl, 300),
+		images: Array.isArray(payload.images) ? payload.images.filter((u: { src?: unknown; after?: unknown }) => u && typeof u.src === "string" && Number.isInteger(u.after)).slice(0, 6).map((u: { src: string; after: number }) => ({ src: u.src.slice(0, 500), after: u.after })) : [],
 		scheduledAt: text(payload.scheduledAt, 40),
 		updatedAt: new Date().toISOString(),
 	};

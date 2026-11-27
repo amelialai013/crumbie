@@ -158,8 +158,9 @@ export default function CustomOrderForm({ enquiryTypes, messagePrompt }: { enqui
         </div>
         {validationErrors.request && <p id="request-error" className="field-error" role="alert">{validationErrors.request}</p>}
       </div>
-      <button type="submit" className="btn btn-dark btn-arrow enquiry-submit" disabled={status === "sending"}>
-        {status === "sending" ? "Sending…" : "Send message"}
+      <button type="submit" className={`btn btn-dark btn-arrow enquiry-submit${status === "sending" ? " btn-loading" : ""}`} disabled={status === "sending"}>
+        {status === "sending" && <span className="btn-spinner" aria-hidden="true" />}
+        Send message
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
           <path d="m7 4.5 5.5 5.5L7 15.5" />
         </svg>

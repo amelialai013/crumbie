@@ -65,8 +65,9 @@ export default function NewsletterSignup({ heading, body, button, note, doneTitl
             <label className="sr-only" htmlFor="newsletter-email">Email address</label>
             <input id="newsletter-email" name="email" type="email" required autoComplete="email" aria-invalid={status === "error"} aria-describedby={status === "error" ? "newsletter-error" : undefined} placeholder="Your email address" />
             <input className="newsletter-hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-            <button type="submit" disabled={status === "sending"}>
-              {status === "sending" ? "Joining…" : button}
+            <button type="submit" className={status === "sending" ? "btn-loading" : undefined} disabled={status === "sending"}>
+              {status === "sending" && <span className="btn-spinner" aria-hidden="true" />}
+              {button}
               <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m7 4.5 5.5 5.5L7 15.5" /></svg>
             </button>
             {status === "error" ? <p className="field-error newsletter-error" id="newsletter-error" role="alert">{message}</p> : null}

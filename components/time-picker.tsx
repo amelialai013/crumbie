@@ -43,9 +43,10 @@ type TimePickerProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
 };
 
-export function TimePicker({ id, label, value, onChange }: TimePickerProps) {
+export function TimePicker({ id, label, value, onChange, required = true }: TimePickerProps) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<React.CSSProperties>({});
   const rootRef = useRef<HTMLDivElement>(null);
@@ -117,7 +118,7 @@ export function TimePicker({ id, label, value, onChange }: TimePickerProps) {
         id={id}
         type="time"
         step={300}
-        required
+        required={required}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />

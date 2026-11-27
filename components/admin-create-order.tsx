@@ -216,7 +216,7 @@ export default function AdminCreateOrder({
         <div className="admin-confirm-actions admin-create-order-footer">
           <span className="admin-create-order-total">Total {money(subtotal + fee)}</span>
           <button className="btn btn-light" type="button" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="btn btn-dark" type="submit" disabled={saving}>{saving ? "Creating..." : "Create order"}</button>
+          <button className={`btn btn-dark${saving ? " btn-loading" : ""}`} type="submit" disabled={saving}>{saving && <span className="btn-spinner" aria-hidden="true" />}Create order</button>
         </div>
       </form>
     </div>

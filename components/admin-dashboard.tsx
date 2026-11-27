@@ -417,6 +417,13 @@ const contentModules: Record<string, ContentModule> = {
       { key: "newsletterNote", label: "Newsletter small print", maxLength: 80 },
       { key: "newsletterDoneTitle", label: "Newsletter after-signup heading", maxLength: 40 },
       { key: "newsletterDoneBody", label: "Newsletter after-signup message", maxLength: 120, multiline: true, rows: 2 },
+      { key: "popupHeading", label: "Pop-up heading", maxLength: 60, multiline: true, rows: 2 },
+      { key: "popupBody", label: "Pop-up body copy", maxLength: 200, multiline: true, rows: 3 },
+      { key: "popupPlaceholder", label: "Pop-up email placeholder", maxLength: 40 },
+      { key: "popupButton", label: "Pop-up button label", maxLength: 30 },
+      { key: "popupDismiss", label: "Pop-up dismiss link", maxLength: 30 },
+      { key: "popupDoneTitle", label: "Pop-up after-signup heading", maxLength: 40 },
+      { key: "popupDoneBody", label: "Pop-up after-signup message", maxLength: 160, multiline: true, rows: 2 },
     ],
     defaults: {
       fields: {
@@ -440,6 +447,13 @@ const contentModules: Record<string, ContentModule> = {
         newsletterNote: "No spam. Unsubscribe any time.",
         newsletterDoneTitle: "Almost there",
         newsletterDoneBody: "Check your inbox and confirm your email to join.",
+        popupHeading: "Warm from the oven,\nstraight to you.",
+        popupBody: "Be first to know about new flavours, limited drops and pickup windows. Plus 10% off your first order.",
+        popupPlaceholder: "Your email address",
+        popupButton: "Join the club",
+        popupDismiss: "No thanks",
+        popupDoneTitle: "Almost there",
+        popupDoneBody: "Check your inbox and confirm your email to join.",
       },
     },
   },
@@ -1091,7 +1105,7 @@ function CardSettings({
       <div className="admin-editor-actions">
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
           {status === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
-          {status === "Saving..." ? "Saving…" : "Save changes"}
+          Save changes
         </button>
         {status && status !== "Saving..." && <span>{status}</span>}
       </div>
@@ -1258,7 +1272,7 @@ function DeliverySettings({
       <div className="admin-editor-actions">
         <button className={`btn btn-light${saving ? " btn-loading" : ""}`} disabled={saving || !changed}>
           {saving && <span className="btn-spinner" aria-hidden="true" />}
-          {saving ? "Saving…" : "Save changes"}
+          Save changes
         </button>
         {error && <span>{error}</span>}
       </div>
@@ -1413,7 +1427,7 @@ function PromoSettings({
       <div className="admin-promo-actions">
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
           {status === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
-          {status === "Saving..." ? "Saving…" : "Save changes"}
+          Save changes
         </button>
         {status && status !== "Saving..." && <span>{status}</span>}
       </div>
@@ -1612,7 +1626,7 @@ function LandingHeroSettings({
       <div className="admin-promo-actions">
         <button className={`btn btn-light${status === "Saving..." ? " btn-loading" : ""}`} disabled={status === "Saving..." || !changed}>
           {status === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
-          {status === "Saving..." ? "Saving…" : "Save changes"}
+          Save changes
         </button>
         {status && status !== "Saving..." && <span>{status}</span>}
       </div>
@@ -1689,7 +1703,7 @@ function MessageSettings({
       <div className="admin-editor-actions">
         <button className={`btn btn-light${saving ? " btn-loading" : ""}`} disabled={saving || !changed}>
           {saving && <span className="btn-spinner" aria-hidden="true" />}
-          {saving ? "Saving…" : "Save changes"}
+          Save changes
         </button>
         {error && <span>{error}</span>}
       </div>
@@ -1723,7 +1737,20 @@ function ContentEditor({
   const [contentStatus, setContentStatus] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [draggedEnquiryType, setDraggedEnquiryType] = useState<number | null>(null);
-  const contentChanged = JSON.stringify(content) !== savedContent;
+  const subSections = moduleName === "homepage"
+    ? [
+        { id: "newsletter", title: "Newsletter", prefix: "newsletter" },
+        { id: "popup", title: "First-visit pop-up", prefix: "popup" },
+      ].map((section) => ({ ...section, keys: contentModules.homepage.fields.filter((field) => field.key.startsWith(section.prefix)).map((field) => field.key) }))
+    : [];
+  const subKeys = subSections.flatMap((section) => section.keys);
+  const savedFields: Record<string, string> = (JSON.parse(savedContent) as Content).fields || {};
+  const pick = (fields: Record<string, string>, keys: string[]) => Object.fromEntries(keys.map((key) => [key, fields[key] ?? ""]));
+  const mainKeys = (fields: Record<string, string>) => Object.keys(fields).filter((key) => !subKeys.includes(key));
+  const sectionChanged = (keys: string[]) => JSON.stringify(pick(content.fields, keys)) !== JSON.stringify(pick(savedFields, keys));
+  const contentChanged = subKeys.length
+    ? JSON.stringify(pick(content.fields, mainKeys(content.fields))) !== JSON.stringify(pick(savedFields, mainKeys(savedFields))) || JSON.stringify({ ...content, fields: {} }) !== JSON.stringify({ ...JSON.parse(savedContent), fields: {} })
+    : JSON.stringify(content) !== savedContent;
 
   useEffect(() => {
     let active = true;
@@ -1760,12 +1787,13 @@ function ContentEditor({
     return (
       <div className="field" key={field.key}>
         <label htmlFor={id}>{field.label}</label>
-        {field.multiline ? (
+        {field.multiline || field.maxLength > 60 ? (
           <textarea
             id={id}
-            rows={field.rows ?? 5}
-            className={field.rows ? "admin-textarea-compact" : "admin-textarea-lines"}
-            style={field.rows ? undefined : ({ "--lines": Math.min(8, Math.max(2, Math.ceil(field.maxLength / 90))) } as React.CSSProperties)}
+            onKeyDown={field.multiline ? undefined : (event) => { if (event.key === "Enter") event.preventDefault(); }}
+            rows={field.multiline ? (field.rows ?? 5) : 2}
+            className={field.rows || !field.multiline ? "admin-textarea-compact" : "admin-textarea-lines"}
+            style={field.rows || !field.multiline ? undefined : ({ "--lines": Math.min(8, Math.max(2, Math.ceil(field.maxLength / 90))) } as React.CSSProperties)}
             maxLength={field.maxLength}
             value={value}
             onChange={(event) => update(event.target.value)}
@@ -1778,8 +1806,13 @@ function ContentEditor({
     );
   }
 
-  async function saveContent(event: React.FormEvent) {
+  async function saveContent(event: React.FormEvent, sectionKeys?: string[]) {
     event.preventDefault();
+    const fieldsToSave = subKeys.length
+      ? sectionKeys
+        ? { ...savedFields, ...pick(content.fields, sectionKeys) }
+        : { ...content.fields, ...pick(savedFields, subKeys) }
+      : content.fields;
     const contentModule = contentModules[moduleName];
     if (
       contentModule.fields.some((field) => (content.fields[field.key] || "").length > field.maxLength) ||
@@ -1795,13 +1828,13 @@ function ContentEditor({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         module: moduleName,
-        fields: content.fields,
+        fields: fieldsToSave,
         sections: content.sections,
         removedFields: content.removedFields,
       }),
     });
     if (response.ok) {
-      setSavedContent(JSON.stringify(content));
+      setSavedContent(JSON.stringify(subKeys.length ? { ...JSON.parse(savedContent), fields: fieldsToSave } : content));
       setContentStatus("");
       finish("Changes successfully saved");
       return;
@@ -1813,11 +1846,14 @@ function ContentEditor({
   if (!loaded) return <CrumbLoader />;
 
   return (
+        <>
           <form className="enquiry-form admin-editor" onSubmit={saveContent}>
+            {subSections.length > 0 && <div className="admin-template-editor-heading admin-section-subheading"><h2>Content</h2></div>}
             <div className="admin-editor-fields">
               {contentModules[moduleName].fields
                 .filter(
                   (field) =>
+                    !subKeys.includes(field.key) &&
                     !(moduleName === "faqs" &&
                     (content.removedFields || []).includes(field.key)) &&
                     !(moduleName === "faqs" &&
@@ -2124,7 +2160,7 @@ function ContentEditor({
                 {contentStatus === "Saving..." && (
                   <span className="btn-spinner" aria-hidden="true" />
                 )}
-                {contentStatus === "Saving..." ? "Saving…" : "Save changes"}
+                Save changes
               </button>
               {contentStatus && contentStatus !== "Saving..." && (
                 <span>{contentStatus}</span>
@@ -2139,6 +2175,24 @@ function ContentEditor({
               )}
             </div>
           </form>
+          {subSections.map((section) => (
+            <Fragment key={section.id}>
+              <hr className="admin-accordion-divider" />
+              <form className="enquiry-form admin-editor" onSubmit={(event) => void saveContent(event, section.keys)}>
+                <div className="admin-template-editor-heading admin-section-subheading"><h2>{section.title}</h2></div>
+                <div className="admin-editor-fields">
+                  {contentModules.homepage.fields.filter((field) => section.keys.includes(field.key)).map(renderContentField)}
+                </div>
+                <div className="admin-editor-actions">
+                  <button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !sectionChanged(section.keys)}>
+                    {contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}
+                    Save changes
+                  </button>
+                </div>
+              </form>
+            </Fragment>
+          ))}
+        </>
   );
 }
 
@@ -3420,7 +3474,7 @@ export default function AdminDashboard() {
             aria-busy={signingIn}
           >
             {signingIn && <span className="btn-spinner" aria-hidden="true" />}
-            {signingIn ? "Signing in…" : "Sign in"}
+            Sign in
           </button>
         </div>
         {error && <p className="field-error" role="alert">{error}</p>}
@@ -3647,11 +3701,12 @@ export default function AdminDashboard() {
                   Cancel
                 </button>
                 <button
-                  className="btn btn-dark admin-confirm-danger"
+                  className={`btn btn-dark admin-confirm-danger${sendingReply ? " btn-loading" : ""}`}
                   type="submit"
                   disabled={sendingReply || (config ? !config.resend : false)}
                 >
-                  {sendingReply ? "Sending..." : "Send reply"}
+                  {sendingReply && <span className="btn-spinner" aria-hidden="true" />}
+                  Send reply
                 </button>
               </div>
             </form>
@@ -3695,8 +3750,9 @@ export default function AdminDashboard() {
                 <button className="btn btn-light" type="button" onClick={() => setOrderPendingDeletion(null)} disabled={deletingOrder}>
                   Keep order
                 </button>
-                <button className="btn btn-dark admin-confirm-danger" type="button" onClick={() => void deleteOrder()} disabled={deletingOrder}>
-                  {deletingOrder ? "Deleting..." : "Yes, delete it"}
+                <button className={`btn btn-dark admin-confirm-danger${deletingOrder ? " btn-loading" : ""}`} type="button" onClick={() => void deleteOrder()} disabled={deletingOrder}>
+                  {deletingOrder && <span className="btn-spinner" aria-hidden="true" />}
+                  Yes, delete it
                 </button>
               </div>
             </div>
@@ -3734,12 +3790,13 @@ export default function AdminDashboard() {
                   Keep enquiry
                 </button>
                 <button
-                  className="btn btn-dark admin-confirm-danger"
+                  className={`btn btn-dark admin-confirm-danger${deletingEnquiryId ? " btn-loading" : ""}`}
                   type="button"
                   onClick={() => void deleteEnquiry()}
                   disabled={Boolean(deletingEnquiryId)}
                 >
-                  {deletingEnquiryId ? "Deleting..." : "Yes, delete it"}
+                  {deletingEnquiryId && <span className="btn-spinner" aria-hidden="true" />}
+                  Yes, delete it
                 </button>
               </div>
             </div>
@@ -3780,12 +3837,13 @@ export default function AdminDashboard() {
                   Keep window
                 </button>
                 <button
-                  className="btn btn-dark admin-confirm-danger"
+                  className={`btn btn-dark admin-confirm-danger${removingPickupDateId ? " btn-loading" : ""}`}
                   type="button"
                   onClick={() => void removePickupDate()}
                   disabled={Boolean(removingPickupDateId)}
                 >
-                  {removingPickupDateId ? "Removing..." : "Yes, remove it"}
+                  {removingPickupDateId && <span className="btn-spinner" aria-hidden="true" />}
+                  Yes, remove it
                 </button>
               </div>
             </div>
@@ -3813,7 +3871,7 @@ export default function AdminDashboard() {
                 {orderEmailError && <p className="admin-reply-error" role="alert">{orderEmailError}</p>}
                 <div className="admin-confirm-actions">
                   <button className="btn btn-light" type="button" onClick={closeOrderEmail} disabled={sendingOrderEmail}>Cancel</button>
-                  <button className="btn btn-dark admin-confirm-danger" type="submit" disabled={sendingOrderEmail || (config ? !config.resend : false)}>{sendingOrderEmail ? "Sending..." : "Send email"}</button>
+                  <button className={`btn btn-dark admin-confirm-danger${sendingOrderEmail ? " btn-loading" : ""}`} type="submit" disabled={sendingOrderEmail || (config ? !config.resend : false)}>{sendingOrderEmail && <span className="btn-spinner" aria-hidden="true" />}Send email</button>
                 </div>
               </form>
             </div>
@@ -5193,13 +5251,7 @@ export default function AdminDashboard() {
                     productStatus === "Publishing...") && (
                     <span className="btn-spinner" aria-hidden="true" />
                   )}
-                  {productStatus === "Saving..."
-                    ? "Saving…"
-                    : productStatus === "Publishing..."
-                      ? "Publishing…"
-                      : editingProductId
-                        ? "Save changes"
-                        : "Publish product"}
+                  {editingProductId ? "Save changes" : "Publish product"}
                 </button>
                 {productStatus &&
                   productStatus !== "Saving..." &&
@@ -5497,7 +5549,7 @@ export default function AdminDashboard() {
                   {pickupDateStatus === "Saving..." && (
                     <span className="btn-spinner" aria-hidden="true" />
                   )}
-                  {pickupDateStatus === "Saving..." ? "Adding…" : `Add ${dateNoun} window`}
+                  {`Add ${dateNoun} window`}
                 </button>
                 {pickupDateStatus && pickupDateStatus !== "Saving..." && (
                   <span>{pickupDateStatus}</span>
@@ -5650,7 +5702,7 @@ export default function AdminDashboard() {
                 </fieldset>
               </>}
             </div>
-            <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !contentChanged}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}{contentStatus === "Saving..." ? "Saving…" : "Save changes"}</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
+            <div className="admin-editor-actions"><button className={`btn btn-light${contentStatus === "Saving..." ? " btn-loading" : ""}`} disabled={contentStatus === "Saving..." || !contentChanged}>{contentStatus === "Saving..." && <span className="btn-spinner" aria-hidden="true" />}Save changes</button>{contentStatus && contentStatus !== "Saving..." && <span>{contentStatus}</span>}</div>
           </form>;
         })()}
         {tab === "page content" && (

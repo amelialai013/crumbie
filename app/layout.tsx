@@ -4,6 +4,8 @@ import "./globals.css";
 import "./motion.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import SubscribePopup from "@/components/subscribe-popup";
+import { getRecord } from "@/lib/store";
 import { CartProvider } from "@/components/cart-context";
 import { defaultSearchImage, getSearchImage } from "@/lib/catalog-store";
 import { siteDescription, siteName, siteUrl } from "@/lib/site";
@@ -63,6 +65,8 @@ const websiteJsonLd = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	const searchImage = await getSearchImage();
+	const home = await getRecord<{ fields?: Record<string, string> }>("content", "homepage").catch(() => null);
+	const f = home?.fields || {};
 	return (
 		<html lang="en" className={dmSans.variable} data-scroll-behavior="smooth">
 			<head>
@@ -75,6 +79,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 					<Header />
 					<main>{children}</main>
 					<Footer />
+					<SubscribePopup
+							heading={f.popupHeading || "Warm from the oven,\nstraight to you."}
+							body={f.popupBody || "Be first to know about new flavours, limited drops and pickup windows. Plus 10% off your first order."}
+							placeholder={f.popupPlaceholder || "Your email address"}
+							button={f.popupButton || "Join the club"}
+							dismiss={f.popupDismiss || "No thanks"}
+							doneTitle={f.popupDoneTitle || "Almost there"}
+							doneBody={f.popupDoneBody || "Check your inbox and confirm your email to join."}
+						/>
 				</CartProvider>
 			</body>
 		</html>

@@ -371,7 +371,7 @@ export default function CheckoutView({ delivery, card, promo, images }: { delive
         <strong>${total.toFixed(2)}<small>AUD</small></strong>
       </div>
       <div className="co-pay-action">
-        <button className="btn btn-dark co-pay" disabled={busy} onClick={pay}>{busy ? "Starting secure checkout…" : "Confirm and pay"}</button>
+        <button className={`btn btn-dark co-pay${busy ? " btn-loading" : ""}`} disabled={busy} onClick={pay}>{busy && <span className="btn-spinner" aria-hidden="true" />}Confirm and pay</button>
         <div className="checkout-fine">
         <button type="button" className="co-link co-clear" disabled={removingLast} onClick={() => setConfirmClear(true)}>
           <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 5.5h13M7.5 5.5V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5M5 5.5l.7 10a1.5 1.5 0 0 0 1.5 1.4h5.6a1.5 1.5 0 0 0 1.5-1.4l.7-10M8.3 9v4.5M11.7 9v4.5" /></svg>
