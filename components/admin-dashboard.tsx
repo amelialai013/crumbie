@@ -1120,9 +1120,9 @@ function DeliverySettings({
       deliveryPostcodes: option.postcodes,
       deliveryRadiusKm: option.radiusKm,
       pickupTitle: initial.pickupTitle ?? "",
-      pickupDescription: option.pickupDescription,
+      pickupDescription: option.pickupDescription.replace(/^\s*(free|\$\s*\d+(\.\d+)?)\s*[•·\-–—:]?\s*/i, "").trim(),
       deliveryTitle: initial.deliveryTitle ?? "",
-      deliveryDescription: initial.deliveryDescription ?? "",
+      deliveryDescription: (initial.deliveryDescription ?? "").replace(/^\s*(free|\$\s*\d+(\.\d+)?)\s*[•·\-–—:]?\s*/i, "").trim(),
       deliveryInfo: initial.deliveryInfo ?? "",
     };
   };
@@ -1216,7 +1216,8 @@ function DeliverySettings({
               </div>
               <div className="field">
                 <label htmlFor="opt-pickup-desc">Pickup card description</label>
-                <input id="opt-pickup-desc" placeholder="Blank shows pickup fee" maxLength={80} value={fields.pickupDescription} onChange={(event) => setFields({ ...fields, pickupDescription: event.target.value })} />
+                <input id="opt-pickup-desc" placeholder="e.g. Ivanhoe (exact address provided after purchase)" maxLength={80} value={fields.pickupDescription} onChange={(event) => setFields({ ...fields, pickupDescription: event.target.value })} />
+                <small className="admin-card-hint">Always displays as [Price / Free] • your description.</small>
               </div>
             </div>
             <div className="admin-card-pair admin-card-stack">
@@ -1226,7 +1227,8 @@ function DeliverySettings({
               </div>
               <div className="field">
                 <label htmlFor="opt-delivery-desc">Delivery card description</label>
-                <input id="opt-delivery-desc" placeholder="Blank shows delivery fee" maxLength={80} value={fields.deliveryDescription} onChange={(event) => setFields({ ...fields, deliveryDescription: event.target.value })} />
+                <input id="opt-delivery-desc" placeholder="e.g. Delivered to your door" maxLength={80} value={fields.deliveryDescription} onChange={(event) => setFields({ ...fields, deliveryDescription: event.target.value })} />
+                <small className="admin-card-hint">Always displays as [Price / Free] • your description.</small>
               </div>
             </div>
             <div className="field">
@@ -3970,7 +3972,7 @@ export default function AdminDashboard() {
               if (!haystack.includes(needle)) return false;
             }
             return true;
-          });
+          }).sort((a, b) => Number(isOrderDone(a as Order)) - Number(isOrderDone(b as Order)));
           return (
           <>
           <div className="field admin-orders-search">
@@ -3999,7 +4001,7 @@ export default function AdminDashboard() {
                 value={orderCardFilter}
                 options={[
                   { value: "all", label: "All orders" },
-                  { value: "with", label: "Includes a card" },
+                  { value: "with", label: "Card" },
                   { value: "without", label: "No card" },
                 ]}
                 placeholder="All orders"
@@ -4063,7 +4065,7 @@ export default function AdminDashboard() {
             <tbody>
               {visibleOrders.length ? (
                 visibleOrders.map((order) => (
-                  <tr key={order.id}>
+                  <tr key={order.id} className={isOrderDone(order) ? "is-completed" : undefined}>
                     <td data-label="Completed" className="admin-status-col">
                       {isOrderDone(order) ? (
                         <svg className="admin-status-tick" aria-label="Completed" role="img" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
@@ -4165,7 +4167,7 @@ export default function AdminDashboard() {
 </td>
 <td data-label="Order">{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</td>
                             <td data-label="Customer" className="admin-order-customer">
-                              <strong>{order.customer?.name}{isOrderDone(order) ? <span className="admin-done-tag">Completed</span> : null}</strong>
+                              <strong>{order.customer?.name}</strong>
                               <span>{order.customer?.email}</span>
                             </td>
                             <td data-label="Items">
@@ -4253,7 +4255,7 @@ export default function AdminDashboard() {
 <td data-label="Stop">{stop}</td>
                             <td data-label="Order">{order.id ? order.id.slice(0, 8).toUpperCase() : "—"}</td>
                             <td data-label="Customer" className="admin-order-customer">
-                              <strong>{order.delivery?.name || order.customer?.name}{isOrderDone(order) ? <span className="admin-done-tag">Completed</span> : null}</strong>
+                              <strong>{order.delivery?.name || order.customer?.name}</strong>
                             </td>
                             <td data-label="Items">
                               {(order.lines || []).filter((line) => !isPickupLine(order, line)).map((line) => `${line.quantity ?? 1} × ${line.productName}`).join(", ")}
