@@ -9143,3 +9143,9 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
   .feature-hero::before, .feature-hero::after,
   section.hero::before, section.hero::after { animation: none; }
 }
+
+/* Newsletter list: full-width table, dates stay on one line. */
+.admin-newsletter > table.admin-stack-table { width: 100%; }
+@media (min-width: 641px) {
+  .admin-newsletter > table.admin-stack-table td[data-label="Date"] { white-space: nowrap; }
+}
