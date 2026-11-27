@@ -8896,3 +8896,25 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 
 .admin-schedule-group:has(.admin-kebab-menu), .admin-stack-table:has(.admin-kebab-menu) { position: relative; z-index: 6; }
 .admin-stack-table tr:has(.admin-kebab-menu) { position: relative; z-index: 5; }
+
+/* Hero orbs: faster, brighter, crisper drift. */
+.feature-hero::after, section.hero::after {
+  filter: blur(42px);
+  background: radial-gradient(circle, rgba(176,128,84,.55), rgba(142,96,60,.24) 45%, transparent 70%);
+  animation: hero-orb-a 8s ease-in-out infinite;
+}
+.feature-hero::before, section.hero::before {
+  filter: blur(42px);
+  background: radial-gradient(circle, rgba(150,88,60,.5), rgba(110,56,44,.18) 50%, transparent 70%);
+  animation: hero-orb-b 10s ease-in-out -4s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feature-hero::before, .feature-hero::after,
+  section.hero::before, section.hero::after { animation: none; }
+}
+
+/* Orders: completed column. */
+.admin-status-col { width: 44px; text-align: center; }
+.admin-status-tick { color: #c9ad94; vertical-align: middle; }
+.admin-status-dash { color: #7a6d5f; font-size: 20px; line-height: 1; }
+@media (max-width: 900px) { td.admin-status-col, th.admin-status-col { text-align: left; width: auto; } th.admin-status-col { display: none; } }
