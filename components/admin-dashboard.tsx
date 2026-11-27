@@ -4173,6 +4173,7 @@ export default function AdminDashboard() {
         {tab === "pickup schedule" && (
           <div>
             {scheduleTabs("pickup")}
+            {!pickupDates.some((date) => scheduleVisible(date, "pickup") && orders.some((order) => scheduleStatusMatch(order) && (order.lines || []).some((line) => line.pickupDate === date && isPickupLine(order, line)))) && <p className="admin-sync-note" role="note">{scheduleStatusFilter === "all" ? `No ${scheduleFilter} pickup orders` : "No pickup orders match this filter"}</p>}
             {pickupDates.filter((date) => scheduleVisible(date, "pickup")).map((date) => {
               const pickups = orders
                 .filter((order) => (order.lines || []).some((line) => line.pickupDate === date && isPickupLine(order, line)))
@@ -4264,6 +4265,7 @@ export default function AdminDashboard() {
             <div>
               {scheduleTabs("delivery")}
               {!dates.length && <p className="admin-sync-note" role="note">No {scheduleFilter} delivery schedules</p>}
+              {!!dates.length && !deliveries.some((order) => dates.includes(order.deliverySlot?.date || "") && scheduleStatusMatch(order)) && <p className="admin-sync-note" role="note">No delivery orders match this filter</p>}
               {dates.map((date) => {
                 const dayRoute = routeFromIvanhoe(
                   deliveries.filter((order) => (order.deliverySlot?.date || "") === date),
@@ -4343,7 +4345,7 @@ export default function AdminDashboard() {
                               {(order.lines || []).filter((line) => !isPickupLine(order, line)).map((line) => `${line.quantity ?? 1} × ${line.productName}`).join(", ")}
                               {order.card ? `${order.lines?.some((line) => !isPickupLine(order, line)) ? " + " : ""}${order.card.quantity ?? 1} × ${order.card.label || "Club Crumbie Card"}` : ""}
                             </td>
-                            <td data-label="Delivery address">{`${order.delivery?.street}, ${order.delivery?.suburb} VIC ${order.delivery?.postcode}`}{order.delivery?.source === "manual" ? <span className="admin-manual-tag">Manual</span> : null}</td>
+                            <td data-label="Delivery address">{`${order.delivery?.street}, ${order.delivery?.suburb} VIC ${order.delivery?.postcode}`}</td>
                             <td className="admin-table-action">
                               {order.id && (
                                 <div className="admin-kebab">

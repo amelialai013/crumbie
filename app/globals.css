@@ -6608,7 +6608,7 @@ textarea.card-addon-input {
   margin-top: 24px;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 640px) {
   .fulfil-toggle { margin-bottom: 24px; grid-template-columns: 1fr; }
 }
 
@@ -8334,7 +8334,6 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 
 .co-address-toggle { margin-top: 10px; padding: 0; background: none; border: 0; color: var(--accent, #c9ad94); font: inherit; font-size: .9rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .co-address-toggle:hover { color: var(--ink, #efcdaa); }
-.admin-manual-tag { margin-left: 8px; padding: 2px 8px; border: 1px solid #4a433a; border-radius: 999px; font-size: .72rem; color: #c9ad94; }
 
 .product-carousel-track { padding-block: 8px; margin-block: -8px; }
 
@@ -8658,7 +8657,7 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .admin-policy-sections .admin-modal-actions .btn.btn-light { background: transparent; border-color: var(--line); color: var(--ink, #efcdaa); }
 .admin-policy-sections .admin-modal-actions .btn.btn-light:hover { background: transparent; border-color: var(--accent); color: var(--ink, #efcdaa); }
 .admin-policy-sections .admin-modal-actions .btn:disabled { opacity: .45; cursor: not-allowed; }
-@media (max-width: 760px) {
+@media (max-width: 640px) {
   .admin-policy-sections .admin-modal-actions { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
 }
 
@@ -8961,3 +8960,73 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 .admin-drag-handle:active { cursor: grabbing; }
 .admin-stack-table tr.is-dragging td { opacity: .4; }
 .admin-stack-table tr.is-drop-target td { box-shadow: inset 0 2px 0 #c9ad94; }
+
+/* Modal fields: label above, rounded outlined control (matches the Search field) */
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field:not(.admin-gallery-field):not(.admin-card-toggle-field):not(:has(input[type="file"])) {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  gap: 8px;
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field:not(.admin-gallery-field):not(.admin-card-toggle-field):not(:has(input[type="file"])):focus-within {
+  box-shadow: none;
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) > :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), textarea),
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) > .admin-number-stepper,
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) .premium-select-trigger {
+  box-sizing: border-box;
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
+  margin: 0;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: #efcdaa;
+  font-size: .95rem;
+  line-height: normal;
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) > textarea {
+  height: auto;
+  min-height: 110px;
+  padding: 14px 16px;
+  line-height: 1.6;
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field > .admin-number-stepper {
+  display: flex;
+  align-items: center;
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) > :is(input, textarea):focus,
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field > .admin-number-stepper:focus-within,
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field .premium-select-trigger:focus-visible {
+  outline: 0;
+  border-color: #c9ad94;
+  box-shadow: 0 0 0 4px rgba(201, 173, 148, .14);
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field:not(.admin-gallery-field):not(.admin-card-toggle-field) > input::placeholder,
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field > textarea::placeholder {
+  color: #7d7060;
+}
+
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field .premium-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+:is(.admin-product-form, .admin-confirm-modal, .admin-create-order, .admin-modal) .field .premium-select-trigger > :last-child {
+  flex: none;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .admin-stack-table tr { position: relative; }
+  .admin-stack-table td.admin-drag-col { position: absolute; top: 14px; right: 0; width: auto; padding: 0 !important; }
+}
+
+@media (max-width: 640px) {
+  .admin-stack-table:not(.admin-enquiries-table) tr:has(td.admin-table-action) { padding-bottom: 60px; }
+  .admin-stack-table:not(.admin-enquiries-table) td.admin-table-action { bottom: 14px; }
+}
