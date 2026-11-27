@@ -6,6 +6,13 @@ import CrumbLoader from "./crumb-loader";
 
 type Subscriber = { id: string; email: string; name: string; subscribedAt: string; unsubscribed: boolean; pending: boolean };
 
+const formatSubscribed = (value: string) => {
+  const d = new Date(value);
+  const date = d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "Australia/Melbourne" });
+  const time = d.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Australia/Melbourne" }).replace(/\s/g, " ");
+  return `${date}, ${time}`;
+};
+
 export default function SubscribersAdmin() {
   const [subscribers, setSubscribers] = useState<Subscriber[] | null>(null);
   const [error, setError] = useState("");
@@ -132,7 +139,7 @@ export default function SubscribersAdmin() {
             {rows.length ? rows.map((s) => (
               <tr key={s.id}>
                 <td data-label="Email">{s.email}</td>
-                <td data-label="Subscribed">{new Date(s.subscribedAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</td>
+                <td data-label="Subscribed">{formatSubscribed(s.subscribedAt)}</td>
                 <td data-label="Status">{s.pending ? "Pending" : s.unsubscribed ? "Unsubscribed" : "Subscribed"}</td>
                 <td className="admin-table-action">
                   <div className="admin-kebab">

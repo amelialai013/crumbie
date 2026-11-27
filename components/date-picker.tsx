@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 type Parts = { day: string; month: string; year: string };
 
@@ -34,6 +34,26 @@ export function DatePicker({
   const yearRef = useRef<HTMLInputElement>(null);
   const nativeRef = useRef<HTMLInputElement>(null);
   const [nativeKey, setNativeKey] = useState(0);
+
+  useEffect(() => {
+    const close = (event: Event) => {
+      if (event.target instanceof Node && nativeRef.current?.parentElement?.contains(event.target)) return;
+      setNativeKey((k) => k + 1);
+    };
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setNativeKey((k) => k + 1);
+    };
+    document.addEventListener("pointerdown", close, true);
+    document.addEventListener("scroll", close, true);
+    document.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("blur", close);
+    return () => {
+      document.removeEventListener("pointerdown", close, true);
+      document.removeEventListener("scroll", close, true);
+      document.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("blur", close);
+    };
+  }, []);
 
   function update(next: Parts) {
     setParts(next);

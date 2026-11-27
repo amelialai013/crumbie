@@ -87,7 +87,8 @@ P.S. Sharing is optional. We won't judge.`,
 const logoBase = "https://clubcrumbie.com/email";
 const logoImgStyle = "display:block;width:136px;max-width:100%;height:auto;border:0;";
 
-// Dark logo by default; clients that honour prefers-color-scheme swap to the light one.
+// Emails sit on an explicit light background (see emailWrapStyle), so they always use the dark logo.
+export const emailWrapStyle = "background:#ffffff;color-scheme:light only;";
 export function emailLogoHtml(extraStyle = "") {
-	return `<style>.logo-light{display:none !important;}@media (prefers-color-scheme: dark){.logo-dark{display:none !important;}.logo-light{display:block !important;}}</style><img class="logo-dark" src="${logoBase}/club-crumbie-logo-transparent.png" alt="Club Crumbie" width="136" height="13" style="${logoImgStyle}${extraStyle}" /><img class="logo-light" src="${logoBase}/club-crumbie-logo-light.png" alt="" role="presentation" width="136" height="13" style="${logoImgStyle}display:none;${extraStyle}" />`;
+	return `<style>:root{color-scheme:light only;supported-color-schemes:light;}</style><img src="${logoBase}/club-crumbie-logo-transparent.png" alt="Club Crumbie" width="136" height="13" style="${logoImgStyle}${extraStyle}" />`;
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { sendGmailReply } from "@/lib/gmail-sender";
 import { Resend } from "resend";
-import { emailLogoHtml, welcomeDefaults, enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
+import { emailLogoHtml, emailWrapStyle, welcomeDefaults, enquiryTypeLabels, withEnquiryType, withPickupAddress } from "@/lib/email-templates";
 import { enquiryMailbox, enquiryReference, notificationRecipients } from "@/lib/enquiry-mail";
 import { threadToken } from "@/lib/enquiry-thread";
 import { formatPickupDate } from "@/lib/format-date";
@@ -309,7 +309,7 @@ export async function sendWelcomeEmail(to: string) {
 	const codeHtml = discount ? `<div style="margin:28px 0 0;padding:20px 24px;border:1px dashed #4A433A;border-radius:16px;max-width:360px;"><p style="margin:0 0 8px;font-size:14px;line-height:20px;color:#4A433A;">Your ${discount.label} off code</p><p style="margin:0 0 8px;font-size:24px;line-height:30px;font-weight:600;letter-spacing:0.04em;color:#1A140D;">${discount.code}</p><p style="margin:0;font-size:13px;line-height:18px;color:#4A433A;">One use only, just for you. Enter it at checkout before ${expiry}.</p></div>` : "";
 	const paragraphs = body.split(/\n{2,}/).map((part) => `<p style="margin:0 0 16px;">${escapeHtml(part.trim()).replace(/\n/g, "<br />")}</p>`).join("");
 	const cta = codeHtml + (hasButton ? `<p style="margin:28px 0 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#1A140D;color:#EFCDAA;text-decoration:none;font-family:'DM Sans',Helvetica,Arial,sans-serif;font-weight:600;font-size:15px;line-height:20px;letter-spacing:0;text-align:center;padding:15px 30px;border-radius:999px;">${escapeHtml(label)}</a></p>` : "");
-	const html = `<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#1A140D;max-width:560px;padding:40px 32px;"><a href="https://clubcrumbie.com" style="text-decoration:none;">${emailLogoHtml("margin-bottom:36px;")}</a>${paragraphs}${cta}<div style="margin-top:40px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">You're getting this because you joined Club Crumbie.</div></div>`;
+	const html = `<div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#1A140D;max-width:560px;padding:40px 32px;${emailWrapStyle}"><a href="https://clubcrumbie.com" style="text-decoration:none;">${emailLogoHtml("margin-bottom:36px;")}</a>${paragraphs}${cta}<div style="margin-top:40px;padding-top:20px;border-top:1px solid #DCCFBF;font-size:12px;color:#8A7D6F;">You're getting this because you joined Club Crumbie.</div></div>`;
 	const { error } = await new Resend(apiKey).emails.send({ from, to, subject, text: [body, discount ? `Your ${discount.label} off code: ${discount.code} (one use only, expires ${expiry})` : "", hasButton ? `${label}: ${url}` : ""].filter(Boolean).join("\n\n"), html });
 	if (error) throw new Error(error.message);
 }

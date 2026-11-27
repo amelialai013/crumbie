@@ -8899,12 +8899,12 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 /* Hero orbs: faster, brighter, crisper drift. */
 .feature-hero::after, section.hero::after {
   filter: blur(42px);
-  background: radial-gradient(circle, rgba(176,128,84,.55), rgba(142,96,60,.24) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(150,104,66,.42), rgba(120,80,50,.18) 45%, transparent 70%);
   animation: hero-orb-a 8s ease-in-out infinite;
 }
 .feature-hero::before, section.hero::before {
   filter: blur(42px);
-  background: radial-gradient(circle, rgba(150,88,60,.5), rgba(110,56,44,.18) 50%, transparent 70%);
+  background: radial-gradient(circle, rgba(130,74,52,.4), rgba(96,48,38,.14) 50%, transparent 70%);
   animation: hero-orb-b 10s ease-in-out -4s infinite;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -9029,4 +9029,117 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 @media (max-width: 640px) {
   .admin-stack-table:not(.admin-enquiries-table) tr:has(td.admin-table-action) { padding-bottom: 60px; }
   .admin-stack-table:not(.admin-enquiries-table) td.admin-table-action { bottom: 14px; }
+}
+
+/* Date/time pickers + newsletter modal fields: same outlined control as other fields */
+.admin-newsletter-modal .field { padding: 0; background: transparent; box-shadow: none; border: 0; gap: 8px; }
+.admin-newsletter-modal .field > :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea) {
+  box-sizing: border-box; width: 100%; height: 50px; margin: 0; padding: 0 16px;
+  border: 1px solid var(--line); border-radius: 12px; background: transparent; color: #efcdaa; font-size: .95rem;
+}
+.admin-newsletter-modal .field > textarea { height: auto; min-height: 110px; padding: 14px 16px; }
+.admin-newsletter-modal .field > :is(input, textarea):focus { outline: 0; border-color: #c9ad94; box-shadow: 0 0 0 4px rgba(201, 173, 148, .14); }
+
+.field > .time-picker {
+  box-sizing: border-box;
+  width: 100%;
+  height: 50px;
+  padding: 0 14px 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+}
+.field > .time-picker:focus-within { border-color: #c9ad94; box-shadow: 0 0 0 4px rgba(201, 173, 148, .14); }
+.field > .time-picker > input:not(.date-picker-native) {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+  color: #efcdaa;
+  font-size: .95rem;
+}
+.field > .time-picker .time-picker-trigger { margin: 0 -6px 0 0; }
+
+/* Mobile hero orbs: sized to the screen and drifting across its full width so they read clearly. */
+@media (max-width: 700px) {
+  .feature-hero::before, .feature-hero::after,
+  section.hero::before, section.hero::after {
+    top: 6svh;
+    width: 160vw;
+    filter: blur(26px);
+  }
+  .feature-hero::after, section.hero::after {
+    background: radial-gradient(circle, rgba(160,110,70,.62), rgba(124,82,50,.3) 40%, rgba(124,82,50,.08) 58%, transparent 66%);
+    animation: hero-orb-a-mobile 22s ease-in-out infinite;
+  }
+  .feature-hero::before, section.hero::before {
+    width: 140vw;
+    background: radial-gradient(circle, rgba(138,78,54,.58), rgba(100,50,40,.26) 42%, rgba(100,50,40,.07) 58%, transparent 66%);
+    animation: hero-orb-b-mobile 27s ease-in-out -9s infinite;
+  }
+}
+@keyframes hero-orb-a-mobile {
+  0%, 100% { transform: translate3d(-35vw, 10svh, 0) scale(0.70); opacity: .8; }
+  14% { transform: translate3d(22vw, 38svh, 0) scale(1.80); opacity: 1; }
+  29% { transform: translate3d(-28vw, 52svh, 0) scale(0.80); opacity: .75; }
+  43% { transform: translate3d(18vw, 8svh, 0) scale(1.50); opacity: 1; }
+  57% { transform: translate3d(-12vw, 30svh, 0) scale(1.00); opacity: .85; }
+  71% { transform: translate3d(28vw, 56svh, 0) scale(0.70); opacity: .8; }
+  86% { transform: translate3d(-30vw, 36svh, 0) scale(1.80); opacity: 1; }
+}
+@keyframes hero-orb-b-mobile {
+  0%, 100% { transform: translate3d(8vw, 44svh, 0) scale(1.60); opacity: .8; }
+  17% { transform: translate3d(-30vw, 12svh, 0) scale(0.70); opacity: 1; }
+  33% { transform: translate3d(26vw, 24svh, 0) scale(1.50); opacity: .8; }
+  50% { transform: translate3d(-18vw, 54svh, 0) scale(0.85); opacity: 1; }
+  67% { transform: translate3d(14vw, 6svh, 0) scale(1.80); opacity: .8; }
+  83% { transform: translate3d(-26vw, 30svh, 0) scale(0.80); opacity: 1; }
+}
+@media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+  .feature-hero::before, .feature-hero::after,
+  section.hero::before, section.hero::after { animation: none; transform: translate3d(-10vw, 25svh, 0); }
+}
+
+/* Desktop hero orbs: crisper edges so each orb reads as its own shape. */
+@media (min-width: 701px) {
+  .feature-hero::before, .feature-hero::after,
+  section.hero::before, section.hero::after { filter: blur(34px); }
+  .feature-hero::after, section.hero::after {
+    background: radial-gradient(circle, rgba(150,104,66,.46), rgba(120,80,50,.24) 40%, rgba(120,80,50,.07) 58%, transparent 66%);
+  }
+  .feature-hero::before, section.hero::before {
+    background: radial-gradient(circle, rgba(130,74,52,.44), rgba(96,48,38,.2) 42%, rgba(96,48,38,.06) 58%, transparent 66%);
+  }
+}
+
+/* Desktop orbs: longer, less repetitive paths that cross in different directions. */
+@media (min-width: 701px) {
+  .feature-hero::after, section.hero::after { animation: hero-orb-a-desktop 17s ease-in-out infinite; }
+  .feature-hero::before, section.hero::before { animation: hero-orb-b-desktop 21s ease-in-out -7s infinite; }
+}
+@keyframes hero-orb-a-desktop {
+  0%, 100% { transform: translate3d(60vw, 10svh, 0) scale(1); opacity: .85; }
+  14% { transform: translate3d(8vw, 28svh, 0) scale(1.3); opacity: 1; }
+  29% { transform: translate3d(-10vw, 8svh, 0) scale(.85); opacity: .8; }
+  43% { transform: translate3d(38vw, 34svh, 0) scale(1.2); opacity: 1; }
+  57% { transform: translate3d(70vw, 24svh, 0) scale(.8); opacity: .85; }
+  71% { transform: translate3d(25vw, 6svh, 0) scale(1.35); opacity: 1; }
+  86% { transform: translate3d(-5vw, 30svh, 0) scale(.95); opacity: .85; }
+}
+@keyframes hero-orb-b-desktop {
+  0%, 100% { transform: translate3d(-5vw, 26svh, 0) scale(1.2); opacity: .8; }
+  17% { transform: translate3d(50vw, 8svh, 0) scale(.8); opacity: 1; }
+  33% { transform: translate3d(72vw, 30svh, 0) scale(1.3); opacity: .85; }
+  50% { transform: translate3d(20vw, 36svh, 0) scale(.9); opacity: 1; }
+  67% { transform: translate3d(-8vw, 6svh, 0) scale(1.25); opacity: .8; }
+  83% { transform: translate3d(42vw, 22svh, 0) scale(.85); opacity: 1; }
+}
+@media (min-width: 701px) and (prefers-reduced-motion: reduce) {
+  .feature-hero::before, .feature-hero::after,
+  section.hero::before, section.hero::after { animation: none; }
 }
