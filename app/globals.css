@@ -8942,3 +8942,22 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
   color: var(--ink, #efcdaa);
   margin: 6px 0 0;
 }
+
+/* Let the hero orbs bleed softly into the next section instead of being clipped and masked. */
+.feature-hero {
+  -webkit-mask-image: none;
+  mask-image: none;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+.feature-hero::before, .feature-hero::after { filter: blur(70px); }
+
+.admin-filter-tabs + .admin-enquiry-filters { margin-bottom: 8px; }
+.admin-filter-tabs + .admin-enquiry-filters + .admin-schedule-group h2 { padding-top: 22px; }
+
+.admin-drag-col { width: 28px; padding-right: 0 !important; }
+.admin-drag-handle { display: inline-grid; place-items: center; width: 24px; height: 28px; opacity: .55; cursor: grab; touch-action: none; }
+.admin-drag-handle:hover { opacity: 1; }
+.admin-drag-handle:active { cursor: grabbing; }
+.admin-stack-table tr.is-dragging td { opacity: .4; }
+.admin-stack-table tr.is-drop-target td { box-shadow: inset 0 2px 0 #c9ad94; }

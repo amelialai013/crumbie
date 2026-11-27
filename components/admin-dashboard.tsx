@@ -50,6 +50,7 @@ type Order = {
   paymentStatus?: string;
   notes?: string;
   completedAt?: string | null;
+  stopOrder?: number | null;
   pickedUpAt?: string | null;
   deliveredAt?: string | null;
   emails?: Array<{ subject: string; message: string; sentAt: string }>;
@@ -1217,7 +1218,7 @@ function DeliverySettings({
               <div className="field">
                 <label htmlFor="opt-pickup-desc">Pickup card description</label>
                 <input id="opt-pickup-desc" placeholder="e.g. Ivanhoe (exact address provided after purchase)" maxLength={80} value={fields.pickupDescription} onChange={(event) => setFields({ ...fields, pickupDescription: event.target.value })} />
-                <small className="admin-card-hint">Always displays as [Price / Free] • your description.</small>
+                <small className="admin-card-hint">Always displays as [Price / Free] • your description</small>
               </div>
             </div>
             <div className="admin-card-pair admin-card-stack">
@@ -1228,7 +1229,7 @@ function DeliverySettings({
               <div className="field">
                 <label htmlFor="opt-delivery-desc">Delivery card description</label>
                 <input id="opt-delivery-desc" placeholder="e.g. Delivered to your door" maxLength={80} value={fields.deliveryDescription} onChange={(event) => setFields({ ...fields, deliveryDescription: event.target.value })} />
-                <small className="admin-card-hint">Always displays as [Price / Free] • your description.</small>
+                <small className="admin-card-hint">Always displays as [Price / Free] • your description</small>
               </div>
             </div>
             <div className="field">
@@ -2233,6 +2234,9 @@ export default function AdminDashboard() {
   const [orderPendingDeletion, setOrderPendingDeletion] = useState<Order | null>(null);
   const [deletingOrder, setDeletingOrder] = useState(false);
   const [pickupFilter, setPickupFilter] = useState<PickupFilter>("all");
+  const [dragStopId, setDragStopId] = useState<string | null>(null);
+  const [dragOverStopId, setDragOverStopId] = useState<string | null>(null);
+  const [scheduleStatusFilter, setScheduleStatusFilter] = useState("all");
   const [scheduleFilter, setScheduleFilter] = useState<"all" | "current" | "past">("all");
   const [managedDeliveryDates, setManagedDeliveryDates] = useState<PickupDate[]>([]);
   const deliveryTab = tab === "delivery windows";
@@ -2614,6 +2618,23 @@ export default function AdminDashboard() {
       current ? { ...current, orders: (current.orders as Order[]).map((item) => (item.id === order.id ? { ...item, completedAt: result.value, pickedUpAt: null, deliveredAt: null } : item)) } : current,
     );
     finishAdminAction(done ? "Marked as completed" : "Marked as not completed");
+  }
+
+  async function dropStop(orderedIds: string[], dragged: string, target: string) {
+    if (dragged === target) return;
+    const next = orderedIds.filter((id) => id !== dragged);
+    const at = next.indexOf(target);
+    if (at < 0) return;
+    next.splice(orderedIds.indexOf(dragged) < orderedIds.indexOf(target) ? at + 1 : at, 0, dragged);
+    setData((current) =>
+      current ? { ...current, orders: (current.orders as Order[]).map((item) => (item.id && next.includes(item.id) ? { ...item, stopOrder: next.indexOf(item.id) } : item)) } : current,
+    );
+    const response = await fetch("/api/admin/orders/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: next }),
+    }).catch(() => null);
+    if (!response?.ok) finishAdminAction("Unable to save the new order. Please try again.");
   }
 
   async function deleteOrder() {
@@ -3424,7 +3445,9 @@ export default function AdminDashboard() {
     const current = !!date && date >= todayMelbourne && (!cardSettings || known.some((item) => item.date === date));
     return scheduleFilter === "current" ? current : !current;
   };
+  const scheduleStatusMatch = (order: Order) => scheduleStatusFilter === "all" || (scheduleStatusFilter === "completed") === isOrderDone(order);
   const scheduleTabs = (kind: string) => (
+    <>
     <div className="admin-filter-tabs" role="tablist" aria-label={`${kind} schedule filters`}>
       {(["all", "current", "past"] as const).map((filter) => (
         <button
@@ -3439,6 +3462,26 @@ export default function AdminDashboard() {
         </button>
       ))}
     </div>
+    <div className="admin-enquiry-filters">
+      <div className="admin-enquiry-filter">
+        <span id={`${kind}-status-filter-label`}>Status</span>
+        <PremiumSelect
+          labelId={`${kind}-status-filter-label`}
+          value={scheduleStatusFilter}
+          options={[
+            { value: "all", label: "All statuses" },
+            { value: "open", label: "Not completed" },
+            { value: "completed", label: "Completed" },
+          ]}
+          placeholder="All statuses"
+          onChange={setScheduleStatusFilter}
+        />
+      </div>
+      {scheduleStatusFilter !== "all" && (
+        <button type="button" className="admin-filter-reset" onClick={() => setScheduleStatusFilter("all")}>Reset filters</button>
+      )}
+    </div>
+    </>
   );
 
   return (
@@ -4133,6 +4176,7 @@ export default function AdminDashboard() {
             {pickupDates.filter((date) => scheduleVisible(date, "pickup")).map((date) => {
               const pickups = orders
                 .filter((order) => (order.lines || []).some((line) => line.pickupDate === date && isPickupLine(order, line)))
+                .filter(scheduleStatusMatch)
                 .sort((a, b) => Number(isOrderDone(a)) - Number(isOrderDone(b)));
               if (!pickups.length) return null;
               return (
@@ -4221,18 +4265,26 @@ export default function AdminDashboard() {
               {scheduleTabs("delivery")}
               {!dates.length && <p className="admin-sync-note" role="note">No {scheduleFilter} delivery schedules</p>}
               {dates.map((date) => {
-                const route = routeFromIvanhoe(
+                const dayRoute = routeFromIvanhoe(
                   deliveries.filter((order) => (order.deliverySlot?.date || "") === date),
                   (order) => order.delivery?.postcode,
                 )
-                  .map((order, index) => ({ order, stop: index + 1 }))
+                  .map((order, index) => ({ order, index }))
+                  .sort((a, b) => (a.order.stopOrder ?? 1e6 + a.index) - (b.order.stopOrder ?? 1e6 + b.index))
+                  .map(({ order }, index) => ({ order, stop: index + 1 }));
+                const openIds = dayRoute.filter(({ order }) => !isOrderDone(order)).map(({ order }) => order.id!).filter(Boolean);
+                const allIds = [...openIds, ...dayRoute.filter(({ order }) => isOrderDone(order)).map(({ order }) => order.id!).filter(Boolean)];
+                const route = dayRoute
+                  .filter(({ order }) => scheduleStatusMatch(order))
                   .sort((a, b) => Number(isOrderDone(a.order)) - Number(isOrderDone(b.order)));
+                if (!route.length) return null;
                 return (
                   <div className="admin-schedule-group" key={date || "unscheduled"}>
                     <h2>{date ? formatPickupDate(date) : "No delivery date"}</h2>
                     <table className="table admin-stack-table">
                       <thead>
                         <tr>
+                          <th className="admin-drag-col"><span className="sr-only">Reorder</span></th>
                           <th className="admin-status-col"><span className="sr-only">Completed</span></th>
 <th>Stop</th>
                           <th>Order</th>
@@ -4244,7 +4296,37 @@ export default function AdminDashboard() {
                       </thead>
                       <tbody>
                         {route.map(({ order, stop }, index) => (
-                          <tr key={order.id ?? index} className={isOrderDone(order) ? "is-completed" : undefined}>
+                          <tr
+                            key={order.id ?? index}
+                            className={[isOrderDone(order) ? "is-completed" : "", dragStopId === order.id ? "is-dragging" : "", dragOverStopId === order.id && dragStopId !== order.id ? "is-drop-target" : ""].filter(Boolean).join(" ") || undefined}
+                            draggable={!!dragStopId && dragStopId === order.id}
+                            onDragStart={(event) => event.dataTransfer.setData("text/plain", order.id ?? "")}
+                            onDragOver={(event) => {
+                              if (!dragStopId || isOrderDone(order) || !order.id) return;
+                              event.preventDefault();
+                              setDragOverStopId(order.id);
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              if (dragStopId && order.id && !isOrderDone(order)) dropStop(allIds, dragStopId, order.id);
+                              setDragStopId(null);
+                              setDragOverStopId(null);
+                            }}
+                            onDragEnd={() => { setDragStopId(null); setDragOverStopId(null); }}
+                          >
+                            <td className="admin-drag-col">
+                              {!isOrderDone(order) && order.id && openIds.length > 1 && (
+                                <span
+                                  className="admin-drag-handle"
+                                  role="img"
+                                  aria-label="Drag to reorder"
+                                  onMouseDown={() => setDragStopId(order.id!)}
+                                  onMouseUp={() => setDragStopId(null)}
+                                >
+                                  <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="5.5" cy="3.5" r="1.3" /><circle cx="10.5" cy="3.5" r="1.3" /><circle cx="5.5" cy="8" r="1.3" /><circle cx="10.5" cy="8" r="1.3" /><circle cx="5.5" cy="12.5" r="1.3" /><circle cx="10.5" cy="12.5" r="1.3" /></svg>
+                                </span>
+                              )}
+                            </td>
                             <td data-label="Completed" className="admin-status-col">
 {isOrderDone(order) ? (
 <svg className="admin-status-tick" aria-label="Completed" role="img" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
