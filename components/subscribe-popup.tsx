@@ -12,6 +12,7 @@ type Props = { heading: string; body: string; placeholder: string; button: strin
 export default function SubscribePopup({ heading, body, placeholder, button, dismiss, doneTitle, doneBody }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +25,7 @@ export default function SubscribePopup({ heading, body, placeholder, button, dis
     } catch {
       return;
     }
+    new Image().src = "/subscribe-popup.jpg";
     const timer = window.setTimeout(() => {
       setOpen(true);
       try {
@@ -33,16 +35,26 @@ export default function SubscribePopup({ heading, body, placeholder, button, dis
     return () => window.clearTimeout(timer);
   }, [hidden]);
 
+  function close() {
+    if (closing) return;
+    setClosing(true);
+    window.setTimeout(() => {
+      setOpen(false);
+      setClosing(false);
+    }, 380);
+  }
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && close();
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, closing]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -77,16 +89,16 @@ export default function SubscribePopup({ heading, body, placeholder, button, dis
   if (!open || hidden) return null;
 
   return (
-    <div className="subscribe-popup" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setOpen(false)}>
+    <div className={`subscribe-popup${closing ? " is-closing" : ""}`} role="presentation" onMouseDown={(event) => event.target === event.currentTarget && close()}>
       <div className="subscribe-popup-card" role="dialog" aria-modal="true" aria-labelledby="subscribe-popup-title">
-        <button type="button" className="subscribe-popup-close" aria-label="Close" onClick={() => setOpen(false)}>
+        <button type="button" className="subscribe-popup-close" aria-label="Close" onClick={close}>
           <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m5 5 10 10M15 5 5 15" /></svg>
         </button>
         <div className="subscribe-popup-image" aria-hidden="true" />
         <div className="subscribe-popup-body">
           {status === "done" ? (
             <div className="subscribe-popup-done" role="status">
-              <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7" /></svg>
+              <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7" pathLength="1" /></svg>
               <h2 id="subscribe-popup-title">{doneTitle}</h2>
               <p>{doneBody}</p>
             </div>
@@ -104,7 +116,7 @@ export default function SubscribePopup({ heading, body, placeholder, button, dis
                 </button>
                 {status === "error" && <p className="subscribe-popup-error" id="subscribe-popup-error" role="alert">{message}</p>}
               </form>
-              <button type="button" className="subscribe-popup-dismiss" onClick={() => setOpen(false)}>{dismiss}</button>
+              <button type="button" className="subscribe-popup-dismiss" onClick={close}>{dismiss}</button>
             </>
           )}
         </div>

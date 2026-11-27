@@ -9406,3 +9406,31 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 @media (max-width: 700px) {
   .subscribe-popup-body input { text-align: center; }
 }
+
+.subscribe-popup-done { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.subscribe-popup-done h2, .subscribe-popup-done p { text-align: center; }
+
+.subscribe-popup-done svg { border: 2px solid var(--accent, #c9ad94); }
+
+@keyframes subscribe-popup-fade-in { from { opacity: 0; backdrop-filter: blur(0); } to { opacity: 1; backdrop-filter: blur(6px); } }
+@keyframes subscribe-popup-fade-out { from { opacity: 1; backdrop-filter: blur(6px); } to { opacity: 0; backdrop-filter: blur(0); } }
+@keyframes subscribe-popup-card-in { from { opacity: 0; transform: translateY(22px) scale(.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes subscribe-popup-card-out { from { opacity: 1; transform: none; filter: blur(0); } to { opacity: 0; transform: translateY(12px) scale(.98); filter: blur(4px); } }
+.subscribe-popup { animation: subscribe-popup-fade-in .6s cubic-bezier(.22, 1, .36, 1) both; }
+.subscribe-popup-card { animation: subscribe-popup-card-in .75s cubic-bezier(.22, 1, .36, 1) .08s both; will-change: transform, opacity; }
+.subscribe-popup.is-closing { pointer-events: none; animation: subscribe-popup-fade-out .38s cubic-bezier(.4, 0, .2, 1) both; }
+.subscribe-popup.is-closing .subscribe-popup-card { animation: subscribe-popup-card-out .38s cubic-bezier(.4, 0, .2, 1) both; }
+@media (prefers-reduced-motion: reduce) { .subscribe-popup, .subscribe-popup-card, .subscribe-popup.is-closing, .subscribe-popup.is-closing .subscribe-popup-card { animation-duration: .01s; animation-delay: 0s; } }
+
+.admin-accordion-divider + .admin-editor .admin-section-subheading h2,
+.admin-accordion-divider + form .admin-section-subheading h2 { margin-top: 0; }
+.admin-section-subheading h2 { margin-top: 0; }
+.admin-accordion-divider { margin-bottom: 20px; }
+
+.subscribe-popup-done svg { stroke-width: 2.3; }
+@media (prefers-reduced-motion: no-preference) {
+  .subscribe-popup-done svg { animation: nl-ring .6s .25s cubic-bezier(.16, 1, .3, 1) both; }
+  .subscribe-popup-done svg path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: nl-tick .45s .55s cubic-bezier(.65, 0, .35, 1) forwards; }
+  .subscribe-popup-done h2 { animation: nl-rise .6s .7s cubic-bezier(.16, 1, .3, 1) both; }
+  .subscribe-popup-done p { animation: nl-rise .6s .85s cubic-bezier(.16, 1, .3, 1) both; }
+}
