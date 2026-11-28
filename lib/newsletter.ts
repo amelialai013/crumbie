@@ -16,7 +16,10 @@ export function newsletterClient() {
 export async function newsletterSegmentId(resend: Resend) {
 	if (process.env.RESEND_NEWSLETTER_SEGMENT_ID?.trim()) return process.env.RESEND_NEWSLETTER_SEGMENT_ID.trim();
 	const list = await resend.segments.list();
-	const existing = list.data?.data.find((segment) => segment.name === "Newsletter");
+	// Never create a segment when the lookup failed; that would fork the subscriber list.
+	if (!list.data) throw new Error(list.error?.message || "Unable to list segments");
+	// If duplicates ever exist, always use the oldest, which holds the original subscribers.
+	const existing = list.data.data.filter((segment) => segment.name === "Newsletter").sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
 	if (existing) return existing.id;
 	const created = await resend.segments.create({ name: "Newsletter" });
 	if (!created.data) throw new Error(created.error?.message || "Unable to create segment");
