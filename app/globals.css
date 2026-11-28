@@ -9453,3 +9453,9 @@ td.admin-order-items, td.admin-order-customer { vertical-align: middle; }
 .newsletter-signup:not(:has(.newsletter-done)) { padding-bottom: clamp(24px, 3.4vw, 38px); }
 .promo-banner-copy p { max-width: none; justify-self: stretch; text-wrap: pretty; }
 .newsletter-done strong { font-size: 1.4rem; }
+.newsletter-done span, .subscribe-popup-done p, .subscribe-popup-body p { white-space: pre-line; }
+.newsletter-done strong { font-size: 1.65rem; }
+.newsletter-done strong { margin-bottom: 6px; }
+.newsletter-done strong { margin-top: 6px; }
+.newsletter-signup:has(.newsletter-done) { padding-bottom: clamp(40px, 5vw, 64px); }
+.newsletter-signup:has(.newsletter-done) { padding-top: clamp(28px, 4.2vw, 52px); }
