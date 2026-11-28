@@ -9450,3 +9450,6 @@ td.admin-order-items, td.admin-order-customer { vertical-align: middle; }
     padding-bottom: calc(100lvh - 100svh + 200px);
   }
 }
+.newsletter-signup:not(:has(.newsletter-done)) { padding-bottom: clamp(24px, 3.4vw, 38px); }
+.promo-banner-copy p { max-width: none; justify-self: stretch; text-wrap: pretty; }
+.newsletter-done strong { font-size: 1.4rem; }
