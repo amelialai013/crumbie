@@ -9436,3 +9436,10 @@ section.hero::before, section.hero::after { mix-blend-mode: normal; }
 }
 
 td.admin-order-items, td.admin-order-customer { vertical-align: middle; }
+
+@media (max-width: 700px) {
+  .subscribe-popup-image { height: clamp(130px, 22dvh, 200px); }
+}
+
+.subscribe-popup-done { padding-block: 28px; }
+.subscribe-popup-done h2 { margin-bottom: 4px; }

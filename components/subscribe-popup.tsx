@@ -7,9 +7,9 @@ const STORAGE_KEY = "crumbie-subscribe-popup";
 const DELAY_MS = 5000;
 const HIDDEN_ON = ["/admin", "/checkout", "/order-confirmation", "/newsletter"];
 
-type Props = { heading: string; body: string; placeholder: string; button: string; dismiss: string; doneTitle: string; doneBody: string };
+type Props = { image: string; heading: string; body: string; placeholder: string; button: string; dismiss: string; doneTitle: string; doneBody: string };
 
-export default function SubscribePopup({ heading, body, placeholder, button, dismiss, doneTitle, doneBody }: Props) {
+export default function SubscribePopup({ image, heading, body, placeholder, button, dismiss, doneTitle, doneBody }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -25,7 +25,7 @@ export default function SubscribePopup({ heading, body, placeholder, button, dis
     } catch {
       return;
     }
-    new Image().src = "/subscribe-popup.jpg";
+    new Image().src = image;
     const timer = window.setTimeout(() => {
       setOpen(true);
       try {
@@ -33,7 +33,7 @@ export default function SubscribePopup({ heading, body, placeholder, button, dis
       } catch {}
     }, DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [hidden]);
+  }, [hidden, image]);
 
   function close() {
     if (closing) return;
@@ -94,7 +94,7 @@ export default function SubscribePopup({ heading, body, placeholder, button, dis
         <button type="button" className="subscribe-popup-close" aria-label="Close" onClick={close}>
           <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m5 5 10 10M15 5 5 15" /></svg>
         </button>
-        <div className="subscribe-popup-image" aria-hidden="true" />
+        <div className="subscribe-popup-image" aria-hidden="true" style={{ backgroundImage: `url("${image}")` }} />
         <div className="subscribe-popup-body">
           {status === "done" ? (
             <div className="subscribe-popup-done" role="status">

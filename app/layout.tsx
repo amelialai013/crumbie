@@ -80,6 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 					<main>{children}</main>
 					<Footer />
 					<SubscribePopup
+							image={f.popupImage || "/subscribe-popup.jpg"}
 							heading={f.popupHeading || "Warm from the oven,\nstraight to you."}
 							body={f.popupBody || "Be first to know about new flavours, limited drops and pickup windows. Plus 10% off your first order."}
 							placeholder={f.popupPlaceholder || "Your email address"}

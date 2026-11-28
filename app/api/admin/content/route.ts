@@ -19,7 +19,7 @@ const editableModules = new Set([
 	"settings",
 ]);
 const limits: Record<string, Record<string, number>> = {
-	homepage: { heroPrimaryLabel: 40, heroSecondaryLabel: 40, howTitle: 40, stepOneTitle: 60, stepOneBody: 80, stepTwoTitle: 60, stepTwoBody: 80, stepThreeTitle: 60, stepThreeBody: 80, catalogHeading: 80, newsletterHeading: 60, newsletterBody: 120, newsletterWordTwo: 30, newsletterWordThree: 30, newsletterWordFour: 30, newsletterButton: 24, newsletterNote: 80, newsletterDoneTitle: 40, newsletterDoneBody: 120, popupHeading: 60, popupBody: 200, popupPlaceholder: 40, popupButton: 30, popupDismiss: 30, popupDoneTitle: 40, popupDoneBody: 160 },
+	homepage: { heroPrimaryLabel: 40, heroSecondaryLabel: 40, howTitle: 40, stepOneTitle: 60, stepOneBody: 80, stepTwoTitle: 60, stepTwoBody: 80, stepThreeTitle: 60, stepThreeBody: 80, catalogHeading: 80, newsletterHeading: 60, newsletterBody: 120, newsletterWordTwo: 30, newsletterWordThree: 30, newsletterWordFour: 30, newsletterButton: 24, newsletterNote: 80, newsletterDoneTitle: 40, newsletterDoneBody: 120, popupImage: 600, popupHeading: 60, popupBody: 200, popupPlaceholder: 40, popupButton: 30, popupDismiss: 30, popupDoneTitle: 40, popupDoneBody: 160 },
 	about: { pageTitle: 80, storyHeading: 80, storyCopy: 1200, batchHeading: 80, batchCopy: 800 },
 	"contact us": { pageTitle: 80, messagePrompt: 180, enquiryTypes: 1000 },
 	faqs: { pageTitle: 80, pickupHeading: 80, pickupCopy: policyBodyMaxChars, deadlineHeading: 80, deadlineCopy: policyBodyMaxChars, paymentHeading: 80, paymentCopy: policyBodyMaxChars, cancellationHeading: 80, cancellationCopy: policyBodyMaxChars, allergenHeading: 80, allergenCopy: policyBodyMaxChars, enquiryHeading: 80, enquiryCopy: policyBodyMaxChars },

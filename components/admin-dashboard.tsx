@@ -325,6 +325,7 @@ type ContentField = {
   body?: boolean;
   multiline?: boolean;
   rows?: number;
+  image?: boolean;
 };
 type ContentModule = { fields: ContentField[]; defaults?: Content };
 type PickupDate = {
@@ -417,6 +418,7 @@ const contentModules: Record<string, ContentModule> = {
       { key: "newsletterNote", label: "Newsletter small print", maxLength: 80 },
       { key: "newsletterDoneTitle", label: "Newsletter after-signup heading", maxLength: 40 },
       { key: "newsletterDoneBody", label: "Newsletter after-signup message", maxLength: 120, multiline: true, rows: 2 },
+      { key: "popupImage", label: "Pop-up image", maxLength: 600, image: true },
       { key: "popupHeading", label: "Pop-up heading", maxLength: 60, multiline: true, rows: 2 },
       { key: "popupBody", label: "Pop-up body copy", maxLength: 200, multiline: true, rows: 3 },
       { key: "popupPlaceholder", label: "Pop-up email placeholder", maxLength: 40 },
@@ -1737,6 +1739,8 @@ function ContentEditor({
   const [contentStatus, setContentStatus] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [draggedEnquiryType, setDraggedEnquiryType] = useState<number | null>(null);
+  const [popupFile, setPopupFile] = useState<File | null>(null);
+  const popupPreview = useMemo(() => (popupFile ? URL.createObjectURL(popupFile) : ""), [popupFile]);
   const subSections = moduleName === "homepage"
     ? [
         { id: "newsletter", title: "Newsletter", prefix: "newsletter" },
@@ -1747,7 +1751,7 @@ function ContentEditor({
   const savedFields: Record<string, string> = (JSON.parse(savedContent) as Content).fields || {};
   const pick = (fields: Record<string, string>, keys: string[]) => Object.fromEntries(keys.map((key) => [key, fields[key] ?? ""]));
   const mainKeys = (fields: Record<string, string>) => Object.keys(fields).filter((key) => !subKeys.includes(key));
-  const sectionChanged = (keys: string[]) => JSON.stringify(pick(content.fields, keys)) !== JSON.stringify(pick(savedFields, keys));
+  const sectionChanged = (keys: string[]) => (keys.includes("popupImage") && popupFile !== null) || JSON.stringify(pick(content.fields, keys)) !== JSON.stringify(pick(savedFields, keys));
   const contentChanged = subKeys.length
     ? JSON.stringify(pick(content.fields, mainKeys(content.fields))) !== JSON.stringify(pick(savedFields, mainKeys(savedFields))) || JSON.stringify({ ...content, fields: {} }) !== JSON.stringify({ ...JSON.parse(savedContent), fields: {} })
     : JSON.stringify(content) !== savedContent;
@@ -1784,6 +1788,40 @@ function ContentEditor({
     const id = `content-${moduleName.replace(/\s+/g, "-")}-${field.key}`;
     const update = (next: string) => setContent({ ...content, fields: { ...content.fields, [field.key]: next } });
 
+    if (field.image) {
+      return (
+        <div className="field admin-gallery-field" key={field.key}>
+          <label htmlFor={id}>{field.label}</label>
+          <label className="admin-reference-dropzone admin-gallery-dropzone" htmlFor={id} tabIndex={0}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              const file = Array.from(event.dataTransfer.files).find((item) => item.type.startsWith("image/"));
+              if (file) setPopupFile(file);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                document.getElementById(id)?.click();
+              }
+            }}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
+            </svg>
+            <span>Click to upload a photo</span>
+            <small>or drag and drop · JPG, PNG or WebP</small>
+            <input id={id} type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) setPopupFile(file); event.target.value = ""; }} />
+          </label>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={popupPreview || value || "/subscribe-popup.jpg"} alt="Pop-up preview" style={{ width: "100%", maxWidth: 320, aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 12, marginTop: 12 }} />
+          {(value || popupFile) && (
+            <button type="button" className="text-button" onClick={() => { setPopupFile(null); update(""); }}>Reset to default</button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="field" key={field.key}>
         <label htmlFor={id}>{field.label}</label>
@@ -1808,9 +1846,25 @@ function ContentEditor({
 
   async function saveContent(event: React.FormEvent, sectionKeys?: string[]) {
     event.preventDefault();
+    let pendingFields = content.fields;
+    if (popupFile && sectionKeys?.includes("popupImage")) {
+      setContentStatus("Saving...");
+      begin("Saving changes…");
+      const upload = new FormData();
+      upload.append("files", (await compressReferenceImages([popupFile]))[0]);
+      const uploaded = await fetch("/api/admin/gallery", { method: "POST", body: upload });
+      const result = await uploaded.json().catch(() => null);
+      if (!uploaded.ok || !result?.urls?.[0]) {
+        finish();
+        setContentStatus(result?.error || "Unable to upload photo");
+        return;
+      }
+      pendingFields = { ...content.fields, popupImage: result.urls[0] };
+      setContent({ ...content, fields: pendingFields });
+    }
     const fieldsToSave = subKeys.length
       ? sectionKeys
-        ? { ...savedFields, ...pick(content.fields, sectionKeys) }
+        ? { ...savedFields, ...pick(pendingFields, sectionKeys) }
         : { ...content.fields, ...pick(savedFields, subKeys) }
       : content.fields;
     const contentModule = contentModules[moduleName];
@@ -1835,6 +1889,7 @@ function ContentEditor({
     });
     if (response.ok) {
       setSavedContent(JSON.stringify(subKeys.length ? { ...JSON.parse(savedContent), fields: fieldsToSave } : content));
+      setPopupFile(null);
       setContentStatus("");
       finish("Changes successfully saved");
       return;
