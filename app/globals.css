@@ -9459,3 +9459,4 @@ td.admin-order-items, td.admin-order-customer { vertical-align: middle; }
 .newsletter-done strong { margin-top: 6px; }
 .newsletter-signup:has(.newsletter-done) { padding-bottom: clamp(40px, 5vw, 64px); }
 .newsletter-signup:has(.newsletter-done) { padding-top: clamp(28px, 4.2vw, 52px); }
+.newsletter-signup:has(.newsletter-done) { padding-bottom: clamp(48px, 5.8vw, 72px); }
