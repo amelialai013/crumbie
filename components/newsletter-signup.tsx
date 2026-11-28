@@ -12,7 +12,7 @@ export default function NewsletterSignup({ heading, body, button, note, doneTitl
     const data = new FormData(form);
     const email = String(data.get("email") || "").trim();
     if (!email || !form.elements.namedItem("email") || !(form.elements.namedItem("email") as HTMLInputElement).validity.valid) {
-      setMessage(email ? "Please enter a valid email address." : "Please enter your email address.");
+      setMessage(email ? "Please enter a valid email address" : "Please enter your email address");
       setStatus("error");
       return;
     }
@@ -63,7 +63,7 @@ export default function NewsletterSignup({ heading, body, button, note, doneTitl
         <>
           <form className="newsletter-form" onSubmit={submit} noValidate>
             <label className="sr-only" htmlFor="newsletter-email">Email address</label>
-            <input id="newsletter-email" name="email" type="email" required autoComplete="email" aria-invalid={status === "error"} aria-describedby={status === "error" ? "newsletter-error" : undefined} placeholder="Your email address" />
+            <input id="newsletter-email" name="email" type="email" required autoComplete="email" aria-invalid={status === "error"} aria-describedby={status === "error" ? "newsletter-error" : undefined} placeholder="Your email address" onChange={() => { if (status === "error") { setStatus("idle"); setMessage(""); } }} />
             <input className="newsletter-hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
             <button type="submit" className={status === "sending" ? "btn-loading" : undefined} disabled={status === "sending"}>
               {status === "sending" && <span className="btn-spinner" aria-hidden="true" />}

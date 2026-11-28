@@ -62,7 +62,7 @@ export default function SubscribePopup({ image, heading, body, placeholder, butt
     const data = new FormData(form);
     const email = String(data.get("email") || "").trim();
     if (!email || !inputRef.current?.validity.valid) {
-      setMessage(email ? "Please enter a valid email address." : "Please enter your email address.");
+      setMessage(email ? "Please enter a valid email address" : "Please enter your email address");
       setStatus("error");
       inputRef.current?.focus();
       return;
@@ -108,7 +108,7 @@ export default function SubscribePopup({ image, heading, body, placeholder, butt
               <p>{body}</p>
               <form onSubmit={submit} noValidate>
                 <label className="sr-only" htmlFor="subscribe-popup-email">Email address</label>
-                <input ref={inputRef} id="subscribe-popup-email" name="email" type="email" autoComplete="email" placeholder={placeholder} aria-invalid={status === "error"} aria-describedby={status === "error" ? "subscribe-popup-error" : undefined} />
+                <input ref={inputRef} id="subscribe-popup-email" name="email" type="email" autoComplete="email" placeholder={placeholder} onChange={() => { if (status === "error") { setStatus("idle"); setMessage(""); } }} aria-invalid={status === "error"} aria-describedby={status === "error" ? "subscribe-popup-error" : undefined} />
                 <input className="newsletter-hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
                 <button type="submit" className={`subscribe-popup-submit${status === "sending" ? " btn-loading" : ""}`} disabled={status === "sending"}>
                   {status === "sending" && <span className="btn-spinner" aria-hidden="true" />}

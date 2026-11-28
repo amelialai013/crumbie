@@ -9500,3 +9500,21 @@ td.admin-order-items, td.admin-order-customer { vertical-align: middle; }
   background: rgba(239, 205, 170, 0.25);
   color: #efcdaa;
 }
+
+.newsletter-signup .newsletter-note { margin-top: -14px; }
+
+@media (min-width: 521px) {
+  .newsletter-signup .newsletter-form:has(.newsletter-error) { margin-bottom: 26px; }
+}
+
+@media (min-width: 521px) {
+  .newsletter-form:has(input[aria-invalid="true"]),
+  .newsletter-form:has(input[aria-invalid="true"]):hover,
+  .newsletter-form:has(input[aria-invalid="true"]):focus-within { border-color: #ff8f8f; }
+  .newsletter-form:has(input[aria-invalid="true"]):focus-within { box-shadow: 0 0 0 4px rgba(255, 143, 143, .14); }
+}
+@media (max-width: 520px) {
+  .newsletter-form input[type="email"][aria-invalid="true"],
+  .newsletter-form input[type="email"][aria-invalid="true"]:hover,
+  .newsletter-form input[type="email"][aria-invalid="true"]:focus { border-color: #ff8f8f; }
+}
