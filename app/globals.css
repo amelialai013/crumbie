@@ -9443,3 +9443,10 @@ td.admin-order-items, td.admin-order-customer { vertical-align: middle; }
 
 .subscribe-popup-done { padding-block: 28px; }
 .subscribe-popup-done h2 { margin-bottom: 4px; }
+/* Overscan the intro overlay so no page shows beneath iOS Safari's floating toolbar while loading. */
+@supports (height: 100lvh) {
+  .orb-intro {
+    height: calc(100lvh + 200px);
+    padding-bottom: calc(100lvh - 100svh + 200px);
+  }
+}
