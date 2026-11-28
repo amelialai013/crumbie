@@ -5,12 +5,16 @@ import { isAdmin } from "@/lib/session";
 
 type Draft = { id: string; subject: string; body: string; buttonLabel: string; buttonUrl: string; images?: { src: string; after: number }[]; scheduledAt: string; updatedAt: string };
 
+// The store serves media as /media/... paths; keep absolute URLs so thumbnails and emails resolve.
+const absoluteMedia = (src: string) => (src.startsWith("/media/") ? `${(process.env.R2_PUBLIC_URL || "https://pub-fea5209176ba412da081e64534c01cc7.r2.dev").replace(/\/$/, "")}${src.slice(6)}` : src);
+
 const text = (value: unknown, max: number) => (typeof value === "string" ? value.slice(0, max) : "");
 
 export async function GET() {
 	if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	try {
 		const drafts = await listRecords<Draft>("newsletter-draft");
+		for (const d of drafts) d.images = d.images?.map((i) => ({ ...i, src: absoluteMedia(i.src) }));
 		drafts.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 		return NextResponse.json({ drafts });
 	} catch {
@@ -29,7 +33,7 @@ export async function POST(req: Request) {
 		body: text(payload.body, 10000),
 		buttonLabel: text(payload.buttonLabel, 60),
 		buttonUrl: text(payload.buttonUrl, 300),
-		images: Array.isArray(payload.images) ? payload.images.filter((u: { src?: unknown; after?: unknown }) => u && typeof u.src === "string" && Number.isInteger(u.after)).slice(0, 6).map((u: { src: string; after: number }) => ({ src: u.src.slice(0, 500), after: u.after })) : [],
+		images: Array.isArray(payload.images) ? payload.images.filter((u: { src?: unknown; after?: unknown }) => u && typeof u.src === "string" && Number.isInteger(u.after)).slice(0, 6).map((u: { src: string; after: number }) => ({ src: absoluteMedia(u.src).slice(0, 500), after: u.after })) : [],
 		scheduledAt: text(payload.scheduledAt, 40),
 		updatedAt: new Date().toISOString(),
 	};

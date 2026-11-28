@@ -1,14 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CrumbLoader from "./crumb-loader";
 import { DatePicker } from "./date-picker";
 import { TimePicker } from "./time-picker";
 
 type NewsletterImage = { src: string; after: number };
 type Sent = { id: string; name: string | null; status: string; createdAt: string; scheduledAt: string | null; sentAt: string | null };
+const normalizeUrl = (u: string) => { const t = u.trim(); return t && !/^https?:\/\//i.test(t) ? `https://${t}` : t; };
+
 type Draft = { id: string; subject: string; body: string; buttonLabel: string; buttonUrl: string; images?: NewsletterImage[]; scheduledAt: string; updatedAt: string };
 type Viewing = { subject: string; html: string } | "loading" | "error" | null;
+
+function withLegacyImages(body: string, images: NewsletterImage[]) {
+  const parts = body.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
+  const out: string[] = [];
+  const at = (n: number) => images.forEach((img, i) => { if ((img.after < 0 || img.after > parts.length ? parts.length : img.after) === n) out.push(`[image ${i + 1}]`); });
+  at(0);
+  parts.forEach((part, i) => { out.push(part); at(i + 1); });
+  return out.join("\n\n");
+}
 
 const fmtDate = (value: string) => new Date(value).toLocaleString("en-AU", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).replace(" at ", ", ");
 
@@ -23,16 +34,17 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
   const scheduledAt = schedDate ? (schedTime ? `${schedDate}T${schedTime}` : schedDate) : "";
   const [images, setImages] = useState<NewsletterImage[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [busy, setBusy] = useState<"" | "test" | "send" | "draft">("");
   const [menuId, setMenuId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [draftId, setDraftId] = useState("");
   const [notice, setNotice] = useState("");
+  const [imageError, setImageError] = useState("");
   const [history, setHistory] = useState<Sent[] | null>(null);
   const [historyError, setHistoryError] = useState("");
   const [viewing, setViewing] = useState<Viewing>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ subject?: string; body?: string; time?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ subject?: string; body?: string; time?: string; buttonLabel?: string; buttonUrl?: string }>({});
 
   useEffect(() => {
     fetch("/api/admin/newsletter")
@@ -91,12 +103,13 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
   function editDraft(draft: Draft) {
     setDraftId(draft.id);
     setSubject(draft.subject);
-    setBody(draft.body);
+    const legacy = draft.images || [];
+    setBody(legacy.length && !/\[image \d+\]/.test(draft.body) ? withLegacyImages(draft.body, legacy) : draft.body);
     setButtonLabel(draft.buttonLabel);
     setButtonUrl(draft.buttonUrl);
     setSchedDate(draft.scheduledAt.slice(0, 10));
     setSchedTime(draft.scheduledAt.slice(11, 16));
-    setImages(draft.images || []);
+    setImages(legacy);
     setFieldErrors({});
     setNotice("");
     onOpen();
@@ -112,6 +125,7 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
   }
 
   async function saveDraft() {
+    if (!validate(false)) return;
     setBusy("draft");
     setNotice("");
     const res = await fetch("/api/admin/newsletter/drafts", {
@@ -128,20 +142,65 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
     loadDrafts();
   }
 
-  const paragraphCount = body.split(/\n{2,}/).filter((part) => part.trim()).length;
+  async function shrink(file: File) {
+    if (file.type === "image/gif") return file;
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+      if (scale === 1 && file.size < 1_500_000) return file;
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const type = file.type === "image/png" ? "image/png" : "image/jpeg";
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, 0.86));
+      return blob && blob.size < file.size ? new File([blob], file.name.replace(/\.\w+$/, type === "image/png" ? ".png" : ".jpg"), { type }) : file;
+    } catch {
+      return file;
+    }
+  }
 
-  async function uploadImages(list: FileList | File[]) {
-    const files = Array.from(list).filter((f) => f.type.startsWith("image/")).slice(0, 6 - images.length);
-    if (!files.length) return;
+  function insertAtCursor(text: string, at?: { start: number; end: number }) {
+    const el = bodyRef.current;
+    const start = at?.start ?? el?.selectionStart ?? body.length;
+    const end = at?.end ?? el?.selectionEnd ?? body.length;
+    setBody((current) => {
+      const before = current.slice(0, start);
+      const after = current.slice(end);
+      const lead = !before ? "" : before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
+      const trail = !after ? "" : after.startsWith("\n\n") ? "" : after.startsWith("\n") ? "\n" : "\n\n";
+      const caret = (before + lead + text + trail).length;
+      requestAnimationFrame(() => { bodyRef.current?.focus(); bodyRef.current?.setSelectionRange(caret, caret); });
+      return before + lead + text + trail + after;
+    });
+    setFieldErrors((f) => ({ ...f, body: undefined }));
+  }
+
+  async function uploadImages(list: FileList | File[], at?: { start: number; end: number }) {
+    const picked = Array.from(list);
+    const files = picked.filter((f) => /^image\/(jpeg|png|gif|webp)$/.test(f.type)).slice(0, 6 - images.length);
+    if (!files.length) return setImageError(images.length >= 6 ? "Up to 6 images" : "Use JPG, PNG, GIF or WebP images");
     setUploading(true);
-    setNotice("");
+    setImageError("");
     const form = new FormData();
-    files.forEach((f) => form.append("files", f));
+    (await Promise.all(files.map(shrink))).forEach((f) => form.append("files", f));
     const res = await fetch("/api/admin/newsletter/images", { method: "POST", body: form }).catch(() => null);
     const data = await res?.json().catch(() => null);
     setUploading(false);
-    if (!res?.ok) return setNotice(data?.error || "Unable to upload images.");
-    setImages((list) => [...list, ...(data.urls as string[]).map((src) => ({ src, after: -1 }))].slice(0, 6));
+    if (!res?.ok) return setImageError(data?.error || (res?.status === 413 ? "Images are too large" : "Unable to upload images"));
+    if (picked.length > files.length) setImageError("Some files were skipped (only JPG, PNG, GIF or WebP, up to 6 images)");
+    const urls = data.urls as string[];
+    const start = images.length;
+    setImages((current) => [...current, ...urls.map((src) => ({ src, after: -1 }))].slice(0, 6));
+    insertAtCursor(urls.map((_, i) => `[image ${start + i + 1}]`).join("\n\n"), at);
+  }
+
+  function removeImage(n: number) {
+    setImages((current) => current.filter((_, i) => i !== n - 1));
+    setBody((current) => current
+      .replace(/\[image (\d+)\]/g, (_, d) => (Number(d) === n ? "\u0000" : `[image ${Number(d) > n ? Number(d) - 1 : d}]`))
+      .replace(/\n*\u0000\n*/g, "\n\n")
+      .replace(/^\n+|\n+$/g, ""));
   }
 
   async function view(id: string) {
@@ -151,18 +210,25 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
     setViewing(res?.ok && data ? data : "error");
   }
 
-  async function submit(mode: "test" | "send") {
-    const errors: { subject?: string; body?: string; time?: string } = {};
-    if (!subject.trim()) errors.subject = "Add a subject.";
-    if (!body.trim()) errors.body = "Add a message.";
-    if (schedDate && !schedTime) errors.time = "Choose a send time.";
+  function validate(full: boolean) {
+    const errors: { subject?: string; body?: string; time?: string; buttonLabel?: string; buttonUrl?: string } = {};
+    if (!subject.trim()) errors.subject = "Add a subject";
+    if (full && !body.trim()) errors.body = "Add a message";
+    if (full && schedDate && !schedTime) errors.time = "Choose a send time";
+    if (buttonLabel.trim() && !buttonUrl.trim()) errors.buttonUrl = "Add a button link";
+    else if (buttonUrl.trim() && !/^(https?:\/\/)?[^\s.\/]+(\.[^\s.\/]+)+\S*$/i.test(buttonUrl.trim())) errors.buttonUrl = "Enter a valid link, e.g. https://clubcrumbie.com";
+    if (buttonUrl.trim() && !buttonLabel.trim()) errors.buttonLabel = "Add button text";
     setFieldErrors(errors);
-    if (errors.subject || errors.body || errors.time) {
-      const target = document.getElementById(errors.subject ? "nl-subject" : errors.body ? "nl-body" : "nl-schedule-time");
-      target?.scrollIntoView({ behavior: "smooth", block: "center" });
-      target?.focus({ preventScroll: true });
-      return;
-    }
+    const first = (["subject", "body", "buttonLabel", "buttonUrl", "time"] as const).find((k) => errors[k]);
+    if (!first) return true;
+    const target = document.getElementById({ subject: "nl-subject", body: "nl-body", buttonLabel: "nl-button-label", buttonUrl: "nl-button-url", time: "nl-schedule-time" }[first]);
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    target?.focus({ preventScroll: true });
+    return false;
+  }
+
+  async function submit(mode: "test" | "send") {
+    if (!validate(true)) return;
     const when = scheduledAt ? ` on ${new Date(scheduledAt).toLocaleString()}` : " now";
     if (mode === "send" && !window.confirm(`Send this newsletter to ${subscribers ?? "all"} subscribers${when}?`)) return;
     setBusy(mode);
@@ -175,7 +241,7 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
         subject,
         body,
         buttonLabel,
-        buttonUrl,
+        buttonUrl: normalizeUrl(buttonUrl),
         images,
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : "",
       }),
@@ -292,76 +358,58 @@ export default function NewsletterAdmin({ onSuccess, composing, onClose, onOpen 
             <div className="admin-modal-body">
             <label className={`field${fieldErrors.subject ? " has-error" : ""}`}>
               <span>Subject</span>
-              <input maxLength={200} aria-invalid={!!fieldErrors.subject} value={subject} onChange={(e) => { setSubject(e.target.value); setFieldErrors((f) => ({ ...f, subject: undefined })); }} />
-              {fieldErrors.subject && <small className="admin-reply-error" role="alert">{fieldErrors.subject}</small>}
+              <input id="nl-subject" maxLength={200} aria-invalid={!!fieldErrors.subject} value={subject} onChange={(e) => { setSubject(e.target.value); setFieldErrors((f) => ({ ...f, subject: undefined })); }} />
+              {fieldErrors.subject && <p className="field-error" role="alert">{fieldErrors.subject}</p>}
             </label>
             <label className={`field${fieldErrors.body ? " has-error" : ""}`}>
               <span>Message</span>
-              <textarea rows={8} maxLength={10000} aria-invalid={!!fieldErrors.body} value={body} onChange={(e) => { setBody(e.target.value); setFieldErrors((f) => ({ ...f, body: undefined })); }} />
-              {fieldErrors.body && <small className="admin-reply-error" role="alert">{fieldErrors.body}</small>}
-              <small className="admin-newsletter-hint">Leave a blank line between paragraphs. An unsubscribe link is added automatically.</small>
+              <textarea id="nl-body" ref={bodyRef} rows={8} maxLength={10000} onPaste={(e) => { const files = Array.from(e.clipboardData.files); if (files.length) { e.preventDefault(); void uploadImages(files, { start: e.currentTarget.selectionStart, end: e.currentTarget.selectionEnd }); } }} onDrop={(e) => { if (e.dataTransfer.files.length) { e.preventDefault(); void uploadImages(e.dataTransfer.files, { start: e.currentTarget.selectionStart, end: e.currentTarget.selectionEnd }); } }} aria-invalid={!!fieldErrors.body} value={body} onChange={(e) => { setBody(e.target.value); setFieldErrors((f) => ({ ...f, body: undefined })); }} />
+              {fieldErrors.body && <p className="field-error" role="alert">{fieldErrors.body}</p>}
+              <small className="admin-newsletter-hint">Leave a blank line between paragraphs. Drop or paste a photo to place it at the cursor. An unsubscribe link is added automatically.</small>
             </label>
             <div className="field">
-              <span>Images (optional)</span>
-              <div className="admin-newsletter-images-box">
-              {images.length < 6 && (
-                <label className={`admin-reference-dropzone admin-gallery-dropzone${dragActive ? " is-active" : ""}`} htmlFor="nl-images" tabIndex={0}
-                  onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-                  onDragLeave={() => setDragActive(false)}
-                  onDrop={(e) => { e.preventDefault(); setDragActive(false); uploadImages(e.dataTransfer.files); }}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.getElementById("nl-images")?.click(); } }}
-                >
-                  <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 16V5m0 0L8 9m4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" />
-                  </svg>
-                  <span>{uploading ? "Uploading…" : "Click to upload photos"}</span>
-                  <small>or drag and drop · JPG, PNG, GIF or WebP · up to 6</small>
-                  <input id="nl-images" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple onChange={(e) => { if (e.target.files) uploadImages(e.target.files); e.target.value = ""; }} />
-                </label>
-              )}
-              {images.length > 0 && (
-                <div className="admin-newsletter-images">
-                  {images.map((image, i) => (
-                    <div key={image.src} className="admin-newsletter-image">
-                      <div className="admin-newsletter-image-thumb">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={image.src} alt="" />
-                        <button type="button" aria-label="Remove image" onClick={() => setImages((list) => list.filter((_, n) => n !== i))}>×</button>
-                      </div>
-                      <select aria-label="Image position" value={image.after} onChange={(e) => setImages((list) => list.map((img, n) => (n === i ? { ...img, after: Number(e.target.value) } : img)))}>
-                        <option value={0}>Above message</option>
-                        {Array.from({ length: paragraphCount }, (_, n) => (
-                          <option key={n} value={n + 1}>After paragraph {n + 1}</option>
-                        ))}
-                        <option value={-1}>Below message</option>
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <span>Photos (optional)</span>
+              <div className="admin-newsletter-photos">
+                {images.map((image, i) => (
+                  <div key={image.src} className="admin-newsletter-image-thumb" title={`[image ${i + 1}]`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={image.src} alt="" />
+                    <em>{i + 1}</em>
+                    <button type="button" aria-label={`Remove image ${i + 1}`} onClick={() => removeImage(i + 1)}>×</button>
+                  </div>
+                ))}
+                {images.length < 6 && (
+                  <button className="admin-newsletter-add-photo" type="button" disabled={uploading} onClick={() => document.getElementById("nl-images")?.click()}>
+                    {uploading ? "Uploading…" : "+ Add photo"}
+                  </button>
+                )}
+                <input id="nl-images" className="sr-only" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple onChange={(e) => { if (e.target.files) void uploadImages(e.target.files); e.target.value = ""; }} />
               </div>
-              <small className="admin-newsletter-hint">Choose where each image sits in the message.</small>
+              {imageError && <p className="field-error" role="alert">{imageError}</p>}
+              <small className="admin-newsletter-hint">Photos appear in the message as [image 1], [image 2]… Move or delete the tag to reposition it.</small>
             </div>
-            <label className="field admin-newsletter-half">
+            <label className={`field admin-newsletter-half${fieldErrors.buttonLabel ? " has-error" : ""}`}>
               <span>Button text (optional)</span>
-              <input maxLength={60} placeholder="Order now" value={buttonLabel} onChange={(e) => setButtonLabel(e.target.value)} />
+              <input id="nl-button-label" maxLength={60} placeholder="Order now" aria-invalid={!!fieldErrors.buttonLabel} value={buttonLabel} onChange={(e) => { setButtonLabel(e.target.value); setFieldErrors((f) => ({ ...f, buttonLabel: undefined, buttonUrl: undefined })); }} />
+              {fieldErrors.buttonLabel && <p className="field-error" role="alert">{fieldErrors.buttonLabel}</p>}
             </label>
-            <label className="field admin-newsletter-half">
+            <label className={`field admin-newsletter-half${fieldErrors.buttonUrl ? " has-error" : ""}`}>
               <span>Button link (optional)</span>
-              <input type="url" placeholder="https://clubcrumbie.com" value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} />
+              <input id="nl-button-url" type="text" inputMode="url" placeholder="https://clubcrumbie.com" aria-invalid={!!fieldErrors.buttonUrl} value={buttonUrl} onChange={(e) => { setButtonUrl(e.target.value); setFieldErrors((f) => ({ ...f, buttonUrl: undefined, buttonLabel: undefined })); }} />
+              {fieldErrors.buttonUrl && <p className="field-error" role="alert">{fieldErrors.buttonUrl}</p>}
             </label>
 <div className="admin-time-range">
               <div className="field">
                 <label htmlFor="nl-schedule-date">Schedule date (optional)</label>
                 <DatePicker key={draftId || "new"} id="nl-schedule-date" value={schedDate} onChange={(date) => { setSchedDate(date); setFieldErrors((e) => ({ ...e, time: undefined })); }} />
               </div>
-              <div className="field">
+              <div className={`field${fieldErrors.time ? " has-error" : ""}`}>
                 <label htmlFor="nl-schedule-time">{schedDate ? "Send time" : "Send time (optional)"}</label>
                 <TimePicker id="nl-schedule-time" label="Send time" required={!!schedDate} value={schedTime} onChange={(time) => { setSchedTime(time); setFieldErrors((e) => ({ ...e, time: undefined })); }} />
-                {fieldErrors.time && <small className="admin-reply-error" role="alert">{fieldErrors.time}</small>}
+                {fieldErrors.time && <p className="field-error" role="alert">{fieldErrors.time}</p>}
               </div>
             </div>
-            <small className="admin-newsletter-hint">Leave the date and time blank to send now.</small>
+            <small className="admin-newsletter-hint">Leave the date blank to send now.</small>
             {notice && <p role="status">{notice}</p>}
       <div className="admin-newsletter-modal-actions">
         <button className="btn btn-light" type="button" disabled={!!busy} onClick={close}>Cancel</button>

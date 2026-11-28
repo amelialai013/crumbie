@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 	const { mode, subject, body, buttonLabel, buttonUrl, scheduledAt, images = [] } = parsed.data;
 	const button = buttonLabel && buttonUrl ? { label: buttonLabel, url: buttonUrl } : undefined;
 	const html = newsletterHtml(body, button, images);
-	const text = `${body}${button ? `\n\n${button.label}: ${button.url}` : ""}\n\nUnsubscribe: {{{RESEND_UNSUBSCRIBE_URL}}}`;
+	const text = `${body.replace(/\[image \d+\]\s*/g, "").trim()}${button ? `\n\n${button.label}: ${button.url}` : ""}\n\nUnsubscribe: {{{RESEND_UNSUBSCRIBE_URL}}}`;
 
 	try {
 		const resend = newsletterClient();

@@ -9462,3 +9462,41 @@ td.admin-order-items, td.admin-order-customer { vertical-align: middle; }
 .newsletter-signup:has(.newsletter-done) { padding-bottom: clamp(48px, 5.8vw, 72px); }
 .newsletter-done span { white-space: pre-line; text-wrap: balance; }
 .subscribe-popup-done p, .subscribe-popup-body p { white-space: pre-line; text-wrap: balance; }
+.admin-newsletter-modal .field:has(.admin-newsletter-images-box):focus-within { box-shadow: none; }
+
+.admin-newsletter-photos { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
+.admin-newsletter-photos .admin-newsletter-image-thumb { width: 72px; flex: none; }
+.admin-newsletter-photos .admin-newsletter-image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.admin-newsletter-photos .admin-newsletter-image-thumb em { position: absolute; left: 6px; bottom: 6px; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: rgba(26, 20, 13, .8); color: #efcdaa; font-size: .72rem; font-style: normal; text-align: center; }
+.admin-newsletter-add-photo { height: 72px; padding: 0 18px; border: 1px dashed #4a433a; border-radius: 12px; background: transparent; color: #c9ad94; font: inherit; font-size: .85rem; cursor: pointer; transition: border-color 160ms ease, color 160ms ease; }
+.admin-newsletter-add-photo:hover { border-color: #c9ad94; color: #efcdaa; }
+.admin-newsletter-photos .admin-newsletter-image-thumb > button { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 999px; background: rgba(26, 20, 13, .85); color: #efcdaa; font: inherit; font-size: 15px; line-height: 22px; text-align: center; cursor: pointer; }
+.admin-newsletter-photos .admin-newsletter-image-thumb > button:hover { background: #efcdaa; color: #1a140d; }
+
+.admin-newsletter-modal .field.has-error > span,
+.admin-newsletter-modal .field.has-error > label { color: #ff8f8f; }
+.admin-newsletter-modal .field.has-error > :is(input, textarea),
+.admin-newsletter-modal .field.has-error > :is(input, textarea):focus { border-color: #ff8f8f; box-shadow: none; }
+.admin-newsletter-modal .field.has-error > :is(input, textarea):focus { box-shadow: 0 0 0 4px rgba(255, 143, 143, .14); }
+:is(.admin-newsletter-modal) .field.has-error:not(.admin-gallery-field):not(.admin-card-toggle-field) > :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), textarea),
+:is(.admin-newsletter-modal) .field.has-error:not(.admin-gallery-field):not(.admin-card-toggle-field) > :is(input, textarea):focus,
+:is(.admin-newsletter-modal) .field.has-error > .time-picker { border-color: #ff8f8f; box-shadow: none; }
+:is(.admin-newsletter-modal) .field.has-error:not(.admin-gallery-field):not(.admin-card-toggle-field) > :is(input, textarea):focus { box-shadow: 0 0 0 4px rgba(255, 143, 143, .14); }
+.admin-newsletter-modal .field.has-error { border-color: transparent; }
+
+.admin-newsletter-modal .time-picker input[type="time"]::-webkit-datetime-edit-hour-field:focus,
+.admin-newsletter-modal .time-picker input[type="time"]::-webkit-datetime-edit-minute-field:focus,
+.admin-newsletter-modal .time-picker input[type="time"]::-webkit-datetime-edit-ampm-field:focus {
+  background: rgba(239, 205, 170, 0.18) !important;
+  color: #efcdaa !important;
+  -webkit-text-fill-color: #efcdaa !important;
+  outline: none;
+}
+.admin-newsletter-modal .time-picker input[type="time"] {
+  -webkit-text-fill-color: #efcdaa;
+  accent-color: #efcdaa;
+}
+.admin-newsletter-modal .time-picker input[type="time"]::selection {
+  background: rgba(239, 205, 170, 0.25);
+  color: #efcdaa;
+}
